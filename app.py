@@ -119,7 +119,7 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# DASHBOARD + EXPORTAR EXCEL
+# DASHBOARD
 # =========================================================
 if menu == "DASHBOARD":
     st.title("📊 DASHBOARD GENERAL")
@@ -131,10 +131,11 @@ if menu == "DASHBOARD":
         empleados_view = empleados.drop(columns=["foto"], errors="ignore")
         st.dataframe(mayus(empleados_view))
 
-    # 🔥 EXPORTAR A EXCEL
+    # EXPORTAR EXCEL (SIN XLSXWRITER)
     if not empleados.empty:
         output = BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+
+        with pd.ExcelWriter(output) as writer:
             empleados_view.to_excel(writer, sheet_name='EMPLEADOS', index=False)
             kpis.to_excel(writer, sheet_name='KPIS', index=False)
 
@@ -182,7 +183,7 @@ elif menu == "REGISTRAR":
             st.success("EMPLEADO REGISTRADO")
 
 # =========================================================
-# EDITAR (FIXED)
+# EDITAR
 # =========================================================
 elif menu == "EDITAR":
     st.title("✏️ EDITAR EMPLEADO")
@@ -190,9 +191,9 @@ elif menu == "EDITAR":
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
     if df.empty:
-        st.warning("NO HAY EMPLEADOS REGISTRADOS")
+        st.warning("NO HAY EMPLEADOS")
     else:
-        emp_id = st.selectbox("SELECCIONAR EMPLEADO", df["id"])
+        emp_id = st.selectbox("EMPLEADO", df["id"])
         data = df[df["id"] == emp_id].iloc[0]
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
@@ -214,7 +215,7 @@ elif menu == "EDITAR":
             """, (nombre,edad,estado,cargo,img,emp_id))
 
             regenerar_kpis(emp_id, cargo)
-            st.success("EMPLEADO ACTUALIZADO")
+            st.success("ACTUALIZADO")
 
 # =========================================================
 # KPIS
@@ -229,7 +230,6 @@ elif menu == "KPIS":
         kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
 
         for i, row in kpis.iterrows():
-
             st.subheader(row["indicador"])
 
             col1, col2, col3 = st.columns(3)
@@ -242,13 +242,14 @@ elif menu == "KPIS":
                 r = st.number_input("REAL", value=row["real"], key=f"r{i}")
 
             if st.button(f"GUARDAR {row['indicador']}"):
-                c.execute("""UPDATE kpis SET meta=?, real=?, proyectado=? 
-                             WHERE id=? AND indicador=?""",
-                          (m,r,p,emp_id,row["indicador"]))
+                c.execute("""
+                UPDATE kpis SET meta=?, real=?, proyectado=?
+                WHERE id=? AND indicador=?
+                """, (m,r,p,emp_id,row["indicador"]))
                 conn.commit()
 
 # =========================================================
-# ESCÁNER
+# ESCÁNER (CON GRÁFICOS)
 # =========================================================
 elif menu == "ESCÁNER":
     st.title("🔍 ESCÁNER")
@@ -264,12 +265,41 @@ elif menu == "ESCÁNER":
         data = df[df["id"] == emp_id].iloc[0]
         kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
 
-        st.write(mayus(pd.DataFrame([data]).drop(columns=["foto"], errors="ignore")))
+        col1, col2 = st.columns([1,2])
 
-        if data["foto"]:
-            st.image(data["foto"], width=140)
+        with col1:
+            st.dataframe(mayus(pd.DataFrame([data]).drop(columns=["foto"], errors="ignore")))
 
-        st.image(generar_qr(data,kpis), width=140)
+            if data["foto"]:
+                st.image(data["foto"], width=140)
+
+            st.image(generar_qr(data,kpis), width=140)
+
+        with col2:
+            st.dataframe(mayus(kpis))
+
+            for i, row in kpis.iterrows():
+
+                labels = ["META","PROYECTADO","REAL"]
+                valores = [row["meta"], row["proyectado"], row["real"]]
+
+                fig = go.Figure()
+
+                fig.add_trace(go.Bar(
+                    x=labels,
+                    y=valores,
+                    marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
+                    width=0.25
+                ))
+
+                fig.add_trace(go.Scatter(
+                    x=labels,
+                    y=valores,
+                    mode="lines+markers",
+                    showlegend=False
+                ))
+
+                st.plotly_chart(fig, key=f"graf_{i}")
 
 # =========================================================
 # CARGOS
