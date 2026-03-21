@@ -57,6 +57,7 @@ indicador TEXT
 conn.commit()
 
 # ---------------- FUNCIONES ----------------
+
 def generar_qr(data, kpis):
     contenido = {
         "id": data["id"],
@@ -114,40 +115,36 @@ if menu == "Registrar":
             regenerar_kpis(id, cargo)
             st.success("Empleado registrado")
 
-# ---------------- EDITAR EMPLEADO ----------------
+# ---------------- EDITAR ----------------
 elif menu == "Editar Empleado":
     st.header("✏️ Editar Empleado")
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
-    if not df.empty:
-        emp_id = st.selectbox("Empleado", df["id"])
-        data = df[df["id"]==emp_id].iloc[0]
+    emp_id = st.selectbox("Empleado", df["id"])
+    data = df[df["id"]==emp_id].iloc[0]
 
-        nombre = st.text_input("Nombre", value=data["nombre"])
-        edad = st.number_input("Edad", value=int(data["edad"]))
-        estado = st.selectbox("Estado",["Soltero","Casado"])
-        profesion = st.text_input("Profesión", value=data["profesion"])
+    nombre = st.text_input("Nombre", value=data["nombre"])
+    edad = st.number_input("Edad", value=int(data["edad"]))
+    estado = st.selectbox("Estado",["Soltero","Casado"])
+    profesion = st.text_input("Profesión", value=data["profesion"])
 
-        cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
-        cargo = st.selectbox("Cargo", cargos["nombre"])
+    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+    cargo = st.selectbox("Cargo", cargos["nombre"])
 
-        if st.button("Actualizar"):
-            c.execute("""UPDATE empleados 
-                         SET nombre=?, edad=?, estado=?, profesion=?, cargo=? 
-                         WHERE id=?""",
-                      (nombre,edad,estado,profesion,cargo,emp_id))
-
-            regenerar_kpis(emp_id, cargo)
-
-            st.success("Empleado actualizado")
+    if st.button("Actualizar"):
+        c.execute("""UPDATE empleados 
+                     SET nombre=?, edad=?, estado=?, profesion=?, cargo=? 
+                     WHERE id=?""",
+                  (nombre,edad,estado,profesion,cargo,emp_id))
+        regenerar_kpis(emp_id, cargo)
+        st.success("Actualizado")
 
 # ---------------- KPIs ----------------
 elif menu == "KPIs":
     st.header("📊 Gestión KPIs")
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
-
     emp_id = st.selectbox("Empleado", df["id"])
 
     kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
@@ -158,9 +155,9 @@ elif menu == "KPIs":
         with col1:
             m = st.number_input("Meta",value=row["meta"],key=f"m{i}")
         with col2:
-            r = st.number_input("Real",value=row["real"],key=f"r{i}")
+            p = st.number_input("Proyectado",value=row["proyectado"],key=f"p{i}")
         with col3:
-            p = st.number_input("Proy",value=row["proyectado"],key=f"p{i}")
+            r = st.number_input("Real",value=row["real"],key=f"r{i}")
 
         if st.button(f"Guardar {row['indicador']}"):
             c.execute("""UPDATE kpis SET meta=?, real=?, proyectado=? 
@@ -170,66 +167,70 @@ elif menu == "KPIs":
 
 # ---------------- ESCÁNER ----------------
 elif menu == "Escáner":
-    st.header("🔍 Escáner")
+    st.header("🔍 Escáner Inteligente")
 
-    search = st.text_input("ID")
+    df = pd.read_sql("SELECT * FROM empleados", conn)
 
-    emp = pd.read_sql("SELECT * FROM empleados WHERE id=?", conn, params=(search,))
+    if not df.empty:
+        df["display"] = df["id"] + " - " + df["nombre"] + " - " + df["cargo"]
 
-    if not emp.empty:
-        data = emp.iloc[0]
-        kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(search,))
+        seleccion = st.selectbox("Seleccionar Empleado", df["display"])
 
-        st.write(data)
-        st.image(generar_qr(data,kpis), width=150)
+        emp_id = df[df["display"] == seleccion]["id"].values[0]
 
-        for _, row in kpis.iterrows():
-            fig = go.Figure()
+        data = df[df["id"] == emp_id].iloc[0]
+        kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
 
-            fig.add_trace(go.Bar(
-                x=["Meta","Real","Proyectado"],
-                y=[row["meta"],row["real"],row["proyectado"]],
-                marker=dict(color=["#A8D5BA","#4CAF50","#7FB77E"]),
-                text=[row["meta"],row["real"],row["proyectado"]],
-                textposition="outside",
-                width=0.4
-            ))
+        col1,col2 = st.columns([1,2])
 
-            fig.update_layout(title=row["indicador"], height=300)
-            st.plotly_chart(fig)
+        with col1:
+            st.write(data)
+            st.image(generar_qr(data,kpis), width=150)
+
+        with col2:
+            st.dataframe(kpis)
+
+            for _, row in kpis.iterrows():
+
+                labels = ["Meta","Proyectado","Real"]
+                valores = [row["meta"], row["proyectado"], row["real"]]
+
+                fig = go.Figure()
+
+                # BARRAS
+                fig.add_trace(go.Bar(
+                    x=labels,
+                    y=valores,
+                    marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
+                    text=valores,
+                    textposition="outside"
+                ))
+
+                # POLÍGONO DE FRECUENCIA
+                fig.add_trace(go.Scatter(
+                    x=labels,
+                    y=valores,
+                    mode="lines+markers",
+                    line=dict(color="darkgreen"),
+                    name="Tendencia"
+                ))
+
+                fig.update_layout(
+                    title=row["indicador"],
+                    height=300
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
 
 # ---------------- CARGOS ----------------
 elif menu == "Cargos":
-    st.header("⚙️ Gestión de Cargos")
+    nombre = st.text_input("Cargo")
+    inds = st.text_area("Indicadores")
 
-    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
-    cargo_sel = st.selectbox("Seleccionar Cargo", cargos["nombre"])
-
-    kpis = pd.read_sql("SELECT * FROM cargos WHERE nombre=?", conn, params=(cargo_sel,))
-    st.write("KPIs actuales:", kpis["indicador"].tolist())
-
-    nuevo = st.text_input("Nuevo KPI")
-
-    if st.button("Agregar KPI"):
-        c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo))
+    if st.button("Guardar"):
+        for i in inds.split(","):
+            c.execute("INSERT INTO cargos VALUES (?,?)",(nombre,i.strip()))
         conn.commit()
-        st.success("KPI agregado")
-
-    eliminar = st.selectbox("Eliminar KPI", kpis["indicador"])
-
-    if st.button("Eliminar KPI"):
-        c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?", (cargo_sel, eliminar))
-        conn.commit()
-        st.success("KPI eliminado")
-
-    sobrescribir = st.text_area("Sobrescribir KPIs (separados por coma)")
-
-    if st.button("Sobrescribir TODO"):
-        c.execute("DELETE FROM cargos WHERE nombre=?", (cargo_sel,))
-        for i in sobrescribir.split(","):
-            c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,i.strip()))
-        conn.commit()
-        st.success("KPIs actualizados completamente")
 
 # ---------------- DASHBOARD ----------------
 elif menu == "Dashboard":
