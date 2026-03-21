@@ -23,45 +23,44 @@ if st.sidebar.button("INGRESAR"):
     if USERS.get(user) == password:
         st.session_state.auth = True
     else:
-        st.error("ACCESO INCORRECTO")
+        st.sidebar.error("ACCESO INCORRECTO")
 
 if not st.session_state.auth:
     st.stop()
 
-# ---------------- DB SEGURA ----------------
+# ---------------- DB ----------------
 conn = sqlite3.connect("bank.db", check_same_thread=False)
 c = conn.cursor()
 
-# CREAR TABLA SOLO SI NO EXISTE
-c.execute('''CREATE TABLE IF NOT EXISTS empleados(
-id TEXT PRIMARY KEY,
-nombre TEXT,
-edad INT,
-estado TEXT,
-profesion TEXT,
-cargo TEXT
-)''')
+# TABLAS
+c.execute("""
+CREATE TABLE IF NOT EXISTS empleados(
+    id TEXT PRIMARY KEY,
+    nombre TEXT,
+    edad INTEGER,
+    estado TEXT,
+    profesion TEXT,
+    cargo TEXT,
+    foto BLOB
+)
+""")
 
-# 🔥 MIGRACIÓN SEGURA (AGREGAR FOTO)
-cols = pd.read_sql("PRAGMA table_info(empleados)", conn)
+c.execute("""
+CREATE TABLE IF NOT EXISTS kpis(
+    id TEXT,
+    indicador TEXT,
+    meta REAL,
+    real REAL,
+    proyectado REAL
+)
+""")
 
-if "foto" not in cols["name"].values:
-    c.execute("ALTER TABLE empleados ADD COLUMN foto BLOB")
-    conn.commit()
-
-# OTRAS TABLAS
-c.execute('''CREATE TABLE IF NOT EXISTS kpis(
-id TEXT,
-indicador TEXT,
-meta REAL,
-real REAL,
-proyectado REAL
-)''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS cargos(
-nombre TEXT,
-indicador TEXT
-)''')
+c.execute("""
+CREATE TABLE IF NOT EXISTS cargos(
+    nombre TEXT,
+    indicador TEXT
+)
+""")
 
 conn.commit()
 
@@ -80,9 +79,13 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
 # ---------------- FUNCIONES ----------------
 def regenerar_kpis(emp_id, cargo):
     c.execute("DELETE FROM kpis WHERE id=?", (emp_id,))
-    indicadores = pd.read_sql("SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo,))
+    indicadores = pd.read_sql(
+        "SELECT indicador FROM cargos WHERE nombre=?",
+        conn, params=(cargo,)
+    )
     for ind in indicadores["indicador"]:
-        c.execute("INSERT INTO kpis VALUES (?,?,?,?,?)",(emp_id, ind, 0, 0, 0))
+        c.execute("INSERT INTO kpis VALUES (?,?,?,?,?)",
+                  (emp_id, ind, 0, 0, 0))
     conn.commit()
 
 def generar_qr(data, kpis):
@@ -92,54 +95,139 @@ def generar_qr(data, kpis):
         "cargo": data["cargo"],
         "kpis": kpis.to_dict(orient="records")
     }
-    qr = qrcode.make(json.dumps(contenido))
+    img = qrcode.make(json.dumps(contenido))
     buf = BytesIO()
-    qr.save(buf)
+    img.save(buf)
     return buf
 
-def a_mayus(df):
-    return df.applymap(lambda x: str(x).upper())
+def mayus(df):
+    return df.astype(str).applymap(lambda x: x.upper())
 
 # ---------------- MENU ----------------
-menu = st.sidebar.radio("MENÚ",[
+menu = st.sidebar.radio("MENÚ", [
     "REGISTRAR",
-    "EDITAR EMPLEADO",
+    "EDITAR",
     "KPIS",
     "ESCÁNER",
     "CARGOS",
     "DASHBOARD"
 ])
 
+# =========================================================
 # ---------------- REGISTRAR ----------------
+# =========================================================
 if menu == "REGISTRAR":
-    st.header("➕ REGISTRO")
+    st.title("➕ REGISTRO DE EMPLEADO")
 
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
-    col1,col2 = st.columns(2)
+    with st.form("form_reg"):
+        col1, col2, col3 = st.columns(3)
 
-    with col1:
-        id = st.text_input("ID").upper()
-        nombre = st.text_input("NOMBRE").upper()
+        with col1:
+            id = st.text_input("ID").upper()
+            nombre = st.text_input("NOMBRE").upper()
 
-    with col2:
-        edad = st.number_input("EDAD",18,70)
-        cargo = st.selectbox("CARGO",cargos["nombre"])
+        with col2:
+            edad = st.number_input("EDAD", 18, 70)
+            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
 
-    foto = st.file_uploader("FOTO", type=["jpg","png"])
+        with col3:
+            profesion = st.text_input("PROFESIÓN").upper()
+            cargo = st.selectbox("CARGO", cargos["nombre"])
 
-    if st.button("GUARDAR"):
-        img = foto.read() if foto else None
+        foto = st.file_uploader("FOTO", type=["jpg","png"])
 
-        c.execute("INSERT OR REPLACE INTO empleados VALUES (?,?,?,?,?,?,?)",
-                  (id,nombre,edad,"","",cargo,img))
+        if st.form_submit_button("GUARDAR"):
+            img = foto.read() if foto else None
 
-        regenerar_kpis(id,cargo)
-        st.success("REGISTRADO")
+            c.execute("""
+            INSERT OR REPLACE INTO empleados
+            VALUES (?,?,?,?,?,?,?)
+            """, (id,nombre,edad,estado,profesion,cargo,img))
 
+            regenerar_kpis(id, cargo)
+            st.success("EMPLEADO REGISTRADO")
+
+# =========================================================
+# ---------------- EDITAR ----------------
+# =========================================================
+elif menu == "EDITAR":
+    st.title("✏️ EDITAR EMPLEADO")
+
+    df = pd.read_sql("SELECT * FROM empleados", conn)
+
+    if not df.empty:
+        emp_id = st.selectbox("EMPLEADO", df["id"])
+        data = df[df["id"] == emp_id].iloc[0]
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
+
+        with col2:
+            edad = st.number_input("EDAD", value=int(data["edad"]))
+
+        with col3:
+            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+
+        cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+        cargo = st.selectbox("CARGO", cargos["nombre"])
+
+        foto = st.file_uploader("CAMBIAR FOTO", type=["jpg","png"])
+
+        if st.button("ACTUALIZAR"):
+            img = foto.read() if foto else data["foto"]
+
+            c.execute("""
+            UPDATE empleados
+            SET nombre=?, edad=?, estado=?, cargo=?, foto=?
+            WHERE id=?
+            """, (nombre,edad,estado,cargo,img,emp_id))
+
+            regenerar_kpis(emp_id, cargo)
+            st.success("ACTUALIZADO")
+
+# =========================================================
+# ---------------- KPIS ----------------
+# =========================================================
+elif menu == "KPIS":
+    st.title("📊 GESTIÓN DE KPIs")
+
+    df = pd.read_sql("SELECT * FROM empleados", conn)
+
+    if not df.empty:
+        emp_id = st.selectbox("EMPLEADO", df["id"])
+        kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
+
+        for i, row in kpis.iterrows():
+
+            st.subheader(row["indicador"])
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                meta = st.number_input("META", value=row["meta"], key=f"m{i}")
+
+            with col2:
+                proy = st.number_input("PROYECTADO", value=row["proyectado"], key=f"p{i}")
+
+            with col3:
+                real = st.number_input("REAL", value=row["real"], key=f"r{i}")
+
+            if st.button(f"GUARDAR_{i}"):
+                c.execute("""
+                UPDATE kpis SET meta=?, real=?, proyectado=?
+                WHERE id=? AND indicador=?
+                """, (meta,real,proy,emp_id,row["indicador"]))
+                conn.commit()
+
+# =========================================================
 # ---------------- ESCÁNER ----------------
+# =========================================================
 elif menu == "ESCÁNER":
-    st.header("🔍 ESCÁNER")
+    st.title("🔍 ESCÁNER")
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
@@ -147,25 +235,74 @@ elif menu == "ESCÁNER":
         df["display"] = df["id"] + " - " + df["nombre"] + " - " + df["cargo"]
 
         sel = st.selectbox("SELECCIONAR", df["display"])
-        emp_id = df[df["display"]==sel]["id"].values[0]
+        emp_id = df[df["display"] == sel]["id"].values[0]
 
-        data = df[df["id"]==emp_id].iloc[0]
+        data = df[df["id"] == emp_id].iloc[0]
         kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
 
-        st.write(a_mayus(pd.DataFrame([data])))
+        col1, col2 = st.columns([1,2])
 
-        if "foto" in data.index and data["foto"]:
-            st.image(data["foto"], width=140)
+        with col1:
+            st.dataframe(mayus(pd.DataFrame([data])))
 
-        st.image(generar_qr(data,kpis), width=140)
+            if data["foto"]:
+                st.image(data["foto"], width=140)
 
-        for i,row in kpis.iterrows():
-            fig = go.Figure()
+            st.image(generar_qr(data,kpis), width=140)
 
-            fig.add_trace(go.Bar(
-                x=["META","PROYECTADO","REAL"],
-                y=[row["meta"],row["proyectado"],row["real"]],
-                width=0.25
-            ))
+        with col2:
+            st.dataframe(mayus(kpis))
 
-            st.plotly_chart(fig, key=f"graf_{i}")
+            for i, row in kpis.iterrows():
+
+                labels = ["META","PROYECTADO","REAL"]
+                valores = [row["meta"],row["proyectado"],row["real"]]
+
+                fig = go.Figure()
+
+                fig.add_trace(go.Bar(
+                    x=labels,
+                    y=valores,
+                    marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
+                    text=valores,
+                    textposition="outside",
+                    width=0.25
+                ))
+
+                fig.add_trace(go.Scatter(
+                    x=labels,
+                    y=valores,
+                    mode="lines+markers",
+                    showlegend=False
+                ))
+
+                fig.update_layout(title=row["indicador"], showlegend=False)
+
+                st.plotly_chart(fig, key=f"graf_{i}")
+
+# =========================================================
+# ---------------- CARGOS ----------------
+# =========================================================
+elif menu == "CARGOS":
+    st.title("⚙️ GESTIÓN DE CARGOS")
+
+    nombre = st.text_input("CARGO").upper()
+    inds = st.text_area("INDICADORES (separados por coma)")
+
+    if st.button("GUARDAR"):
+        for i in inds.split(","):
+            c.execute("INSERT INTO cargos VALUES (?,?)",
+                      (nombre, i.strip().upper()))
+        conn.commit()
+        st.success("CARGO GUARDADO")
+
+# =========================================================
+# ---------------- DASHBOARD ----------------
+# =========================================================
+elif menu == "DASHBOARD":
+    st.title("📊 DASHBOARD")
+
+    df = pd.read_sql("SELECT * FROM empleados", conn)
+
+    if not df.empty:
+        st.dataframe(mayus(df))
