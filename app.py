@@ -57,7 +57,6 @@ indicador TEXT
 conn.commit()
 
 # ---------------- FUNCIONES ----------------
-
 def generar_qr(data, kpis):
     contenido = {
         "id": data["id"],
@@ -175,7 +174,6 @@ elif menu == "Escáner":
         df["display"] = df["id"] + " - " + df["nombre"] + " - " + df["cargo"]
 
         seleccion = st.selectbox("Seleccionar Empleado", df["display"])
-
         emp_id = df[df["display"] == seleccion]["id"].values[0]
 
         data = df[df["id"] == emp_id].iloc[0]
@@ -197,26 +195,26 @@ elif menu == "Escáner":
 
                 fig = go.Figure()
 
-                # BARRAS
                 fig.add_trace(go.Bar(
                     x=labels,
                     y=valores,
                     marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
                     text=valores,
-                    textposition="outside"
+                    textposition="outside",
+                    width=0.25
                 ))
 
-                # POLÍGONO DE FRECUENCIA
                 fig.add_trace(go.Scatter(
                     x=labels,
                     y=valores,
                     mode="lines+markers",
                     line=dict(color="darkgreen"),
-                    name="Tendencia"
+                    showlegend=False
                 ))
 
                 fig.update_layout(
                     title=row["indicador"],
+                    showlegend=False,
                     height=300
                 )
 
