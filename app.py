@@ -3,6 +3,7 @@ import pandas as pd
 import sqlite3
 import plotly.graph_objects as go
 import qrcode
+import json
 from io import BytesIO
 
 # ---------------- CONFIG ----------------
@@ -56,21 +57,43 @@ indicador TEXT
 conn.commit()
 
 # ---------------- FUNCIONES ----------------
+
 def generar_qr_completo(data, kpis):
-    texto = f"""
-ID: {data['id']}
-Nombre: {data['nombre']}
-Edad: {data['edad']}
-Estado: {data['estado']}
-Profesión: {data['profesion']}
-Cargo: {data['cargo']}
+    # Construir estructura JSON estándar
+    contenido = {
+        "id": data["id"],
+        "nombre": data["nombre"],
+        "edad": int(data["edad"]),
+        "estado": data["estado"],
+        "profesion": data["profesion"],
+        "cargo": data["cargo"],
+        "kpis": []
+    }
 
---- KPIs ---
-"""
     for _, row in kpis.iterrows():
-        texto += f"{row['indicador']}: Meta={row['meta']}, Real={row['real']}, Proy={row['proyectado']}\n"
+        contenido["kpis"].append({
+            "indicador": row["indicador"],
+            "meta": row["meta"],
+            "real": row["real"],
+            "proyectado": row["proyectado"]
+        })
 
-    img = qrcode.make(texto)
+    # Convertir a JSON compacto
+    data_json = json.dumps(contenido, separators=(",", ":"))
+
+    # Generar QR robusto
+    qr = qrcode.QRCode(
+        version=None,  # automático
+        error_correction=qrcode.constants.ERROR_CORRECT_Q,
+        box_size=6,
+        border=2
+    )
+
+    qr.add_data(data_json)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+
     buf = BytesIO()
     img.save(buf)
     return buf
@@ -131,9 +154,7 @@ elif menu == "KPIs":
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
-    if df.empty:
-        st.warning("No hay empleados")
-    else:
+    if not df.empty:
         emp_id = st.selectbox("Empleado",df["id"])
 
         kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{emp_id}'", conn)
@@ -154,18 +175,16 @@ elif menu == "KPIs":
 
             nuevos.append((m,r,p,row["indicador"]))
 
-        if st.button("💾 Guardar TODOS"):
+        if st.button("Guardar KPIs"):
             for m,r,p,ind in nuevos:
-                c.execute("""UPDATE kpis 
-                             SET meta=?, real=?, proyectado=? 
-                             WHERE id=? AND indicador=?""",
+                c.execute("UPDATE kpis SET meta=?, real=?, proyectado=? WHERE id=? AND indicador=?",
                           (m,r,p,emp_id,ind))
             conn.commit()
-            st.success("KPIs actualizados correctamente")
+            st.success("KPIs actualizados")
 
 # ---------------- ESCÁNER ----------------
 elif menu == "Escáner":
-    st.header("🔍 Escaneo completo")
+    st.header("🔍 Escaneo")
 
     search = st.text_input("Ingrese ID")
 
@@ -175,107 +194,42 @@ elif menu == "Escáner":
         data = emp.iloc[0]
         kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{search}'", conn)
 
-        kpis = kpis.dropna()
-
         col1,col2 = st.columns([1,2])
 
         with col1:
-            st.subheader("📋 Datos Personales")
             st.write(data)
-
             qr = generar_qr_completo(data, kpis)
             st.image(qr, width=180)
 
         with col2:
-            st.subheader("📊 KPIs Reales")
             st.dataframe(kpis)
 
-            st.subheader("📈 Visualización por KPI")
-
             for _, row in kpis.iterrows():
-
-                indicador = row["indicador"]
-                meta = row["meta"]
-                real = row["real"]
-                proy = row["proyectado"]
-
                 fig = go.Figure()
 
-                # COLORES SUAVES VERDES
-                fig.add_trace(go.Bar(
-                    x=["Meta"],
-                    y=[meta],
-                    name="Meta",
-                    width=0.3,
-                    marker=dict(color="#A8D5BA")  # verde claro
-                ))
+                fig.add_trace(go.Bar(x=["Meta"], y=[row["meta"]], width=0.3))
+                fig.add_trace(go.Bar(x=["Real"], y=[row["real"]], width=0.3))
+                fig.add_trace(go.Bar(x=["Proyectado"], y=[row["proyectado"]], width=0.3))
 
-                fig.add_trace(go.Bar(
-                    x=["Real"],
-                    y=[real],
-                    name="Real",
-                    width=0.3,
-                    marker=dict(color="#4CAF50")  # verde medio
-                ))
-
-                fig.add_trace(go.Bar(
-                    x=["Proyectado"],
-                    y=[proy],
-                    name="Proyectado",
-                    width=0.3,
-                    marker=dict(color="#7FB77E")  # verde suave oliva
-                ))
-
-                fig.update_layout(
-                    title=f"KPI: {indicador}",
-                    bargap=0.6,
-                    plot_bgcolor="white",
-                    paper_bgcolor="white",
-                    height=300
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-
-    else:
-        st.warning("Empleado no encontrado")
+                st.plotly_chart(fig)
 
 # ---------------- DASHBOARD ----------------
 elif menu == "Dashboard":
-    st.header("📊 Dashboard")
-
     df = pd.read_sql("SELECT * FROM empleados", conn)
-
-    if not df.empty:
-        st.dataframe(df)
-        st.bar_chart(df["cargo"].value_counts())
+    st.dataframe(df)
 
 # ---------------- CAPACITACIONES ----------------
 elif menu == "Capacitaciones":
-    st.header("📚 Centro de Capacitación")
-
-    cursos = pd.DataFrame({
-        "Curso":[
-            "Servicio al Cliente",
-            "Análisis Financiero y Créditos",
-            "Sistemas Bancarios",
-            "Prevención de Fraude"
-        ],
-        "Área":[
-            "Todos","Finanzas","Todos","Todos"
-        ]
-    })
-
-    st.table(cursos)
+    st.table(pd.DataFrame({
+        "Curso":["Servicio Cliente","Finanzas","Sistemas","Fraude"]
+    }))
 
 # ---------------- CARGOS ----------------
 elif menu == "Cargos":
-    st.header("⚙️ Crear Cargo Nuevo")
+    nombre = st.text_input("Cargo")
+    inds = st.text_area("Indicadores")
 
-    nombre = st.text_input("Nombre del Cargo")
-    indicadores = st.text_area("Indicadores (separados por coma)")
-
-    if st.button("Guardar Cargo"):
-        for i in indicadores.split(","):
+    if st.button("Guardar"):
+        for i in inds.split(","):
             c.execute("INSERT INTO cargos VALUES (?,?)",(nombre,i.strip()))
         conn.commit()
-        st.success("Cargo creado correctamente")
