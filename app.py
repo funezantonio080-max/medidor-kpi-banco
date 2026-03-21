@@ -76,7 +76,6 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
     conn.commit()
 
 # ---------------- FUNCIONES ----------------
-
 def regenerar_kpis(emp_id, cargo):
     c.execute("DELETE FROM kpis WHERE id=?", (emp_id,))
     indicadores = pd.read_sql(
@@ -106,22 +105,35 @@ def mayus(df):
         df[col] = df[col].apply(
             lambda x: x.upper() if isinstance(x, str) else x
         )
+    df.columns = [c.upper() for c in df.columns]
     return df
 
 # ---------------- MENU ----------------
 menu = st.sidebar.radio("MENÚ", [
+    "DASHBOARD",
     "REGISTRAR",
     "EDITAR",
     "KPIS",
     "ESCÁNER",
-    "CARGOS",
-    "DASHBOARD"
+    "CARGOS"
 ])
+
+# =========================================================
+# DASHBOARD (PRINCIPAL)
+# =========================================================
+if menu == "DASHBOARD":
+    st.title("📊 DASHBOARD GENERAL")
+
+    df = pd.read_sql("SELECT * FROM empleados", conn)
+
+    if not df.empty:
+        df = df.drop(columns=["foto"], errors="ignore")
+        st.dataframe(mayus(df))
 
 # =========================================================
 # REGISTRAR
 # =========================================================
-if menu == "REGISTRAR":
+elif menu == "REGISTRAR":
     st.title("➕ REGISTRO DE EMPLEADO")
 
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
@@ -155,46 +167,6 @@ if menu == "REGISTRAR":
             st.success("EMPLEADO REGISTRADO")
 
 # =========================================================
-# EDITAR EMPLEADO
-# =========================================================
-elif menu == "EDITAR":
-    st.title("✏️ EDITAR EMPLEADO")
-
-    df = pd.read_sql("SELECT * FROM empleados", conn)
-
-    if not df.empty:
-        emp_id = st.selectbox("EMPLEADO", df["id"])
-        data = df[df["id"] == emp_id].iloc[0]
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
-
-        with col2:
-            edad = st.number_input("EDAD", value=int(data["edad"]))
-
-        with col3:
-            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
-
-        cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
-        cargo = st.selectbox("CARGO", cargos["nombre"])
-
-        foto = st.file_uploader("CAMBIAR FOTO", type=["jpg","png"])
-
-        if st.button("ACTUALIZAR"):
-            img = foto.read() if foto else data["foto"]
-
-            c.execute("""
-            UPDATE empleados
-            SET nombre=?, edad=?, estado=?, cargo=?, foto=?
-            WHERE id=?
-            """, (nombre,edad,estado,cargo,img,emp_id))
-
-            regenerar_kpis(emp_id, cargo)
-            st.success("ACTUALIZADO")
-
-# =========================================================
 # KPIS
 # =========================================================
 elif menu == "KPIS":
@@ -221,7 +193,7 @@ elif menu == "KPIS":
             with col3:
                 real = st.number_input("REAL", value=row["real"], key=f"r{i}")
 
-            if st.button(f"GUARDAR_{i}"):
+            if st.button(f"GUARDAR {row['indicador']}"):
                 c.execute("""
                 UPDATE kpis SET meta=?, real=?, proyectado=?
                 WHERE id=? AND indicador=?
@@ -270,8 +242,6 @@ elif menu == "ESCÁNER":
                     x=labels,
                     y=valores,
                     marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
-                    text=valores,
-                    textposition="outside",
                     width=0.25
                 ))
 
@@ -282,12 +252,10 @@ elif menu == "ESCÁNER":
                     showlegend=False
                 ))
 
-                fig.update_layout(title=row["indicador"], showlegend=False)
-
                 st.plotly_chart(fig, key=f"graf_{i}")
 
 # =========================================================
-# CARGOS (EDICIÓN COMPLETA)
+# CARGOS
 # =========================================================
 elif menu == "CARGOS":
     st.title("⚙️ GESTIÓN DE CARGOS")
@@ -308,7 +276,6 @@ elif menu == "CARGOS":
     if st.button("AGREGAR KPI"):
         c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo.upper()))
         conn.commit()
-        st.success("KPI AGREGADO")
 
     eliminar = st.selectbox("ELIMINAR KPI", kpis["indicador"])
 
@@ -316,25 +283,12 @@ elif menu == "CARGOS":
         c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?",
                   (cargo_sel,eliminar))
         conn.commit()
-        st.success("KPI ELIMINADO")
 
-    sobrescribir = st.text_area("SOBRESCRIBIR KPIs (coma)")
+    sobrescribir = st.text_area("REEMPLAZAR KPIs")
 
-    if st.button("REEMPLAZAR TODOS"):
+    if st.button("REEMPLAZAR TODO"):
         c.execute("DELETE FROM cargos WHERE nombre=?", (cargo_sel,))
         for i in sobrescribir.split(","):
             c.execute("INSERT INTO cargos VALUES (?,?)",
                       (cargo_sel,i.strip().upper()))
         conn.commit()
-        st.success("KPIs ACTUALIZADOS")
-
-# =========================================================
-# DASHBOARD
-# =========================================================
-elif menu == "DASHBOARD":
-    st.title("📊 DASHBOARD")
-
-    df = pd.read_sql("SELECT * FROM empleados", conn)
-
-    if not df.empty:
-        st.dataframe(mayus(df))
