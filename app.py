@@ -6,7 +6,7 @@ import qrcode
 from io import BytesIO
 
 # ---------------- CONFIG ----------------
-st.set_page_config(page_title="Banco PRO", layout="wide")
+st.set_page_config(page_title="Banco PRO KPI", layout="wide")
 
 # ---------------- LOGIN ----------------
 USERS = {"admin": "1234"}
@@ -14,6 +14,7 @@ USERS = {"admin": "1234"}
 if "auth" not in st.session_state:
     st.session_state.auth = False
 
+st.sidebar.subheader("🔐 Login")
 user = st.sidebar.text_input("Usuario")
 password = st.sidebar.text_input("Contraseña", type="password")
 
@@ -21,7 +22,7 @@ if st.sidebar.button("Ingresar"):
     if USERS.get(user) == password:
         st.session_state.auth = True
     else:
-        st.error("Error login")
+        st.error("Acceso incorrecto")
 
 if not st.session_state.auth:
     st.stop()
@@ -32,13 +33,25 @@ c = conn.cursor()
 
 c.execute('''CREATE TABLE IF NOT EXISTS empleados(
 id TEXT PRIMARY KEY,
-nombre TEXT, edad INT, estado TEXT, profesion TEXT, cargo TEXT)''')
+nombre TEXT,
+edad INT,
+estado TEXT,
+profesion TEXT,
+cargo TEXT
+)''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS kpis(
-id TEXT, indicador TEXT, meta REAL, real REAL, proyectado REAL)''')
+id TEXT,
+indicador TEXT,
+meta REAL,
+real REAL,
+proyectado REAL
+)''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS cargos(
-nombre TEXT, indicador TEXT)''')
+nombre TEXT,
+indicador TEXT
+)''')
 
 conn.commit()
 
@@ -65,22 +78,20 @@ Cargo: {data['cargo']}
 
 def crear_kpis_unicos(emp_id, cargo):
     existentes = pd.read_sql(f"SELECT indicador FROM kpis WHERE id='{emp_id}'", conn)
-
     indicadores = pd.read_sql(f"SELECT indicador FROM cargos WHERE nombre='{cargo}'", conn)
 
     for ind in indicadores["indicador"]:
         if ind not in existentes["indicador"].values:
             c.execute("INSERT INTO kpis VALUES (?,?,?,?,?)",
                       (emp_id, ind, 0, 0, 0))
-
     conn.commit()
 
 # ---------------- INIT CARGOS ----------------
 if pd.read_sql("SELECT * FROM cargos", conn).empty:
     base = {
-        "Gerente Financiero": ["Rentabilidad","ROA","ROE","Liquidez"],
-        "Recursos Humanos": ["Ausentismo","Rotación","Clima"],
-        "Analista de Datos": ["Precisión","Tiempo","Sistemas"]
+        "Gerente Financiero": ["Rentabilidad","ROA","ROE","Liquidez","Margen"],
+        "Recursos Humanos": ["Ausentismo","Rotación","Clima Laboral","Capacitación"],
+        "Analista de Datos": ["Precisión","Tiempo Respuesta","Uso Sistemas","Análisis"]
     }
 
     for cargo, inds in base.items():
@@ -90,12 +101,12 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
 
 # ---------------- MENU ----------------
 menu = st.sidebar.radio("Menú",[
-    "Registrar","KPIs","Escáner","Dashboard","Cargos"
+    "Registrar","KPIs","Escáner","Dashboard","Capacitaciones","Cargos"
 ])
 
 # ---------------- REGISTRAR ----------------
 if menu == "Registrar":
-    st.header("➕ Registro")
+    st.header("➕ Registro de Empleado")
 
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
@@ -117,31 +128,41 @@ if menu == "Registrar":
 
 # ---------------- KPIs ----------------
 elif menu == "KPIs":
-    st.header("📊 Gestión KPI")
+    st.header("📊 Gestión de KPIs")
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
-    emp_id = st.selectbox("Empleado",df["id"])
+    if df.empty:
+        st.warning("No hay empleados")
+    else:
+        emp_id = st.selectbox("Empleado",df["id"])
 
-    kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{emp_id}'", conn)
+        kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{emp_id}'", conn)
 
-    nuevos = []
+        nuevos = []
 
-    for i,row in kpis.iterrows():
-        st.subheader(row["indicador"])
+        for i,row in kpis.iterrows():
+            st.subheader(row["indicador"])
 
-        m = st.number_input("Meta",value=row["meta"],key=f"m{i}")
-        r = st.number_input("Real",value=row["real"],key=f"r{i}")
-        p = st.number_input("Proy",value=row["proyectado"],key=f"p{i}")
+            col1,col2,col3 = st.columns(3)
 
-        nuevos.append((m,r,p,row["indicador"]))
+            with col1:
+                m = st.number_input("Meta",value=row["meta"],key=f"m{i}")
+            with col2:
+                r = st.number_input("Real",value=row["real"],key=f"r{i}")
+            with col3:
+                p = st.number_input("Proyectado",value=row["proyectado"],key=f"p{i}")
 
-    if st.button("Guardar KPIs"):
-        for m,r,p,ind in nuevos:
-            c.execute("UPDATE kpis SET meta=?, real=?, proyectado=? WHERE id=? AND indicador=?",
-                      (m,r,p,emp_id,ind))
-        conn.commit()
-        st.success("KPIs guardados correctamente")
+            nuevos.append((m,r,p,row["indicador"]))
+
+        if st.button("💾 Guardar TODOS"):
+            for m,r,p,ind in nuevos:
+                c.execute("""UPDATE kpis 
+                             SET meta=?, real=?, proyectado=? 
+                             WHERE id=? AND indicador=?""",
+                          (m,r,p,emp_id,ind))
+            conn.commit()
+            st.success("KPIs actualizados correctamente")
 
 # ---------------- ESCÁNER ----------------
 elif menu == "Escáner":
@@ -153,39 +174,82 @@ elif menu == "Escáner":
 
     if not emp.empty:
         data = emp.iloc[0]
-
         kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{search}'", conn)
 
-        st.subheader("📋 Datos")
-        st.write(data)
+        col1,col2 = st.columns([1,2])
 
-        st.subheader("📊 KPIs")
-        st.dataframe(kpis)
+        # DATOS + QR
+        with col1:
+            st.subheader("📋 Datos Personales")
+            st.write(data)
 
-        qr = generar_qr_completo(data, kpis)
-        st.image(qr, caption="QR completo del empleado")
+            qr = generar_qr_completo(data, kpis)
+            st.image(qr, width=200)
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=kpis["indicador"], y=kpis["meta"], name="Meta"))
-        fig.add_trace(go.Bar(x=kpis["indicador"], y=kpis["real"], name="Real"))
-        fig.add_trace(go.Scatter(x=kpis["indicador"], y=kpis["proyectado"], mode="markers"))
+        # KPIs + GRÁFICO REAL
+        with col2:
+            st.subheader("📊 KPIs Reales")
 
-        st.plotly_chart(fig)
+            st.dataframe(kpis)
+
+            indicadores = kpis["indicador"].tolist()
+            meta = kpis["meta"].tolist()
+            real = kpis["real"].tolist()
+            proy = kpis["proyectado"].tolist()
+
+            fig = go.Figure()
+
+            fig.add_trace(go.Bar(x=indicadores, y=meta, name="Meta"))
+            fig.add_trace(go.Bar(x=indicadores, y=real, name="Real"))
+            fig.add_trace(go.Scatter(x=indicadores, y=proy, mode="markers+lines", name="Proyectado"))
+
+            fig.update_layout(
+                title="Meta vs Real vs Proyectado",
+                barmode="group"
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.warning("Empleado no encontrado")
 
 # ---------------- DASHBOARD ----------------
 elif menu == "Dashboard":
+    st.header("📊 Dashboard")
+
     df = pd.read_sql("SELECT * FROM empleados", conn)
-    st.dataframe(df)
+
+    if not df.empty:
+        st.dataframe(df)
+        st.bar_chart(df["cargo"].value_counts())
+
+# ---------------- CAPACITACIONES ----------------
+elif menu == "Capacitaciones":
+    st.header("📚 Centro de Capacitación")
+
+    cursos = pd.DataFrame({
+        "Curso":[
+            "Servicio al Cliente",
+            "Análisis Financiero y Créditos",
+            "Sistemas Bancarios",
+            "Prevención de Fraude"
+        ],
+        "Área":[
+            "Todos","Finanzas","Todos","Todos"
+        ]
+    })
+
+    st.table(cursos)
 
 # ---------------- CARGOS ----------------
 elif menu == "Cargos":
-    st.header("⚙️ Crear cargos")
+    st.header("⚙️ Crear Cargo Nuevo")
 
-    nombre = st.text_input("Cargo")
-    inds = st.text_area("Indicadores separados por coma")
+    nombre = st.text_input("Nombre del Cargo")
+    indicadores = st.text_area("Indicadores (separados por coma)")
 
     if st.button("Guardar Cargo"):
-        for i in inds.split(","):
+        for i in indicadores.split(","):
             c.execute("INSERT INTO cargos VALUES (?,?)",(nombre,i.strip()))
         conn.commit()
-        st.success("Cargo creado")
+        st.success("Cargo creado correctamente")
