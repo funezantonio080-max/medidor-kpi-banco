@@ -104,14 +104,22 @@ if menu == "REGISTRAR":
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
     with st.form("form"):
-        id = st.text_input("ID").upper()
-        nombre = st.text_input("NOMBRE").upper()
-        edad = st.number_input("EDAD",18,70)
-        estado = st.selectbox("ESTADO",["SOLTERO","CASADO"])
-        profesion = st.text_input("PROFESIÓN").upper()
-        cargo = st.selectbox("CARGO",cargos["nombre"])
+        col1, col2, col3 = st.columns(3)
 
-        foto = st.file_uploader("SUBIR FOTO", type=["jpg","png"])
+        with col1:
+            id = st.text_input("ID").upper()
+            nombre = st.text_input("NOMBRE").upper()
+
+        with col2:
+            edad = st.number_input("EDAD",18,70)
+            estado = st.selectbox("ESTADO",["SOLTERO","CASADO"])
+
+        with col3:
+            profesion = st.text_input("PROFESIÓN").upper()
+            cargo = st.selectbox("CARGO",cargos["nombre"])
+
+        st.markdown("📸 FOTO DEL EMPLEADO")
+        foto = st.file_uploader("", type=["jpg","png"])
 
         if st.form_submit_button("GUARDAR"):
             img_bytes = foto.read() if foto else None
@@ -131,15 +139,28 @@ elif menu == "EDITAR EMPLEADO":
     emp_id = st.selectbox("EMPLEADO", df["id"])
     data = df[df["id"]==emp_id].iloc[0]
 
-    nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
-    edad = st.number_input("EDAD", value=int(data["edad"]))
-    estado = st.selectbox("ESTADO",["SOLTERO","CASADO"])
-    profesion = st.text_input("PROFESIÓN", value=data["profesion"]).upper()
+    col1, col2, col3 = st.columns(3)
 
-    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
-    cargo = st.selectbox("CARGO", cargos["nombre"])
+    with col1:
+        nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
 
-    foto = st.file_uploader("CAMBIAR FOTO", type=["jpg","png"])
+    with col2:
+        edad = st.number_input("EDAD", value=int(data["edad"]))
+
+    with col3:
+        estado = st.selectbox("ESTADO",["SOLTERO","CASADO"])
+
+    col4, col5 = st.columns(2)
+
+    with col4:
+        profesion = st.text_input("PROFESIÓN", value=data["profesion"]).upper()
+
+    with col5:
+        cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+        cargo = st.selectbox("CARGO", cargos["nombre"])
+
+    st.markdown("📸 ACTUALIZAR FOTO")
+    foto = st.file_uploader("", type=["jpg","png"])
 
     if st.button("ACTUALIZAR"):
         img_bytes = foto.read() if foto else data["foto"]
@@ -152,7 +173,7 @@ elif menu == "EDITAR EMPLEADO":
         regenerar_kpis(emp_id, cargo)
         st.success("ACTUALIZADO")
 
-# ---------------- KPIs ----------------
+# ---------------- KPIS ----------------
 elif menu == "KPIS":
     st.header("📊 GESTIÓN KPI")
 
@@ -162,6 +183,8 @@ elif menu == "KPIS":
     kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
 
     for i,row in kpis.iterrows():
+        st.markdown(f"### {row['indicador']}")
+
         col1,col2,col3 = st.columns(3)
 
         with col1:
@@ -196,9 +219,9 @@ elif menu == "ESCÁNER":
         st.write(a_mayus(pd.DataFrame([data])))
 
         if data["foto"]:
-            st.image(data["foto"], width=150)
+            st.image(data["foto"], width=140)
 
-        st.image(generar_qr(data,kpis), width=150)
+        st.image(generar_qr(data,kpis), width=140)
 
     with col2:
         st.dataframe(a_mayus(kpis))
@@ -233,6 +256,8 @@ elif menu == "ESCÁNER":
 
 # ---------------- CARGOS ----------------
 elif menu == "CARGOS":
+    st.header("⚙️ GESTIÓN DE CARGOS")
+
     nombre = st.text_input("CARGO").upper()
     inds = st.text_area("INDICADORES")
 
