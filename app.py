@@ -187,7 +187,7 @@ elif menu == "Escáner":
             qr = generar_qr_completo(data, kpis)
             st.image(qr, width=200)
 
-        # KPIs + GRÁFICOS INDIVIDUALES
+        # KPIs + GRÁFICOS
         with col2:
             st.subheader("📊 KPIs Reales")
             st.dataframe(kpis)
@@ -203,22 +203,13 @@ elif menu == "Escáner":
 
                 fig = go.Figure()
 
-                fig.add_trace(go.Bar(
-                    x=["Meta", "Real"],
-                    y=[meta, real],
-                    name="Valores"
-                ))
-
-                fig.add_trace(go.Scatter(
-                    x=["Proyectado"],
-                    y=[proy],
-                    mode="markers",
-                    marker=dict(size=12),
-                    name="Proyectado"
-                ))
+                fig.add_trace(go.Bar(x=["Meta"], y=[meta], name="Meta", width=0.3))
+                fig.add_trace(go.Bar(x=["Real"], y=[real], name="Real", width=0.3))
+                fig.add_trace(go.Bar(x=["Proyectado"], y=[proy], name="Proyectado", width=0.3))
 
                 fig.update_layout(
                     title=f"KPI: {indicador}",
+                    bargap=0.5,
                     height=300
                 )
 
