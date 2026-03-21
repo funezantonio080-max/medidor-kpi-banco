@@ -57,60 +57,33 @@ indicador TEXT
 conn.commit()
 
 # ---------------- FUNCIONES ----------------
-
-def generar_qr_completo(data, kpis):
+def generar_qr(data, kpis):
     contenido = {
         "id": data["id"],
         "nombre": data["nombre"],
-        "edad": int(data["edad"]),
-        "estado": data["estado"],
-        "profesion": data["profesion"],
         "cargo": data["cargo"],
         "kpis": kpis.to_dict(orient="records")
     }
-
-    data_json = json.dumps(contenido, separators=(",", ":"))
-
-    qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_Q,
-        box_size=6,
-        border=2
-    )
-
-    qr.add_data(data_json)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
+    data_json = json.dumps(contenido)
+    qr = qrcode.make(data_json)
     buf = BytesIO()
-    img.save(buf)
+    qr.save(buf)
     return buf
 
-# 🔥 CORREGIDO
-def crear_kpis_por_cargo(emp_id, cargo):
-    # BORRAR KPIs anteriores (evita mezcla)
+def regenerar_kpis(emp_id, cargo):
     c.execute("DELETE FROM kpis WHERE id=?", (emp_id,))
-
-    indicadores = pd.read_sql(
-        "SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo,)
-    )
-
+    indicadores = pd.read_sql("SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo,))
     for ind in indicadores["indicador"]:
-        c.execute(
-            "INSERT INTO kpis VALUES (?,?,?,?,?)",
-            (emp_id, ind, 0, 0, 0)
-        )
-
+        c.execute("INSERT INTO kpis VALUES (?,?,?,?,?)",(emp_id, ind, 0, 0, 0))
     conn.commit()
 
 # ---------------- INIT CARGOS ----------------
 if pd.read_sql("SELECT * FROM cargos", conn).empty:
     base = {
-        "Gerente Financiero": ["Rentabilidad","ROA","ROE","Liquidez","Margen"],
-        "Recursos Humanos": ["Ausentismo","Rotación","Clima Laboral","Capacitación"],
-        "Analista de Datos": ["Precisión","Tiempo Respuesta","Uso Sistemas","Análisis"]
+        "Gerente Financiero": ["Rentabilidad","ROA","ROE","Liquidez"],
+        "Recursos Humanos": ["Ausentismo","Clima","Rotación"],
+        "Analista de Datos": ["Precisión","Tiempo","Sistemas"]
     }
-
     for cargo, inds in base.items():
         for i in inds:
             c.execute("INSERT INTO cargos VALUES (?,?)",(cargo,i))
@@ -118,12 +91,12 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
 
 # ---------------- MENU ----------------
 menu = st.sidebar.radio("Menú",[
-    "Registrar","KPIs","Escáner","Dashboard","Capacitaciones","Cargos"
+    "Registrar","Editar Empleado","KPIs","Escáner","Cargos","Dashboard"
 ])
 
 # ---------------- REGISTRAR ----------------
 if menu == "Registrar":
-    st.header("➕ Registro de Empleado")
+    st.header("➕ Registrar Empleado")
 
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
@@ -136,127 +109,129 @@ if menu == "Registrar":
         cargo = st.selectbox("Cargo",cargos["nombre"])
 
         if st.form_submit_button("Guardar"):
-            c.execute(
-                "INSERT OR REPLACE INTO empleados VALUES (?,?,?,?,?,?)",
-                (id,nombre,edad,estado,profesion,cargo)
-            )
+            c.execute("INSERT OR REPLACE INTO empleados VALUES (?,?,?,?,?,?)",
+                      (id,nombre,edad,estado,profesion,cargo))
+            regenerar_kpis(id, cargo)
+            st.success("Empleado registrado")
 
-            crear_kpis_por_cargo(id, cargo)
-
-            st.success("Empleado registrado correctamente")
-
-# ---------------- KPIs ----------------
-elif menu == "KPIs":
-    st.header("📊 Gestión de KPIs")
+# ---------------- EDITAR EMPLEADO ----------------
+elif menu == "Editar Empleado":
+    st.header("✏️ Editar Empleado")
 
     df = pd.read_sql("SELECT * FROM empleados", conn)
 
     if not df.empty:
-        emp_id = st.selectbox("Empleado",df["id"])
+        emp_id = st.selectbox("Empleado", df["id"])
+        data = df[df["id"]==emp_id].iloc[0]
 
-        kpis = pd.read_sql(
-            "SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,)
-        )
+        nombre = st.text_input("Nombre", value=data["nombre"])
+        edad = st.number_input("Edad", value=int(data["edad"]))
+        estado = st.selectbox("Estado",["Soltero","Casado"])
+        profesion = st.text_input("Profesión", value=data["profesion"])
 
-        nuevos = []
+        cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+        cargo = st.selectbox("Cargo", cargos["nombre"])
 
-        for i,row in kpis.iterrows():
-            st.subheader(row["indicador"])
+        if st.button("Actualizar"):
+            c.execute("""UPDATE empleados 
+                         SET nombre=?, edad=?, estado=?, profesion=?, cargo=? 
+                         WHERE id=?""",
+                      (nombre,edad,estado,profesion,cargo,emp_id))
 
-            col1,col2,col3 = st.columns(3)
+            regenerar_kpis(emp_id, cargo)
 
-            with col1:
-                m = st.number_input("Meta",value=float(row["meta"]),key=f"m{i}")
-            with col2:
-                r = st.number_input("Real",value=float(row["real"]),key=f"r{i}")
-            with col3:
-                p = st.number_input("Proyectado",value=float(row["proyectado"]),key=f"p{i}")
+            st.success("Empleado actualizado")
 
-            nuevos.append((m,r,p,row["indicador"]))
+# ---------------- KPIs ----------------
+elif menu == "KPIs":
+    st.header("📊 Gestión KPIs")
 
-        if st.button("💾 Guardar KPIs"):
-            for m,r,p,ind in nuevos:
-                c.execute(
-                    "UPDATE kpis SET meta=?, real=?, proyectado=? WHERE id=? AND indicador=?",
-                    (m,r,p,emp_id,ind)
-                )
+    df = pd.read_sql("SELECT * FROM empleados", conn)
+
+    emp_id = st.selectbox("Empleado", df["id"])
+
+    kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
+
+    for i,row in kpis.iterrows():
+        col1,col2,col3 = st.columns(3)
+
+        with col1:
+            m = st.number_input("Meta",value=row["meta"],key=f"m{i}")
+        with col2:
+            r = st.number_input("Real",value=row["real"],key=f"r{i}")
+        with col3:
+            p = st.number_input("Proy",value=row["proyectado"],key=f"p{i}")
+
+        if st.button(f"Guardar {row['indicador']}"):
+            c.execute("""UPDATE kpis SET meta=?, real=?, proyectado=? 
+                         WHERE id=? AND indicador=?""",
+                      (m,r,p,emp_id,row["indicador"]))
             conn.commit()
-            st.success("KPIs actualizados")
 
 # ---------------- ESCÁNER ----------------
 elif menu == "Escáner":
-    st.header("🔍 Escaneo")
+    st.header("🔍 Escáner")
 
-    search = st.text_input("Ingrese ID")
+    search = st.text_input("ID")
 
-    emp = pd.read_sql(
-        "SELECT * FROM empleados WHERE id=?", conn, params=(search,)
-    )
+    emp = pd.read_sql("SELECT * FROM empleados WHERE id=?", conn, params=(search,))
 
     if not emp.empty:
         data = emp.iloc[0]
-        kpis = pd.read_sql(
-            "SELECT * FROM kpis WHERE id=?", conn, params=(search,)
-        )
+        kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(search,))
 
-        col1,col2 = st.columns([1,2])
+        st.write(data)
+        st.image(generar_qr(data,kpis), width=150)
 
-        with col1:
-            st.write(data)
-            qr = generar_qr_completo(data, kpis)
-            st.image(qr, width=180)
+        for _, row in kpis.iterrows():
+            fig = go.Figure()
 
-        with col2:
-            st.dataframe(kpis)
+            fig.add_trace(go.Bar(
+                x=["Meta","Real","Proyectado"],
+                y=[row["meta"],row["real"],row["proyectado"]],
+                marker=dict(color=["#A8D5BA","#4CAF50","#7FB77E"]),
+                text=[row["meta"],row["real"],row["proyectado"]],
+                textposition="outside",
+                width=0.4
+            ))
 
-            for _, row in kpis.iterrows():
+            fig.update_layout(title=row["indicador"], height=300)
+            st.plotly_chart(fig)
 
-                fig = go.Figure()
+# ---------------- CARGOS ----------------
+elif menu == "Cargos":
+    st.header("⚙️ Gestión de Cargos")
 
-                # COLORES SUAVES CORRECTOS
-                colors = ["#A8D5BA", "#4CAF50", "#7FB77E"]
+    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+    cargo_sel = st.selectbox("Seleccionar Cargo", cargos["nombre"])
 
-                values = [row["meta"], row["real"], row["proyectado"]]
-                labels = ["Meta","Real","Proyectado"]
+    kpis = pd.read_sql("SELECT * FROM cargos WHERE nombre=?", conn, params=(cargo_sel,))
+    st.write("KPIs actuales:", kpis["indicador"].tolist())
 
-                fig.add_trace(go.Bar(
-                    x=labels,
-                    y=values,
-                    marker=dict(color=colors),
-                    text=values,
-                    textposition='outside',
-                    width=0.4
-                ))
+    nuevo = st.text_input("Nuevo KPI")
 
-                fig.update_layout(
-                    title=f"KPI: {row['indicador']}",
-                    showlegend=False,
-                    plot_bgcolor="white",
-                    height=300
-                )
+    if st.button("Agregar KPI"):
+        c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo))
+        conn.commit()
+        st.success("KPI agregado")
 
-                st.plotly_chart(fig, use_container_width=True)
+    eliminar = st.selectbox("Eliminar KPI", kpis["indicador"])
 
-    else:
-        st.warning("Empleado no encontrado")
+    if st.button("Eliminar KPI"):
+        c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?", (cargo_sel, eliminar))
+        conn.commit()
+        st.success("KPI eliminado")
+
+    sobrescribir = st.text_area("Sobrescribir KPIs (separados por coma)")
+
+    if st.button("Sobrescribir TODO"):
+        c.execute("DELETE FROM cargos WHERE nombre=?", (cargo_sel,))
+        for i in sobrescribir.split(","):
+            c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,i.strip()))
+        conn.commit()
+        st.success("KPIs actualizados completamente")
 
 # ---------------- DASHBOARD ----------------
 elif menu == "Dashboard":
     df = pd.read_sql("SELECT * FROM empleados", conn)
     st.dataframe(df)
-
-# ---------------- CAPACITACIONES ----------------
-elif menu == "Capacitaciones":
-    st.table(pd.DataFrame({
-        "Curso":["Servicio Cliente","Finanzas","Sistemas","Fraude"]
-    }))
-
-# ---------------- CARGOS ----------------
-elif menu == "Cargos":
-    nombre = st.text_input("Cargo")
-    inds = st.text_area("Indicadores")
-
-    if st.button("Guardar"):
-        for i in inds.split(","):
-            c.execute("INSERT INTO cargos VALUES (?,?)",(nombre,i.strip()))
-        conn.commit()
