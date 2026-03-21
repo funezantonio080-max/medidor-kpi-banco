@@ -59,7 +59,6 @@ conn.commit()
 # ---------------- FUNCIONES ----------------
 
 def generar_qr_completo(data, kpis):
-    # Construir estructura JSON estándar
     contenido = {
         "id": data["id"],
         "nombre": data["nombre"],
@@ -67,23 +66,13 @@ def generar_qr_completo(data, kpis):
         "estado": data["estado"],
         "profesion": data["profesion"],
         "cargo": data["cargo"],
-        "kpis": []
+        "kpis": kpis.to_dict(orient="records")
     }
 
-    for _, row in kpis.iterrows():
-        contenido["kpis"].append({
-            "indicador": row["indicador"],
-            "meta": row["meta"],
-            "real": row["real"],
-            "proyectado": row["proyectado"]
-        })
-
-    # Convertir a JSON compacto
     data_json = json.dumps(contenido, separators=(",", ":"))
 
-    # Generar QR robusto
     qr = qrcode.QRCode(
-        version=None,  # automático
+        version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_Q,
         box_size=6,
         border=2
@@ -93,19 +82,25 @@ def generar_qr_completo(data, kpis):
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
-
     buf = BytesIO()
     img.save(buf)
     return buf
 
-def crear_kpis_unicos(emp_id, cargo):
-    existentes = pd.read_sql(f"SELECT indicador FROM kpis WHERE id='{emp_id}'", conn)
-    indicadores = pd.read_sql(f"SELECT indicador FROM cargos WHERE nombre='{cargo}'", conn)
+# 🔥 CORREGIDO
+def crear_kpis_por_cargo(emp_id, cargo):
+    # BORRAR KPIs anteriores (evita mezcla)
+    c.execute("DELETE FROM kpis WHERE id=?", (emp_id,))
+
+    indicadores = pd.read_sql(
+        "SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo,)
+    )
 
     for ind in indicadores["indicador"]:
-        if ind not in existentes["indicador"].values:
-            c.execute("INSERT INTO kpis VALUES (?,?,?,?,?)",
-                      (emp_id, ind, 0, 0, 0))
+        c.execute(
+            "INSERT INTO kpis VALUES (?,?,?,?,?)",
+            (emp_id, ind, 0, 0, 0)
+        )
+
     conn.commit()
 
 # ---------------- INIT CARGOS ----------------
@@ -141,10 +136,12 @@ if menu == "Registrar":
         cargo = st.selectbox("Cargo",cargos["nombre"])
 
         if st.form_submit_button("Guardar"):
-            c.execute("INSERT OR REPLACE INTO empleados VALUES (?,?,?,?,?,?)",
-                      (id,nombre,edad,estado,profesion,cargo))
+            c.execute(
+                "INSERT OR REPLACE INTO empleados VALUES (?,?,?,?,?,?)",
+                (id,nombre,edad,estado,profesion,cargo)
+            )
 
-            crear_kpis_unicos(id,cargo)
+            crear_kpis_por_cargo(id, cargo)
 
             st.success("Empleado registrado correctamente")
 
@@ -157,7 +154,9 @@ elif menu == "KPIs":
     if not df.empty:
         emp_id = st.selectbox("Empleado",df["id"])
 
-        kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{emp_id}'", conn)
+        kpis = pd.read_sql(
+            "SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,)
+        )
 
         nuevos = []
 
@@ -175,10 +174,12 @@ elif menu == "KPIs":
 
             nuevos.append((m,r,p,row["indicador"]))
 
-        if st.button("Guardar KPIs"):
+        if st.button("💾 Guardar KPIs"):
             for m,r,p,ind in nuevos:
-                c.execute("UPDATE kpis SET meta=?, real=?, proyectado=? WHERE id=? AND indicador=?",
-                          (m,r,p,emp_id,ind))
+                c.execute(
+                    "UPDATE kpis SET meta=?, real=?, proyectado=? WHERE id=? AND indicador=?",
+                    (m,r,p,emp_id,ind)
+                )
             conn.commit()
             st.success("KPIs actualizados")
 
@@ -188,11 +189,15 @@ elif menu == "Escáner":
 
     search = st.text_input("Ingrese ID")
 
-    emp = pd.read_sql(f"SELECT * FROM empleados WHERE id='{search}'", conn)
+    emp = pd.read_sql(
+        "SELECT * FROM empleados WHERE id=?", conn, params=(search,)
+    )
 
     if not emp.empty:
         data = emp.iloc[0]
-        kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{search}'", conn)
+        kpis = pd.read_sql(
+            "SELECT * FROM kpis WHERE id=?", conn, params=(search,)
+        )
 
         col1,col2 = st.columns([1,2])
 
@@ -205,13 +210,35 @@ elif menu == "Escáner":
             st.dataframe(kpis)
 
             for _, row in kpis.iterrows():
+
                 fig = go.Figure()
 
-                fig.add_trace(go.Bar(x=["Meta"], y=[row["meta"]], width=0.3))
-                fig.add_trace(go.Bar(x=["Real"], y=[row["real"]], width=0.3))
-                fig.add_trace(go.Bar(x=["Proyectado"], y=[row["proyectado"]], width=0.3))
+                # COLORES SUAVES CORRECTOS
+                colors = ["#A8D5BA", "#4CAF50", "#7FB77E"]
 
-                st.plotly_chart(fig)
+                values = [row["meta"], row["real"], row["proyectado"]]
+                labels = ["Meta","Real","Proyectado"]
+
+                fig.add_trace(go.Bar(
+                    x=labels,
+                    y=values,
+                    marker=dict(color=colors),
+                    text=values,
+                    textposition='outside',
+                    width=0.4
+                ))
+
+                fig.update_layout(
+                    title=f"KPI: {row['indicador']}",
+                    showlegend=False,
+                    plot_bgcolor="white",
+                    height=300
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.warning("Empleado no encontrado")
 
 # ---------------- DASHBOARD ----------------
 elif menu == "Dashboard":
