@@ -6,7 +6,7 @@ import qrcode
 from io import BytesIO
 
 # ---------------- CONFIG ----------------
-st.set_page_config(page_title="Banco PRO KPI", layout="wide")
+st.set_page_config(page_title="Banco KPI PRO", layout="wide")
 
 # ---------------- LOGIN ----------------
 USERS = {"admin": "1234"}
@@ -56,7 +56,6 @@ indicador TEXT
 conn.commit()
 
 # ---------------- FUNCIONES ----------------
-
 def generar_qr_completo(data, kpis):
     texto = f"""
 ID: {data['id']}
@@ -147,11 +146,11 @@ elif menu == "KPIs":
             col1,col2,col3 = st.columns(3)
 
             with col1:
-                m = st.number_input("Meta",value=row["meta"],key=f"m{i}")
+                m = st.number_input("Meta",value=float(row["meta"]),key=f"m{i}")
             with col2:
-                r = st.number_input("Real",value=row["real"],key=f"r{i}")
+                r = st.number_input("Real",value=float(row["real"]),key=f"r{i}")
             with col3:
-                p = st.number_input("Proyectado",value=row["proyectado"],key=f"p{i}")
+                p = st.number_input("Proyectado",value=float(row["proyectado"]),key=f"p{i}")
 
             nuevos.append((m,r,p,row["indicador"]))
 
@@ -176,6 +175,8 @@ elif menu == "Escáner":
         data = emp.iloc[0]
         kpis = pd.read_sql(f"SELECT * FROM kpis WHERE id='{search}'", conn)
 
+        kpis = kpis.dropna()
+
         col1,col2 = st.columns([1,2])
 
         # DATOS + QR
@@ -186,26 +187,33 @@ elif menu == "Escáner":
             qr = generar_qr_completo(data, kpis)
             st.image(qr, width=200)
 
-        # KPIs + GRÁFICO REAL
+        # KPIs + GRÁFICO CORRECTO
         with col2:
             st.subheader("📊 KPIs Reales")
 
             st.dataframe(kpis)
 
-            indicadores = kpis["indicador"].tolist()
-            meta = kpis["meta"].tolist()
-            real = kpis["real"].tolist()
-            proy = kpis["proyectado"].tolist()
+            indicadores = list(kpis["indicador"])
+            meta = list(kpis["meta"])
+            real = list(kpis["real"])
+            proy = list(kpis["proyectado"])
 
             fig = go.Figure()
 
             fig.add_trace(go.Bar(x=indicadores, y=meta, name="Meta"))
             fig.add_trace(go.Bar(x=indicadores, y=real, name="Real"))
-            fig.add_trace(go.Scatter(x=indicadores, y=proy, mode="markers+lines", name="Proyectado"))
+            fig.add_trace(go.Scatter(
+                x=indicadores,
+                y=proy,
+                mode="lines+markers",
+                name="Proyectado"
+            ))
 
             fig.update_layout(
-                title="Meta vs Real vs Proyectado",
-                barmode="group"
+                title="Comparación KPI",
+                barmode='group',
+                xaxis_title="Indicadores",
+                yaxis_title="Valores"
             )
 
             st.plotly_chart(fig, use_container_width=True)
