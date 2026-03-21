@@ -163,7 +163,7 @@ elif menu == "REGISTRAR":
 
         with col2:
             edad = st.number_input("EDAD", 18, 70)
-            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+            estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
 
         with col3:
             profesion = st.text_input("PROFESIÓN").upper()
