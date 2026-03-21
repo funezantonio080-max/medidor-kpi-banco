@@ -179,22 +179,20 @@ elif menu == "Escáner":
 
         col1,col2 = st.columns([1,2])
 
-        # DATOS + QR
         with col1:
             st.subheader("📋 Datos Personales")
             st.write(data)
 
             qr = generar_qr_completo(data, kpis)
-            st.image(qr, width=200)
+            st.image(qr, width=180)
 
-        # KPIs + GRÁFICOS
         with col2:
             st.subheader("📊 KPIs Reales")
             st.dataframe(kpis)
 
             st.subheader("📈 Visualización por KPI")
 
-            for i, row in kpis.iterrows():
+            for _, row in kpis.iterrows():
 
                 indicador = row["indicador"]
                 meta = row["meta"]
@@ -203,13 +201,36 @@ elif menu == "Escáner":
 
                 fig = go.Figure()
 
-                fig.add_trace(go.Bar(x=["Meta"], y=[meta], name="Meta", width=0.3))
-                fig.add_trace(go.Bar(x=["Real"], y=[real], name="Real", width=0.3))
-                fig.add_trace(go.Bar(x=["Proyectado"], y=[proy], name="Proyectado", width=0.3))
+                # COLORES SUAVES VERDES
+                fig.add_trace(go.Bar(
+                    x=["Meta"],
+                    y=[meta],
+                    name="Meta",
+                    width=0.3,
+                    marker=dict(color="#A8D5BA")  # verde claro
+                ))
+
+                fig.add_trace(go.Bar(
+                    x=["Real"],
+                    y=[real],
+                    name="Real",
+                    width=0.3,
+                    marker=dict(color="#4CAF50")  # verde medio
+                ))
+
+                fig.add_trace(go.Bar(
+                    x=["Proyectado"],
+                    y=[proy],
+                    name="Proyectado",
+                    width=0.3,
+                    marker=dict(color="#7FB77E")  # verde suave oliva
+                ))
 
                 fig.update_layout(
                     title=f"KPI: {indicador}",
-                    bargap=0.5,
+                    bargap=0.6,
+                    plot_bgcolor="white",
+                    paper_bgcolor="white",
                     height=300
                 )
 
