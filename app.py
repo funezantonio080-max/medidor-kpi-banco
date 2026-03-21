@@ -32,7 +32,6 @@ if not st.session_state.auth:
 conn = sqlite3.connect("bank.db", check_same_thread=False)
 c = conn.cursor()
 
-# TABLAS
 c.execute("""
 CREATE TABLE IF NOT EXISTS empleados(
     id TEXT PRIMARY KEY,
@@ -77,6 +76,7 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
     conn.commit()
 
 # ---------------- FUNCIONES ----------------
+
 def regenerar_kpis(emp_id, cargo):
     c.execute("DELETE FROM kpis WHERE id=?", (emp_id,))
     indicadores = pd.read_sql(
@@ -101,7 +101,12 @@ def generar_qr(data, kpis):
     return buf
 
 def mayus(df):
-    return df.astype(str).applymap(lambda x: x.upper())
+    df = df.copy()
+    for col in df.columns:
+        df[col] = df[col].apply(
+            lambda x: x.upper() if isinstance(x, str) else x
+        )
+    return df
 
 # ---------------- MENU ----------------
 menu = st.sidebar.radio("MENÚ", [
@@ -114,7 +119,7 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# ---------------- REGISTRAR ----------------
+# REGISTRAR
 # =========================================================
 if menu == "REGISTRAR":
     st.title("➕ REGISTRO DE EMPLEADO")
@@ -150,7 +155,7 @@ if menu == "REGISTRAR":
             st.success("EMPLEADO REGISTRADO")
 
 # =========================================================
-# ---------------- EDITAR ----------------
+# EDITAR EMPLEADO
 # =========================================================
 elif menu == "EDITAR":
     st.title("✏️ EDITAR EMPLEADO")
@@ -190,7 +195,7 @@ elif menu == "EDITAR":
             st.success("ACTUALIZADO")
 
 # =========================================================
-# ---------------- KPIS ----------------
+# KPIS
 # =========================================================
 elif menu == "KPIS":
     st.title("📊 GESTIÓN DE KPIs")
@@ -224,7 +229,7 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ---------------- ESCÁNER ----------------
+# ESCÁNER
 # =========================================================
 elif menu == "ESCÁNER":
     st.title("🔍 ESCÁNER")
@@ -243,7 +248,8 @@ elif menu == "ESCÁNER":
         col1, col2 = st.columns([1,2])
 
         with col1:
-            st.dataframe(mayus(pd.DataFrame([data])))
+            data_display = pd.DataFrame([data]).drop(columns=["foto"], errors="ignore")
+            st.dataframe(mayus(data_display))
 
             if data["foto"]:
                 st.image(data["foto"], width=140)
@@ -281,23 +287,49 @@ elif menu == "ESCÁNER":
                 st.plotly_chart(fig, key=f"graf_{i}")
 
 # =========================================================
-# ---------------- CARGOS ----------------
+# CARGOS (EDICIÓN COMPLETA)
 # =========================================================
 elif menu == "CARGOS":
     st.title("⚙️ GESTIÓN DE CARGOS")
 
-    nombre = st.text_input("CARGO").upper()
-    inds = st.text_area("INDICADORES (separados por coma)")
+    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
-    if st.button("GUARDAR"):
-        for i in inds.split(","):
-            c.execute("INSERT INTO cargos VALUES (?,?)",
-                      (nombre, i.strip().upper()))
+    cargo_sel = st.selectbox("SELECCIONAR CARGO", cargos["nombre"])
+
+    kpis = pd.read_sql(
+        "SELECT indicador FROM cargos WHERE nombre=?",
+        conn, params=(cargo_sel,)
+    )
+
+    st.write("KPIs actuales:", kpis["indicador"].tolist())
+
+    nuevo = st.text_input("NUEVO KPI")
+
+    if st.button("AGREGAR KPI"):
+        c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo.upper()))
         conn.commit()
-        st.success("CARGO GUARDADO")
+        st.success("KPI AGREGADO")
+
+    eliminar = st.selectbox("ELIMINAR KPI", kpis["indicador"])
+
+    if st.button("ELIMINAR KPI"):
+        c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?",
+                  (cargo_sel,eliminar))
+        conn.commit()
+        st.success("KPI ELIMINADO")
+
+    sobrescribir = st.text_area("SOBRESCRIBIR KPIs (coma)")
+
+    if st.button("REEMPLAZAR TODOS"):
+        c.execute("DELETE FROM cargos WHERE nombre=?", (cargo_sel,))
+        for i in sobrescribir.split(","):
+            c.execute("INSERT INTO cargos VALUES (?,?)",
+                      (cargo_sel,i.strip().upper()))
+        conn.commit()
+        st.success("KPIs ACTUALIZADOS")
 
 # =========================================================
-# ---------------- DASHBOARD ----------------
+# DASHBOARD
 # =========================================================
 elif menu == "DASHBOARD":
     st.title("📊 DASHBOARD")
