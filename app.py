@@ -187,36 +187,42 @@ elif menu == "Escáner":
             qr = generar_qr_completo(data, kpis)
             st.image(qr, width=200)
 
-        # KPIs + GRÁFICO CORRECTO
+        # KPIs + GRÁFICOS INDIVIDUALES
         with col2:
             st.subheader("📊 KPIs Reales")
-
             st.dataframe(kpis)
 
-            indicadores = list(kpis["indicador"])
-            meta = list(kpis["meta"])
-            real = list(kpis["real"])
-            proy = list(kpis["proyectado"])
+            st.subheader("📈 Visualización por KPI")
 
-            fig = go.Figure()
+            for i, row in kpis.iterrows():
 
-            fig.add_trace(go.Bar(x=indicadores, y=meta, name="Meta"))
-            fig.add_trace(go.Bar(x=indicadores, y=real, name="Real"))
-            fig.add_trace(go.Scatter(
-                x=indicadores,
-                y=proy,
-                mode="lines+markers",
-                name="Proyectado"
-            ))
+                indicador = row["indicador"]
+                meta = row["meta"]
+                real = row["real"]
+                proy = row["proyectado"]
 
-            fig.update_layout(
-                title="Comparación KPI",
-                barmode='group',
-                xaxis_title="Indicadores",
-                yaxis_title="Valores"
-            )
+                fig = go.Figure()
 
-            st.plotly_chart(fig, use_container_width=True)
+                fig.add_trace(go.Bar(
+                    x=["Meta", "Real"],
+                    y=[meta, real],
+                    name="Valores"
+                ))
+
+                fig.add_trace(go.Scatter(
+                    x=["Proyectado"],
+                    y=[proy],
+                    mode="markers",
+                    marker=dict(size=12),
+                    name="Proyectado"
+                ))
+
+                fig.update_layout(
+                    title=f"KPI: {indicador}",
+                    height=300
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
 
     else:
         st.warning("Empleado no encontrado")
