@@ -5,7 +5,7 @@ import base64
 from datetime import datetime
 
 # =========================================================
-# CONFIGURACION
+# CONFIGURACION GENERAL
 # =========================================================
 
 st.set_page_config(
@@ -25,20 +25,124 @@ conn = sqlite3.connect(
 
 cursor = conn.cursor()
 
-# RECONSTRUIR TABLA
-cursor.execute("DROP TABLE IF EXISTS empleados")
+# =========================================================
+# TABLA EMPLEADOS
+# =========================================================
 
 cursor.execute("""
-CREATE TABLE empleados(
+CREATE TABLE IF NOT EXISTS empleados(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT,
     puesto TEXT,
     departamento TEXT,
-    rendimiento INTEGER
+    rendimiento INTEGER,
+    unidad_medida TEXT,
+    kpi TEXT
+)
+""")
+
+# =========================================================
+# TABLA KPIs
+# =========================================================
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS kpis(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT
+)
+""")
+
+# =========================================================
+# TABLA PUESTOS
+# =========================================================
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS puestos(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT
 )
 """)
 
 conn.commit()
+
+# =========================================================
+# INSERTAR KPIs BASE
+# =========================================================
+
+kpis_base = [
+    "Cumplimiento de metas",
+    "Tiempo de respuesta",
+    "Atencion al cliente",
+    "Productividad diaria",
+    "Calidad operativa",
+    "Gestion documental",
+    "Analisis financiero",
+    "Rendimiento bancario"
+]
+
+for kpi in kpis_base:
+
+    cursor.execute(
+        "SELECT * FROM kpis WHERE nombre=?",
+        (kpi,)
+    )
+
+    if cursor.fetchone() is None:
+
+        cursor.execute(
+            "INSERT INTO kpis(nombre) VALUES(?)",
+            (kpi,)
+        )
+
+# =========================================================
+# INSERTAR PUESTOS BASE
+# =========================================================
+
+puestos_base = [
+    "Gerente General",
+    "Supervisor KPI",
+    "Analista KPI",
+    "Recursos Humanos",
+    "Cajero",
+    "Asistente Bancario",
+    "Auditor",
+    "Gerente Financiero"
+]
+
+for puesto in puestos_base:
+
+    cursor.execute(
+        "SELECT * FROM puestos WHERE nombre=?",
+        (puesto,)
+    )
+
+    if cursor.fetchone() is None:
+
+        cursor.execute(
+            "INSERT INTO puestos(nombre) VALUES(?)",
+            (puesto,)
+        )
+
+conn.commit()
+
+# =========================================================
+# OBTENER DATOS
+# =========================================================
+
+df_empleados = pd.read_sql_query(
+    "SELECT * FROM empleados",
+    conn
+)
+
+df_kpis = pd.read_sql_query(
+    "SELECT * FROM kpis",
+    conn
+)
+
+df_puestos = pd.read_sql_query(
+    "SELECT * FROM puestos",
+    conn
+)
 
 # =========================================================
 # FONDO
@@ -46,7 +150,10 @@ conn.commit()
 
 try:
 
-    with open("cf28a163-8639-4681-8332-327545f58634.png", "rb") as img:
+    with open(
+        "cf28a163-8639-4681-8332-327545f58634.png",
+        "rb"
+    ) as img:
 
         encoded = base64.b64encode(
             img.read()
@@ -85,6 +192,7 @@ try:
         background: rgba(0,0,0,0.60);
         padding:20px;
         border-radius:15px;
+        border:1px solid rgba(255,255,255,0.10);
     }}
 
     </style>
@@ -154,7 +262,7 @@ if not st.session_state.login:
     st.stop()
 
 # =========================================================
-# SIDEBAR
+# MENU
 # =========================================================
 
 st.sidebar.title("MENU")
@@ -163,19 +271,12 @@ menu = st.sidebar.radio(
     "NAVEGACION",
     [
         "Dashboard",
-        "Registrar",
+        "Registrar Empleado",
+        "Nuevo KPI",
+        "Nuevo Puesto",
         "Empleados",
         "Escaner"
     ]
-)
-
-# =========================================================
-# DATAFRAME
-# =========================================================
-
-df = pd.read_sql_query(
-    "SELECT * FROM empleados",
-    conn
 )
 
 # =========================================================
@@ -184,22 +285,31 @@ df = pd.read_sql_query(
 
 if menu == "Dashboard":
 
-    st.title("🏦 DASHBOARD KPI")
+    st.title("🏦 DASHBOARD DE CUMPLIMIENTO KPI")
 
-    total = len(df)
+    total = len(df_empleados)
 
+    objetivo = 0
+    riesgo = 0
     promedio = 0
 
     if total > 0:
-        promedio = int(df["rendimiento"].mean())
 
-    riesgo = len(
-        df[df["rendimiento"] < 70]
-    )
+        objetivo = len(
+            df_empleados[
+                df_empleados["rendimiento"] >= 70
+            ]
+        )
 
-    objetivo = len(
-        df[df["rendimiento"] >= 70]
-    )
+        riesgo = len(
+            df_empleados[
+                df_empleados["rendimiento"] < 70
+            ]
+        )
+
+        promedio = int(
+            df_empleados["rendimiento"].mean()
+        )
 
     c1,c2,c3,c4 = st.columns(4)
 
@@ -207,10 +317,10 @@ if menu == "Dashboard":
         st.metric("COLABORADORES", total)
 
     with c2:
-        st.metric("KPIs", total)
+        st.metric("KPIs ACTIVOS", len(df_kpis))
 
     with c3:
-        st.metric("EN OBJETIVO", objetivo)
+        st.metric("CUMPLIMIENTO", f"{promedio}%")
 
     with c4:
         st.metric("EN RIESGO", riesgo)
@@ -219,23 +329,23 @@ if menu == "Dashboard":
 
     if total > 0:
 
-        st.dataframe(df)
+        st.subheader("RENDIMIENTO POR EMPLEADO")
 
         st.bar_chart(
-            df.set_index("nombre")["rendimiento"]
+            df_empleados.set_index("nombre")[
+                "rendimiento"
+            ]
         )
 
-    else:
+        st.subheader("BASE DE EMPLEADOS")
 
-        st.info(
-            "NO HAY EMPLEADOS REGISTRADOS"
-        )
+        st.dataframe(df_empleados)
 
 # =========================================================
-# REGISTRO
+# REGISTRO EMPLEADOS
 # =========================================================
 
-elif menu == "Registrar":
+elif menu == "Registrar Empleado":
 
     st.title("REGISTRO DE EMPLEADOS")
 
@@ -243,22 +353,35 @@ elif menu == "Registrar":
 
     puesto = st.selectbox(
         "PUESTO",
-        [
-            "Gerente",
-            "Supervisor",
-            "Analista KPI",
-            "Recursos Humanos",
-            "Cajero"
-        ]
+        df_puestos["nombre"]
     )
 
     departamento = st.selectbox(
         "DEPARTAMENTO",
         [
+            "Gerencia",
             "Finanzas",
-            "RRHH",
-            "Operaciones",
-            "Analitica"
+            "Recursos Humanos",
+            "Analitica",
+            "Operaciones"
+        ]
+    )
+
+    kpi = st.selectbox(
+        "KPI ASIGNADO",
+        df_kpis["nombre"]
+    )
+
+    unidad = st.selectbox(
+        "UNIDAD DE MEDIDA",
+        [
+            "%",
+            "Minutos",
+            "Horas",
+            "Cantidad",
+            "Documentos",
+            "Clientes",
+            "Operaciones"
         ]
     )
 
@@ -269,21 +392,25 @@ elif menu == "Registrar":
         80
     )
 
-    if st.button("GUARDAR"):
+    if st.button("GUARDAR EMPLEADO"):
 
         cursor.execute("""
         INSERT INTO empleados(
-        nombre,
-        puesto,
-        departamento,
-        rendimiento
+            nombre,
+            puesto,
+            departamento,
+            rendimiento,
+            unidad_medida,
+            kpi
         )
-        VALUES(?,?,?,?)
+        VALUES(?,?,?,?,?,?)
         """, (
             nombre,
             puesto,
             departamento,
-            rendimiento
+            rendimiento,
+            unidad,
+            kpi
         ))
 
         conn.commit()
@@ -293,16 +420,66 @@ elif menu == "Registrar":
         )
 
 # =========================================================
+# NUEVO KPI
+# =========================================================
+
+elif menu == "Nuevo KPI":
+
+    st.title("CREAR NUEVO KPI")
+
+    nuevo_kpi = st.text_input(
+        "NOMBRE DEL KPI"
+    )
+
+    if st.button("AGREGAR KPI"):
+
+        cursor.execute("""
+        INSERT INTO kpis(nombre)
+        VALUES(?)
+        """, (nuevo_kpi,))
+
+        conn.commit()
+
+        st.success(
+            "KPI AGREGADO"
+        )
+
+# =========================================================
+# NUEVO PUESTO
+# =========================================================
+
+elif menu == "Nuevo Puesto":
+
+    st.title("CREAR NUEVO PUESTO")
+
+    nuevo_puesto = st.text_input(
+        "NOMBRE DEL PUESTO"
+    )
+
+    if st.button("AGREGAR PUESTO"):
+
+        cursor.execute("""
+        INSERT INTO puestos(nombre)
+        VALUES(?)
+        """, (nuevo_puesto,))
+
+        conn.commit()
+
+        st.success(
+            "PUESTO AGREGADO"
+        )
+
+# =========================================================
 # EMPLEADOS
 # =========================================================
 
 elif menu == "Empleados":
 
-    st.title("LISTA DE EMPLEADOS")
+    st.title("BASE GENERAL DE EMPLEADOS")
 
-    if len(df) > 0:
+    if len(df_empleados) > 0:
 
-        st.dataframe(df)
+        st.dataframe(df_empleados)
 
     else:
 
@@ -330,12 +507,11 @@ elif menu == "Escaner":
         )
 
         st.write(
-            "Archivo:",
+            "ARCHIVO:",
             archivo.name
         )
 
         st.write(
-            "Fecha:",
+            "FECHA:",
             datetime.now()
         )
-        
