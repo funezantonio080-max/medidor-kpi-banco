@@ -1,9 +1,3 @@
-```python
-# =========================================================
-# GERENCIA DE BANCO KPI
-# SISTEMA EJECUTIVO BANCARIO
-# =========================================================
-
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -12,6 +6,7 @@ from PIL import Image
 import io
 from datetime import datetime
 import base64
+import os
 
 # =====================================================
 # CONFIG
@@ -27,20 +22,17 @@ st.set_page_config(
 # IMAGEN PORTADA
 # =====================================================
 
-def get_base64(imagen):
+IMAGEN_PORTADA = "portada.png"
 
+def get_base64(imagen):
     with open(imagen, "rb") as f:
         data = f.read()
-
     return base64.b64encode(data).decode()
 
-# =====================================================
-# CAMBIA AQUI EL NOMBRE REAL DE TU IMAGEN
-# =====================================================
+img = ""
 
-IMAGEN_PORTADA = "20fa5327-1c3f-4e1a-8d08-de07ca1decff.png"
-
-img = get_base64(IMAGEN_PORTADA)
+if os.path.exists(IMAGEN_PORTADA):
+    img = get_base64(IMAGEN_PORTADA)
 
 # =====================================================
 # CSS
@@ -147,6 +139,9 @@ if not st.session_state.login:
     """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
+
+    if not os.path.exists(IMAGEN_PORTADA):
+        st.warning("NO SE ENCONTRO portada.png")
 
     c1,c2,c3 = st.columns([1,1,1])
 
@@ -272,10 +267,6 @@ if menu == "DASHBOARD":
 
     c1,c2,c3,c4 = st.columns(4)
 
-    # =================================================
-    # COLABORADORES
-    # =================================================
-
     with c1:
 
         st.markdown(
@@ -292,10 +283,6 @@ if menu == "DASHBOARD":
             unsafe_allow_html=True
         )
 
-    # =================================================
-    # KPIs
-    # =================================================
-
     with c2:
 
         st.markdown(
@@ -311,10 +298,6 @@ if menu == "DASHBOARD":
             """,
             unsafe_allow_html=True
         )
-
-    # =================================================
-    # PROMEDIO
-    # =================================================
 
     with c3:
 
@@ -340,10 +323,6 @@ if menu == "DASHBOARD":
             """,
             unsafe_allow_html=True
         )
-
-    # =================================================
-    # FECHA
-    # =================================================
 
     with c4:
 
@@ -409,7 +388,8 @@ if menu == "DASHBOARD":
 
         st.plotly_chart(
             fig,
-            use_container_width=True
+            use_container_width=True,
+            key="dashboard_chart"
         )
 
 # =====================================================
@@ -613,10 +593,6 @@ elif menu == "ESCANER":
 
         c1,c2 = st.columns([1,2])
 
-        # =============================================
-        # PERFIL
-        # =============================================
-
         with c1:
 
             if data["foto"]:
@@ -654,10 +630,6 @@ elif menu == "ESCANER":
                 "**PROFESION:**",
                 data["profesion"]
             )
-
-        # =============================================
-        # KPI EMPLEADO
-        # =============================================
 
         with c2:
 
@@ -699,11 +671,11 @@ elif menu == "ESCANER":
 
                 st.plotly_chart(
                     fig,
-                    use_container_width=True
+                    use_container_width=True,
+                    key="empleado_chart"
                 )
 
                 st.dataframe(
                     kpis,
                     use_container_width=True
                 )
-```
