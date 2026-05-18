@@ -1,16 +1,12 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-import plotly.graph_objects as go
-from PIL import Image
-import io
-from datetime import datetime
 import base64
-import os
+from datetime import datetime
 
-# =====================================================
+# =========================================================
 # CONFIGURACION
-# =====================================================
+# =========================================================
 
 st.set_page_config(
     page_title="GERENCIA DE BANCO KPI",
@@ -18,127 +14,107 @@ st.set_page_config(
     layout="wide"
 )
 
-# =====================================================
-# IMAGEN PORTADA
-# =====================================================
+# =========================================================
+# BASE DE DATOS
+# =========================================================
 
-IMAGEN_PORTADA = "8e2ed00a-50f4-48f2-a807-a11e06a29108.png"
+conn = sqlite3.connect("banco_kpi.db", check_same_thread=False)
+cursor = conn.cursor()
 
-def get_base64(imagen):
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS empleados(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    puesto TEXT,
+    departamento TEXT,
+    rendimiento INTEGER
+)
+""")
 
-    with open(imagen, "rb") as f:
-        data = f.read()
+conn.commit()
 
-    return base64.b64encode(data).decode()
-
-img = ""
-
-if os.path.exists(IMAGEN_PORTADA):
-
-    img = get_base64(IMAGEN_PORTADA)
-
-# =====================================================
-# CSS
-# =====================================================
-
-st.markdown(f"""
-<style>
-
-[data-testid="stAppViewContainer"] {{
-    background-image:
-    linear-gradient(
-    rgba(0,0,0,0.72),
-    rgba(0,0,0,0.72)),
-    url("data:image/png;base64,{img}");
-
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-}}
-
-[data-testid="stHeader"] {{
-    background: rgba(0,0,0,0);
-}}
-
-[data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.92);
-}}
-
-.block-container {{
-    padding-top: 1rem;
-}}
-
-h1,h2,h3,h4,h5,h6,p,label {{
-    color:white !important;
-}}
-
-.metric {{
-    background: rgba(5,15,35,0.88);
-    padding:20px;
-    border-radius:18px;
-    text-align:center;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 0 15px rgba(0,0,0,0.5);
-}}
-
-.valor {{
-    font-size:42px;
-    font-weight:bold;
-    color:#00ffcc;
-}}
-
-.panel {{
-    background: rgba(5,15,35,0.88);
-    padding:20px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.08);
-}}
-
-.stButton>button {{
-    width:100%;
-    border:none;
-    border-radius:12px;
-    height:48px;
-    background:linear-gradient(90deg,#0066ff,#00c6ff);
-    color:white;
-    font-weight:bold;
-    font-size:16px;
-}}
-
-.stTextInput input {{
-    border-radius:10px;
-}}
-
-</style>
-""", unsafe_allow_html=True)
-
-# =====================================================
+# =========================================================
 # LOGIN
-# =====================================================
+# =========================================================
 
 if "login" not in st.session_state:
     st.session_state.login = False
 
-USUARIO = "ADMIN"
+USUARIO = "admin"
 CLAVE = "1234"
 
-# =====================================================
+# =========================================================
+# IMAGEN DE FONDO
+# =========================================================
+
+def fondo():
+
+    try:
+
+        with open("cf28a163-8639-4681-8332-327545f58634.png", "rb") as img:
+
+            encoded = base64.b64encode(img.read()).decode()
+
+        st.markdown(f"""
+        <style>
+
+        [data-testid="stAppViewContainer"] {{
+
+            background-image:
+            linear-gradient(
+            rgba(0,0,0,0.45),
+            rgba(0,0,0,0.45)),
+            url("data:image/png;base64,{encoded}");
+
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+
+        [data-testid="stHeader"] {{
+            background: rgba(0,0,0,0);
+        }}
+
+        [data-testid="stSidebar"] {{
+            background: rgba(0,0,0,0.75);
+        }}
+
+        h1,h2,h3,h4,h5,h6,p,label {{
+            color:white !important;
+        }}
+
+        .box {{
+            background: rgba(0,0,0,0.60);
+            padding:20px;
+            border-radius:15px;
+            border:1px solid rgba(255,255,255,0.1);
+        }}
+
+        </style>
+        """, unsafe_allow_html=True)
+
+    except:
+        pass
+
+fondo()
+
+# =========================================================
 # LOGIN SCREEN
-# =====================================================
+# =========================================================
 
 if not st.session_state.login:
 
     st.markdown("""
-    <h1 style='text-align:center;font-size:62px;'>
+    <h1 style='text-align:center;font-size:70px;'>
     🏦 GERENCIA DE BANCO KPI
     </h1>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <h3 style='text-align:center;'>
+    <h2 style='text-align:center;'>
     CENTRO EJECUTIVO DE INDICADORES BANCARIOS
-    </h3>
+    </h2>
     """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -148,18 +124,15 @@ if not st.session_state.login:
     with c2:
 
         st.markdown("""
-        <div class="panel">
-        <h2 style='text-align:center;'>
+        <div class="box">
+        <h1 style='text-align:center;'>
         INICIAR SESION
-        </h2>
+        </h1>
         </div>
         """, unsafe_allow_html=True)
 
         usuario = st.text_input("USUARIO")
-        clave = st.text_input(
-            "CONTRASEÑA",
-            type="password"
-        )
+        clave = st.text_input("CONTRASEÑA", type="password")
 
         if st.button("INGRESAR"):
 
@@ -170,239 +143,190 @@ if not st.session_state.login:
 
             else:
 
-                st.error(
-                    "USUARIO O CONTRASEÑA INCORRECTA"
-                )
+                st.error("USUARIO O CONTRASEÑA INCORRECTA")
 
     st.stop()
 
-# =====================================================
-# TITULO
-# =====================================================
+# =========================================================
+# SIDEBAR
+# =========================================================
 
-st.markdown("""
-<h1 style='text-align:center;font-size:55px;'>
-🏦 GERENCIA DE BANCO KPI
-</h1>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<h3 style='text-align:center;'>
-CENTRO EJECUTIVO DE INDICADORES BANCARIOS
-</h3>
-""", unsafe_allow_html=True)
-
-# =====================================================
-# DATABASE
-# =====================================================
-
-conn = sqlite3.connect(
-    "banco_kpi.db",
-    check_same_thread=False
-)
-
-c = conn.cursor()
-
-# =====================================================
-# TABLA EMPLEADOS
-# =====================================================
-
-c.execute("""
-CREATE TABLE IF NOT EXISTS empleados(
-id TEXT PRIMARY KEY,
-nombre TEXT,
-edad TEXT,
-estado TEXT,
-profesion TEXT,
-cargo TEXT,
-foto BLOB
-)
-""")
-
-# =====================================================
-# TABLA KPIs
-# =====================================================
-
-c.execute("""
-CREATE TABLE IF NOT EXISTS indicadores(
-id_empleado TEXT,
-indicador TEXT,
-meta REAL,
-proyectado REAL,
-real REAL
-)
-""")
-
-conn.commit()
-
-# =====================================================
-# MENU
-# =====================================================
+st.sidebar.title("MENU")
 
 menu = st.sidebar.radio(
-    "MENU",
+    "NAVEGACION",
     [
-        "DASHBOARD",
-        "REGISTRAR",
-        "EMPLEADOS",
-        "ESCANER"
+        "Dashboard",
+        "Registrar",
+        "Empleados",
+        "Escaner"
     ]
 )
 
-# =====================================================
+# =========================================================
+# OBTENER EMPLEADOS
+# =========================================================
+
+df = pd.read_sql_query(
+    "SELECT * FROM empleados",
+    conn
+)
+
+# =========================================================
 # DASHBOARD
-# =====================================================
+# =========================================================
 
-if menu == "DASHBOARD":
+if menu == "Dashboard":
 
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
+    st.markdown("""
+    <h1 style='text-align:center;font-size:60px;'>
+    🏦 GERENCIA DE BANCO KPI
+    </h1>
+    """, unsafe_allow_html=True)
 
-    kpis = pd.read_sql(
-        "SELECT * FROM indicadores",
-        conn
-    )
-
-    c1,c2,c3,c4 = st.columns(4)
-
-    # =================================================
-    # COLABORADORES
-    # =================================================
-
-    with c1:
-
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>COLABORADORES</h3>
-
-            <div class="valor">
-            {len(empleados)}
-            </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # KPIs
-    # =================================================
-
-    with c2:
-
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>KPIs</h3>
-
-            <div class="valor">
-            {len(kpis)}
-            </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # PROMEDIO
-    # =================================================
-
-    with c3:
-
-        promedio = 0
-
-        if not kpis.empty:
-
-            promedio = round(
-                kpis["real"].mean(),
-                2
-            )
-
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>PROMEDIO REAL</h3>
-
-            <div class="valor">
-            {promedio}
-            </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # FECHA
-    # =================================================
-
-    with c4:
-
-        fecha = datetime.now().strftime(
-            "%d/%m/%Y"
-        )
-
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>FECHA</h3>
-
-            <div class="valor" style="font-size:22px;">
-            {fecha}
-            </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    st.markdown("""
+    <h2 style='text-align:center;'>
+    DASHBOARD EJECUTIVO BANCARIO
+    </h2>
+    """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # =================================================
-    # GRAFICO GENERAL
-    # =================================================
+    total = len(df)
 
-    if not kpis.empty:
+    promedio = 0
 
-        fig = go.Figure()
+    if total > 0:
+        promedio = int(df["rendimiento"].mean())
 
-        fig.add_trace(go.Bar(
-            x=kpis["indicador"],
-            y=kpis["meta"],
-            name="META",
-            marker_color="#0066ff",
-            width=0.20
-        ))
+    riesgo = len(df[df["rendimiento"] < 70])
 
-        fig.add_trace(go.Bar(
-            x=kpis["indicador"],
-            y=kpis["proyectado"],
-            name="PROYECTADO",
-            marker_color="#00cc99",
-            width=0.20
-        ))
+    objetivo = len(df[df["rendimiento"] >= 70])
 
-        fig.add_trace(go.Bar(
-            x=kpis["indicador"],
-            y=kpis["real"],
-            name="REAL",
-            marker_color="#00ffcc",
-            width=0.20
-        ))
+    c1,c2,c3,c4 = st.columns(4)
 
-        fig.update_layout(
-            barmode="group",
-            height=600,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white")
+    with c1:
+        st.metric("COLABORADORES", total)
+
+    with c2:
+        st.metric("KPIs", total)
+
+    with c3:
+        st.metric("EN OBJETIVO", objetivo)
+
+    with c4:
+        st.metric("EN RIESGO", riesgo)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    st.subheader("KPIs GENERALES")
+
+    if total > 0:
+
+        st.dataframe(df)
+
+        st.bar_chart(
+            df.set_index("nombre")["rendimiento"]
         )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
+    else:
+
+        st.info("NO HAY EMPLEADOS REGISTRADOS")
+
+# =========================================================
+# REGISTRAR
+# =========================================================
+
+elif menu == "Registrar":
+
+    st.title("REGISTRO DE EMPLEADOS")
+
+    nombre = st.text_input("NOMBRE")
+
+    puesto = st.selectbox(
+        "PUESTO",
+        [
+            "Gerente",
+            "Supervisor",
+            "Analista KPI",
+            "Recursos Humanos",
+            "Cajero",
+            "Asistente"
+        ]
+    )
+
+    departamento = st.selectbox(
+        "DEPARTAMENTO",
+        [
+            "Finanzas",
+            "Recursos Humanos",
+            "Analitica",
+            "Operaciones",
+            "Gerencia"
+        ]
+    )
+
+    rendimiento = st.slider(
+        "RENDIMIENTO KPI",
+        0,
+        100,
+        80
+    )
+
+    if st.button("GUARDAR EMPLEADO"):
+
+        cursor.execute("""
+        INSERT INTO empleados(
+        nombre,
+        puesto,
+        departamento,
+        rendimiento
         )
+        VALUES(?,?,?,?)
+        """, (
+            nombre,
+            puesto,
+            departamento,
+            rendimiento
+        ))
+
+        conn.commit()
+
+        st.success("EMPLEADO REGISTRADO")
+
+# =========================================================
+# EMPLEADOS
+# =========================================================
+
+elif menu == "Empleados":
+
+    st.title("LISTA DE EMPLEADOS")
+
+    if len(df) > 0:
+
+        st.dataframe(df)
+
+    else:
+
+        st.warning("NO HAY EMPLEADOS")
+
+# =========================================================
+# ESCANER
+# =========================================================
+
+elif menu == "Escaner":
+
+    st.title("ESCANER DE DOCUMENTOS")
+
+    archivo = st.file_uploader(
+        "SUBIR DOCUMENTO",
+        type=["png","jpg","jpeg","pdf"]
+    )
+
+    if archivo:
+
+        st.success("DOCUMENTO ESCANEADO")
+
+        st.write("Nombre:", archivo.name)
+
+        st.write("Fecha:", datetime.now())
