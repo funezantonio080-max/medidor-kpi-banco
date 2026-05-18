@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -22,14 +23,12 @@ st.set_page_config(
 # IMAGEN PORTADA
 # =====================================================
 
-IMAGEN_PORTADA = "9c24b2b9-e58e-4118-a33d-7c8450749d26.png"
+IMAGEN_PORTADA = "f88e5f83-7be0-4f04-8ce4-12e25465ae27.png"
 
-def get_base64(imagen):
+def get_base64(file_path):
 
-    with open(imagen, "rb") as f:
-        data = f.read()
-
-    return base64.b64encode(data).decode()
+    with open(file_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 img = ""
 
@@ -38,17 +37,18 @@ if os.path.exists(IMAGEN_PORTADA):
     img = get_base64(IMAGEN_PORTADA)
 
 # =====================================================
-# CSS
+# CSS GENERAL
 # =====================================================
 
-st.markdown(f"""
+page_bg = f"""
 <style>
 
 [data-testid="stAppViewContainer"] {{
-    background-image:
+    background:
     linear-gradient(
-    rgba(0,0,0,0.72),
-    rgba(0,0,0,0.72)),
+    rgba(0,0,0,0.45),
+    rgba(0,0,0,0.45)
+    ),
     url("data:image/png;base64,{img}");
 
     background-size: cover;
@@ -62,7 +62,7 @@ st.markdown(f"""
 }}
 
 [data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.90);
+    background: rgba(0,0,0,0.88);
 }}
 
 .block-container {{
@@ -111,7 +111,12 @@ h1,h2,h3,h4,h5,h6,p,label {{
 }}
 
 </style>
-""", unsafe_allow_html=True)
+"""
+
+st.markdown(
+    page_bg,
+    unsafe_allow_html=True
+)
 
 # =====================================================
 # LOGIN
@@ -177,7 +182,7 @@ if not st.session_state.login:
     st.stop()
 
 # =====================================================
-# TITULO
+# TITULO PRINCIPAL
 # =====================================================
 
 st.markdown("""
@@ -193,7 +198,7 @@ CENTRO EJECUTIVO DE INDICADORES BANCARIOS
 """, unsafe_allow_html=True)
 
 # =====================================================
-# DATABASE
+# BASE DE DATOS
 # =====================================================
 
 conn = sqlite3.connect(
@@ -374,24 +379,21 @@ if menu == "DASHBOARD":
             x=kpis["indicador"],
             y=kpis["meta"],
             name="META",
-            marker_color="#0066ff",
-            width=0.20
+            marker_color="#0066ff"
         ))
 
         fig.add_trace(go.Bar(
             x=kpis["indicador"],
             y=kpis["proyectado"],
             name="PROYECTADO",
-            marker_color="#00cc99",
-            width=0.20
+            marker_color="#00cc99"
         ))
 
         fig.add_trace(go.Bar(
             x=kpis["indicador"],
             y=kpis["real"],
             name="REAL",
-            marker_color="#00ffcc",
-            width=0.20
+            marker_color="#00ffcc"
         ))
 
         fig.update_layout(
@@ -406,3 +408,4 @@ if menu == "DASHBOARD":
             fig,
             use_container_width=True
         )
+```
