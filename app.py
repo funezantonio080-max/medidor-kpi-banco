@@ -18,11 +18,18 @@ st.set_page_config(
 # BASE DE DATOS
 # =========================================================
 
-conn = sqlite3.connect("banco_kpi.db", check_same_thread=False)
+conn = sqlite3.connect(
+    "banco_kpi.db",
+    check_same_thread=False
+)
+
 cursor = conn.cursor()
 
+# RECONSTRUIR TABLA
+cursor.execute("DROP TABLE IF EXISTS empleados")
+
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS empleados(
+CREATE TABLE empleados(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT,
     puesto TEXT,
@@ -34,6 +41,59 @@ CREATE TABLE IF NOT EXISTS empleados(
 conn.commit()
 
 # =========================================================
+# FONDO
+# =========================================================
+
+try:
+
+    with open("cf28a163-8639-4681-8332-327545f58634.png", "rb") as img:
+
+        encoded = base64.b64encode(
+            img.read()
+        ).decode()
+
+    st.markdown(f"""
+    <style>
+
+    [data-testid="stAppViewContainer"] {{
+
+        background-image:
+        linear-gradient(
+        rgba(0,0,0,0.45),
+        rgba(0,0,0,0.45)),
+        url("data:image/png;base64,{encoded}");
+
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+
+    [data-testid="stHeader"] {{
+        background: rgba(0,0,0,0);
+    }}
+
+    [data-testid="stSidebar"] {{
+        background: rgba(0,0,0,0.80);
+    }}
+
+    h1,h2,h3,h4,h5,h6,p,label {{
+        color:white !important;
+    }}
+
+    .box {{
+        background: rgba(0,0,0,0.60);
+        padding:20px;
+        border-radius:15px;
+    }}
+
+    </style>
+    """, unsafe_allow_html=True)
+
+except:
+    pass
+
+# =========================================================
 # LOGIN
 # =========================================================
 
@@ -42,66 +102,6 @@ if "login" not in st.session_state:
 
 USUARIO = "admin"
 CLAVE = "1234"
-
-# =========================================================
-# IMAGEN DE FONDO
-# =========================================================
-
-def fondo():
-
-    try:
-
-        with open("cf28a163-8639-4681-8332-327545f58634.png", "rb") as img:
-
-            encoded = base64.b64encode(img.read()).decode()
-
-        st.markdown(f"""
-        <style>
-
-        [data-testid="stAppViewContainer"] {{
-
-            background-image:
-            linear-gradient(
-            rgba(0,0,0,0.45),
-            rgba(0,0,0,0.45)),
-            url("data:image/png;base64,{encoded}");
-
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-
-        [data-testid="stHeader"] {{
-            background: rgba(0,0,0,0);
-        }}
-
-        [data-testid="stSidebar"] {{
-            background: rgba(0,0,0,0.75);
-        }}
-
-        h1,h2,h3,h4,h5,h6,p,label {{
-            color:white !important;
-        }}
-
-        .box {{
-            background: rgba(0,0,0,0.60);
-            padding:20px;
-            border-radius:15px;
-            border:1px solid rgba(255,255,255,0.1);
-        }}
-
-        </style>
-        """, unsafe_allow_html=True)
-
-    except:
-        pass
-
-fondo()
-
-# =========================================================
-# LOGIN SCREEN
-# =========================================================
 
 if not st.session_state.login:
 
@@ -132,7 +132,11 @@ if not st.session_state.login:
         """, unsafe_allow_html=True)
 
         usuario = st.text_input("USUARIO")
-        clave = st.text_input("CONTRASEÑA", type="password")
+
+        clave = st.text_input(
+            "CONTRASEÑA",
+            type="password"
+        )
 
         if st.button("INGRESAR"):
 
@@ -143,7 +147,9 @@ if not st.session_state.login:
 
             else:
 
-                st.error("USUARIO O CONTRASEÑA INCORRECTA")
+                st.error(
+                    "USUARIO O CONTRASEÑA INCORRECTA"
+                )
 
     st.stop()
 
@@ -164,7 +170,7 @@ menu = st.sidebar.radio(
 )
 
 # =========================================================
-# OBTENER EMPLEADOS
+# DATAFRAME
 # =========================================================
 
 df = pd.read_sql_query(
@@ -178,19 +184,7 @@ df = pd.read_sql_query(
 
 if menu == "Dashboard":
 
-    st.markdown("""
-    <h1 style='text-align:center;font-size:60px;'>
-    🏦 GERENCIA DE BANCO KPI
-    </h1>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <h2 style='text-align:center;'>
-    DASHBOARD EJECUTIVO BANCARIO
-    </h2>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.title("🏦 DASHBOARD KPI")
 
     total = len(df)
 
@@ -199,9 +193,13 @@ if menu == "Dashboard":
     if total > 0:
         promedio = int(df["rendimiento"].mean())
 
-    riesgo = len(df[df["rendimiento"] < 70])
+    riesgo = len(
+        df[df["rendimiento"] < 70]
+    )
 
-    objetivo = len(df[df["rendimiento"] >= 70])
+    objetivo = len(
+        df[df["rendimiento"] >= 70]
+    )
 
     c1,c2,c3,c4 = st.columns(4)
 
@@ -217,9 +215,7 @@ if menu == "Dashboard":
     with c4:
         st.metric("EN RIESGO", riesgo)
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
-
-    st.subheader("KPIs GENERALES")
+    st.markdown("<br>", unsafe_allow_html=True)
 
     if total > 0:
 
@@ -231,10 +227,12 @@ if menu == "Dashboard":
 
     else:
 
-        st.info("NO HAY EMPLEADOS REGISTRADOS")
+        st.info(
+            "NO HAY EMPLEADOS REGISTRADOS"
+        )
 
 # =========================================================
-# REGISTRAR
+# REGISTRO
 # =========================================================
 
 elif menu == "Registrar":
@@ -250,8 +248,7 @@ elif menu == "Registrar":
             "Supervisor",
             "Analista KPI",
             "Recursos Humanos",
-            "Cajero",
-            "Asistente"
+            "Cajero"
         ]
     )
 
@@ -259,10 +256,9 @@ elif menu == "Registrar":
         "DEPARTAMENTO",
         [
             "Finanzas",
-            "Recursos Humanos",
-            "Analitica",
+            "RRHH",
             "Operaciones",
-            "Gerencia"
+            "Analitica"
         ]
     )
 
@@ -273,7 +269,7 @@ elif menu == "Registrar":
         80
     )
 
-    if st.button("GUARDAR EMPLEADO"):
+    if st.button("GUARDAR"):
 
         cursor.execute("""
         INSERT INTO empleados(
@@ -292,7 +288,9 @@ elif menu == "Registrar":
 
         conn.commit()
 
-        st.success("EMPLEADO REGISTRADO")
+        st.success(
+            "EMPLEADO REGISTRADO"
+        )
 
 # =========================================================
 # EMPLEADOS
@@ -308,7 +306,9 @@ elif menu == "Empleados":
 
     else:
 
-        st.warning("NO HAY EMPLEADOS")
+        st.warning(
+            "NO HAY EMPLEADOS"
+        )
 
 # =========================================================
 # ESCANER
@@ -325,8 +325,17 @@ elif menu == "Escaner":
 
     if archivo:
 
-        st.success("DOCUMENTO ESCANEADO")
+        st.success(
+            "DOCUMENTO ESCANEADO"
+        )
 
-        st.write("Nombre:", archivo.name)
+        st.write(
+            "Archivo:",
+            archivo.name
+        )
 
-        st.write("Fecha:", datetime.now())
+        st.write(
+            "Fecha:",
+            datetime.now()
+        )
+        
