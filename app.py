@@ -1,10 +1,5 @@
-```python
 import streamlit as st
 import base64
-
-# =====================================================
-# CONFIGURACION
-# =====================================================
 
 st.set_page_config(
     page_title="GERENCIA DE BANCO KPI",
@@ -16,14 +11,7 @@ st.set_page_config(
 # IMAGEN DE FONDO
 # =====================================================
 
-# USA EL NOMBRE REAL DE TU IMAGEN
-IMAGEN = "df1e2a07-a3f9-40e1-919a-773770e2fd0f.png"
-
-# =====================================================
-# CONVERTIR IMAGEN
-# =====================================================
-
-with open(IMAGEN, "rb") as image_file:
+with open("c95310e2-fce9-47e4-b060-34e38fd422b2.png", "rb") as image_file:
     encoded = base64.b64encode(
         image_file.read()
     ).decode()
@@ -119,10 +107,6 @@ if "login" not in st.session_state:
 USUARIO = "ADMIN"
 CLAVE = "1234"
 
-# =====================================================
-# PANTALLA LOGIN
-# =====================================================
-
 if not st.session_state.login:
 
     st.markdown("""
@@ -205,4 +189,3 @@ with c3:
 
 with c4:
     st.metric("EN RIESGO", "4")
-```
