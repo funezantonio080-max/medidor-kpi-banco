@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -20,7 +19,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# IMAGEN PORTADA
+# IMAGEN DE FONDO
 # =====================================================
 
 IMAGEN_PORTADA = "f88e5f83-7be0-4f04-8ce4-12e25465ae27.png"
@@ -33,21 +32,20 @@ def get_base64(file_path):
 img = ""
 
 if os.path.exists(IMAGEN_PORTADA):
-
     img = get_base64(IMAGEN_PORTADA)
 
 # =====================================================
-# CSS GENERAL
+# ESTILOS
 # =====================================================
 
-page_bg = f"""
+st.markdown(f"""
 <style>
 
 [data-testid="stAppViewContainer"] {{
     background:
     linear-gradient(
-    rgba(0,0,0,0.45),
-    rgba(0,0,0,0.45)
+    rgba(0,0,0,0.50),
+    rgba(0,0,0,0.50)
     ),
     url("data:image/png;base64,{img}");
 
@@ -62,7 +60,7 @@ page_bg = f"""
 }}
 
 [data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.88);
+    background: rgba(0,0,0,0.90);
 }}
 
 .block-container {{
@@ -70,53 +68,48 @@ page_bg = f"""
 }}
 
 h1,h2,h3,h4,h5,h6,p,label {{
-    color:white !important;
+    color: white !important;
 }}
 
 .metric {{
     background: rgba(5,15,35,0.88);
-    padding:20px;
-    border-radius:18px;
-    text-align:center;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 0 15px rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 18px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }}
 
 .valor {{
-    font-size:42px;
-    font-weight:bold;
-    color:#00ffcc;
+    font-size: 42px;
+    font-weight: bold;
+    color: #00ffcc;
 }}
 
 .panel {{
     background: rgba(5,15,35,0.88);
-    padding:20px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.08);
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
 }}
 
-.stButton>button {{
-    width:100%;
-    border:none;
-    border-radius:12px;
-    height:48px;
-    background:linear-gradient(90deg,#0066ff,#00c6ff);
-    color:white;
-    font-weight:bold;
-    font-size:16px;
+.stButton > button {{
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    height: 48px;
+    background: linear-gradient(90deg,#0066ff,#00c6ff);
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
 }}
 
 .stTextInput input {{
-    border-radius:10px;
+    border-radius: 10px;
 }}
 
 </style>
-"""
-
-st.markdown(
-    page_bg,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 # =====================================================
 # LOGIN
@@ -129,7 +122,7 @@ USUARIO = "ADMIN"
 CLAVE = "1234"
 
 # =====================================================
-# LOGIN SCREEN
+# PANTALLA LOGIN
 # =====================================================
 
 if not st.session_state.login:
@@ -148,7 +141,7 @@ if not st.session_state.login:
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
-    c1,c2,c3 = st.columns([1,1,1])
+    c1, c2, c3 = st.columns([1,1,1])
 
     with c2:
 
@@ -214,13 +207,13 @@ c = conn.cursor()
 
 c.execute("""
 CREATE TABLE IF NOT EXISTS empleados(
-id TEXT PRIMARY KEY,
-nombre TEXT,
-edad TEXT,
-estado TEXT,
-profesion TEXT,
-cargo TEXT,
-foto BLOB
+    id TEXT PRIMARY KEY,
+    nombre TEXT,
+    edad TEXT,
+    estado TEXT,
+    profesion TEXT,
+    cargo TEXT,
+    foto BLOB
 )
 """)
 
@@ -230,11 +223,11 @@ foto BLOB
 
 c.execute("""
 CREATE TABLE IF NOT EXISTS indicadores(
-id_empleado TEXT,
-indicador TEXT,
-meta REAL,
-proyectado REAL,
-real REAL
+    id_empleado TEXT,
+    indicador TEXT,
+    meta REAL,
+    proyectado REAL,
+    real REAL
 )
 """)
 
@@ -270,80 +263,54 @@ if menu == "DASHBOARD":
         conn
     )
 
-    c1,c2,c3,c4 = st.columns(4)
-
-    # =================================================
-    # COLABORADORES
-    # =================================================
+    c1, c2, c3, c4 = st.columns(4)
 
     with c1:
 
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>COLABORADORES</h3>
+        st.markdown(f"""
+        <div class="metric">
+        <h3>COLABORADORES</h3>
 
-            <div class="valor">
-            {len(empleados)}
-            </div>
+        <div class="valor">
+        {len(empleados)}
+        </div>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # KPIs
-    # =================================================
+        </div>
+        """, unsafe_allow_html=True)
 
     with c2:
 
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>KPIs</h3>
+        st.markdown(f"""
+        <div class="metric">
+        <h3>KPIs</h3>
 
-            <div class="valor">
-            {len(kpis)}
-            </div>
+        <div class="valor">
+        {len(kpis)}
+        </div>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # PROMEDIO
-    # =================================================
+        </div>
+        """, unsafe_allow_html=True)
 
     with c3:
 
         promedio = 0
 
         if not kpis.empty:
-
             promedio = round(
                 kpis["real"].mean(),
                 2
             )
 
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>PROMEDIO REAL</h3>
+        st.markdown(f"""
+        <div class="metric">
+        <h3>PROMEDIO REAL</h3>
 
-            <div class="valor">
-            {promedio}
-            </div>
+        <div class="valor">
+        {promedio}
+        </div>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    # =================================================
-    # FECHA
-    # =================================================
+        </div>
+        """, unsafe_allow_html=True)
 
     with c4:
 
@@ -351,19 +318,16 @@ if menu == "DASHBOARD":
             "%d/%m/%Y"
         )
 
-        st.markdown(
-            f"""
-            <div class="metric">
-            <h3>FECHA</h3>
+        st.markdown(f"""
+        <div class="metric">
+        <h3>FECHA</h3>
 
-            <div class="valor" style="font-size:22px;">
-            {fecha}
-            </div>
+        <div class="valor" style="font-size:22px;">
+        {fecha}
+        </div>
 
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -408,4 +372,3 @@ if menu == "DASHBOARD":
             fig,
             use_container_width=True
         )
-```
