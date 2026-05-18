@@ -9,7 +9,6 @@ import sqlite3
 import plotly.graph_objects as go
 from PIL import Image
 import io
-import base64
 import os
 from datetime import datetime
 
@@ -24,116 +23,49 @@ st.set_page_config(
 )
 
 # =========================================================
-# FUNCION BASE64
-# =========================================================
-
-def get_base64(file):
-    with open(file, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-# =========================================================
-# FONDO EJECUTIVO
-# =========================================================
-
-ruta_imagen = "portada.png"
-
-img = ""
-
-if os.path.exists(ruta_imagen):
-    img = get_base64(ruta_imagen)
-
-if img != "":
-
-    fondo = f"""
-    <style>
-
-    [data-testid="stAppViewContainer"] {{
-        background-image:
-        linear-gradient(
-        rgba(0,0,0,0.78),
-        rgba(0,0,0,0.78)),
-        url("data:image/png;base64,{img}");
-
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-
-    </style>
-    """
-
-else:
-
-    fondo = """
-    <style>
-
-    [data-testid="stAppViewContainer"] {
-        background: linear-gradient(
-        135deg,
-        #06121f,
-        #0b2340,
-        #06121f
-        );
-    }
-
-    </style>
-    """
-
-st.markdown(fondo, unsafe_allow_html=True)
-
-# =========================================================
-# ESTILOS GENERALES
+# ESTILOS
 # =========================================================
 
 st.markdown("""
 <style>
+
+html, body, [class*="css"] {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+[data-testid="stAppViewContainer"]{
+    background: linear-gradient(
+    135deg,
+    #04111f,
+    #062041,
+    #04111f
+    );
+}
 
 [data-testid="stHeader"]{
     background: rgba(0,0,0,0);
 }
 
 [data-testid="stSidebar"]{
-    background: rgba(5,15,35,0.92);
-    backdrop-filter: blur(10px);
-}
-
-.block-container{
-    padding-top: 1rem;
+    background: rgba(3,12,25,0.95);
 }
 
 h1,h2,h3,h4,h5,h6,p,label,div{
     color:white !important;
 }
 
-.stButton>button{
-    width:100%;
-    border-radius:14px;
-    height:48px;
-    border:none;
-    font-size:16px;
-    font-weight:bold;
-    color:white;
-    background:linear-gradient(90deg,#0d6efd,#00c6ff);
-}
-
-.stButton>button:hover{
-    transform:scale(1.02);
-}
-
 .metric-card{
-    background:rgba(10,20,40,0.90);
-    padding:25px;
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.08);
+    background: rgba(8,20,40,0.92);
+    border-radius: 18px;
+    padding: 25px;
     text-align:center;
-    box-shadow:0 0 18px rgba(0,0,0,0.5);
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 0 18px rgba(0,0,0,0.4);
 }
 
 .metric-title{
-    color:#c7d0d9;
     font-size:18px;
+    color:#cfd8dc;
 }
 
 .metric-value{
@@ -143,42 +75,144 @@ h1,h2,h3,h4,h5,h6,p,label,div{
 }
 
 .panel{
-    background:rgba(10,20,40,0.90);
+    background: rgba(8,20,40,0.92);
     padding:20px;
     border-radius:18px;
     border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 0 15px rgba(0,0,0,0.4);
+    box-shadow: 0 0 18px rgba(0,0,0,0.4);
+}
+
+.stButton>button{
+    width:100%;
+    height:48px;
+    border:none;
+    border-radius:12px;
+    background: linear-gradient(90deg,#0066ff,#00c6ff);
+    color:white;
+    font-weight:bold;
+    font-size:16px;
+}
+
+.stTextInput input{
+    border-radius:10px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# TITULO
+# LOGIN
+# =========================================================
+
+if "login" not in st.session_state:
+    st.session_state.login = False
+
+USUARIO = "ADMIN"
+CLAVE = "1234"
+
+if not st.session_state.login:
+
+    st.markdown("""
+    <h1 style='text-align:center;
+    font-size:58px;
+    margin-bottom:0;'>
+    🏦 GERENCIA DE BANCO KPI
+    </h1>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <h3 style='text-align:center;
+    color:#d9d9d9;
+    margin-top:0;'>
+    CENTRO EJECUTIVO DE INDICADORES BANCARIOS
+    </h3>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # =====================================================
+    # PORTADA
+    # =====================================================
+
+    if os.path.exists("portada.png"):
+
+        st.image(
+            "portada.png",
+            use_container_width=True
+        )
+
+    else:
+
+        st.warning(
+            "NO SE ENCONTRO portada.png"
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # =====================================================
+    # LOGIN FORM
+    # =====================================================
+
+    col1,col2,col3 = st.columns([1,1,1])
+
+    with col2:
+
+        st.markdown("""
+        <div class="panel">
+        <h3 style='text-align:center;'>
+        INICIAR SESION
+        </h3>
+        </div>
+        """, unsafe_allow_html=True)
+
+        usuario = st.text_input("USUARIO")
+        clave = st.text_input(
+            "CONTRASEÑA",
+            type="password"
+        )
+
+        if st.button("INGRESAR"):
+
+            if usuario == USUARIO and clave == CLAVE:
+
+                st.session_state.login = True
+                st.rerun()
+
+            else:
+
+                st.error("CREDENCIALES INCORRECTAS")
+
+    st.stop()
+
+# =========================================================
+# TITULO PRINCIPAL
 # =========================================================
 
 st.markdown("""
 <h1 style='text-align:center;
 font-size:52px;
-font-weight:bold;
 margin-bottom:0;'>
 🏦 GERENCIA DE BANCO KPI
 </h1>
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<h4 style='text-align:center;
-margin-top:0;
-color:#d9d9d9;'>
+<h3 style='text-align:center;
+color:#d9d9d9;
+margin-top:0;'>
 CENTRO EJECUTIVO DE INDICADORES BANCARIOS
-</h4>
+</h3>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# BASE DE DATOS
+# DATABASE
 # =========================================================
 
-conn = sqlite3.connect("banco_kpi.db", check_same_thread=False)
+conn = sqlite3.connect(
+    "banco_kpi.db",
+    check_same_thread=False
+)
+
 c = conn.cursor()
 
 # =========================================================
@@ -278,7 +312,10 @@ if menu == "DASHBOARD":
         promedio = 0
 
         if not kpis.empty:
-            promedio = round(kpis["real"].mean(),2)
+            promedio = round(
+                kpis["real"].mean(),
+                2
+            )
 
         st.markdown(f"""
         <div class="metric-card">
@@ -294,7 +331,9 @@ if menu == "DASHBOARD":
 
     with col4:
 
-        fecha = datetime.now().strftime("%d/%m/%Y")
+        fecha = datetime.now().strftime(
+            "%d/%m/%Y"
+        )
 
         st.markdown(f"""
         <div class="metric-card">
@@ -312,7 +351,7 @@ if menu == "DASHBOARD":
 
     st.markdown("""
     <div class="panel">
-    <h3>📊 KPIs GENERALES</h3>
+    <h2>📊 KPIs GENERALES</h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -381,9 +420,17 @@ elif menu == "REGISTRAR":
 
         with col2:
 
-            estado = st.text_input("ESTADO CIVIL")
-            profesion = st.text_input("PROFESION")
-            cargo = st.text_input("CARGO")
+            estado = st.text_input(
+                "ESTADO CIVIL"
+            )
+
+            profesion = st.text_input(
+                "PROFESION"
+            )
+
+            cargo = st.text_input(
+                "CARGO"
+            )
 
         foto = st.file_uploader(
             "FOTO",
@@ -400,33 +447,39 @@ elif menu == "REGISTRAR":
 
             ind = st.text_input(
                 f"INDICADOR {i+1}",
-                key=f"i{i}"
+                key=f"ind{i}"
             )
 
             meta = st.number_input(
                 f"META {i+1}",
-                key=f"m{i}"
+                key=f"meta{i}"
             )
 
             proy = st.number_input(
                 f"PROYECTADO {i+1}",
-                key=f"p{i}"
+                key=f"proy{i}"
             )
 
             real = st.number_input(
                 f"REAL {i+1}",
-                key=f"r{i}"
+                key=f"real{i}"
             )
 
             indicadores.append(
                 [ind,meta,proy,real]
             )
 
-        guardar = st.form_submit_button("GUARDAR")
+        guardar = st.form_submit_button(
+            "GUARDAR"
+        )
 
         if guardar:
 
-            foto_bytes = foto.read() if foto else None
+            foto_bytes = (
+                foto.read()
+                if foto
+                else None
+            )
 
             c.execute("""
             INSERT OR REPLACE INTO empleados
@@ -461,7 +514,9 @@ elif menu == "REGISTRAR":
 
             conn.commit()
 
-            st.success("EMPLEADO REGISTRADO")
+            st.success(
+                "EMPLEADO REGISTRADO"
+            )
 
 # =========================================================
 # EMPLEADOS
@@ -480,7 +535,12 @@ elif menu == "EMPLEADOS":
         conn
     )
 
-    st.dataframe(empleados)
+    st.dataframe(
+        empleados.drop(
+            columns=["foto"],
+            errors="ignore"
+        )
+    )
 
 # =========================================================
 # ESCANER
@@ -514,10 +574,15 @@ elif menu == "ESCANER":
             empleados["mostrar"]
         )
 
-        emp_id = seleccionado.split(" - ")[0]
+        emp_id = seleccionado.split(
+            " - "
+        )[0]
 
         data = pd.read_sql(
-            f"SELECT * FROM empleados WHERE id='{emp_id}'",
+            f"""
+            SELECT * FROM empleados
+            WHERE id='{emp_id}'
+            """,
             conn
         ).iloc[0]
 
@@ -557,15 +622,33 @@ elif menu == "ESCANER":
             #### {data["cargo"].upper()}
             """)
 
-            st.write("**ID:**", data["id"])
-            st.write("**EDAD:**", data["edad"])
-            st.write("**ESTADO CIVIL:**", data["estado"])
-            st.write("**PROFESION:**", data["profesion"])
+            st.write(
+                "**ID:**",
+                data["id"]
+            )
 
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.write(
+                "**EDAD:**",
+                data["edad"]
+            )
+
+            st.write(
+                "**ESTADO CIVIL:**",
+                data["estado"]
+            )
+
+            st.write(
+                "**PROFESION:**",
+                data["profesion"]
+            )
+
+            st.markdown(
+                "</div>",
+                unsafe_allow_html=True
+            )
 
         # =====================================================
-        # TV KPI
+        # GRAFICO KPI
         # =====================================================
 
         with col2:
@@ -619,4 +702,7 @@ elif menu == "ESCANER":
                     use_container_width=True
                 )
 
-                st.dataframe(kpis)
+                st.dataframe(
+                    kpis,
+                    use_container_width=True
+                )
