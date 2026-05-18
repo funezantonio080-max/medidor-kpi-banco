@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import base64
 
@@ -12,16 +13,23 @@ st.set_page_config(
 )
 
 # =====================================================
-# CARGAR IMAGEN DE FONDO
+# IMAGEN DE FONDO
 # =====================================================
 
-with open("3572fe68-b4fd-46a1-ad61-85162f44e7fd.png", "rb") as f:
-    data = f.read()
-
-img = base64.b64encode(data).decode()
+# USA EL NOMBRE REAL DE TU IMAGEN
+IMAGEN = "df1e2a07-a3f9-40e1-919a-773770e2fd0f.png"
 
 # =====================================================
-# ESTILOS
+# CONVERTIR IMAGEN
+# =====================================================
+
+with open(IMAGEN, "rb") as image_file:
+    encoded = base64.b64encode(
+        image_file.read()
+    ).decode()
+
+# =====================================================
+# CSS
 # =====================================================
 
 st.markdown(f"""
@@ -34,7 +42,7 @@ st.markdown(f"""
         rgba(0,0,0,0.45),
         rgba(0,0,0,0.45)
     ),
-    url("data:image/png;base64,{img}");
+    url("data:image/png;base64,{encoded}");
 
     background-size: cover;
     background-position: center;
@@ -44,10 +52,6 @@ st.markdown(f"""
 
 [data-testid="stHeader"] {{
     background: rgba(0,0,0,0);
-}}
-
-[data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.75);
 }}
 
 .block-container {{
@@ -201,3 +205,4 @@ with c3:
 
 with c4:
     st.metric("EN RIESGO", "4")
+```
