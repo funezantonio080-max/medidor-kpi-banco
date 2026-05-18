@@ -1,6 +1,6 @@
+```python
 import streamlit as st
 import base64
-import os
 
 # =====================================================
 # CONFIGURACION
@@ -13,25 +13,13 @@ st.set_page_config(
 )
 
 # =====================================================
-# IMAGEN
+# IMAGEN REAL
 # =====================================================
 
-IMAGEN_FONDO = "portada.png"
+with open("3572fe68-b4fd-46a1-ad61-85162f44e7fd.png", "rb") as f:
+    data = f.read()
 
-# =====================================================
-# FUNCION BASE64
-# =====================================================
-
-def get_base64(imagen):
-
-    with open(imagen, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-img = ""
-
-if os.path.exists(IMAGEN_FONDO):
-
-    img = get_base64(IMAGEN_FONDO)
+img = base64.b64encode(data).decode()
 
 # =====================================================
 # FONDO
@@ -44,8 +32,8 @@ st.markdown(f"""
 
     background-image:
     linear-gradient(
-    rgba(0,0,0,0.45),
-    rgba(0,0,0,0.45)),
+    rgba(0,0,0,0.40),
+    rgba(0,0,0,0.40)),
     url("data:image/png;base64,{img}");
 
     background-size: cover;
@@ -62,21 +50,42 @@ st.markdown(f"""
     background: rgba(0,0,0,0.80);
 }}
 
+.block-container {{
+    padding-top: 1rem;
+}}
+
 h1,h2,h3,label {{
     color: white !important;
 }}
 
 .login-box {{
-    background: rgba(5,15,35,0.88);
-    padding: 35px;
+
+    background: rgba(0,0,0,0.55);
+
+    padding: 40px;
+
     border-radius: 20px;
+
+    backdrop-filter: blur(10px);
+
+    border: 1px solid rgba(255,255,255,0.10);
+}}
+
+.stTextInput input {{
+
+    height: 50px;
+
+    border-radius: 12px;
 }}
 
 .stButton > button {{
 
     width: 100%;
-    height: 50px;
+
+    height: 52px;
+
     border-radius: 12px;
+
     border: none;
 
     background:
@@ -86,7 +95,9 @@ h1,h2,h3,label {{
     #00c6ff);
 
     color: white;
+
     font-size: 18px;
+
     font-weight: bold;
 }}
 
@@ -104,13 +115,13 @@ USUARIO = "ADMIN"
 CLAVE = "1234"
 
 # =====================================================
-# LOGIN SCREEN
+# PANTALLA LOGIN
 # =====================================================
 
 if not st.session_state.login:
 
     st.markdown("""
-    <h1 style='text-align:center;font-size:70px;'>
+    <h1 style='text-align:center;font-size:70px;font-weight:bold;'>
     🏦 GERENCIA DE BANCO KPI
     </h1>
     """, unsafe_allow_html=True)
@@ -147,6 +158,7 @@ if not st.session_state.login:
             if usuario == USUARIO and clave == CLAVE:
 
                 st.session_state.login = True
+
                 st.rerun()
 
             else:
@@ -188,3 +200,4 @@ with c3:
 
 with c4:
     st.metric("EN RIESGO", "4")
+```
