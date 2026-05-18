@@ -15,13 +15,13 @@ st.set_page_config(
 # CARGAR IMAGEN DE FONDO
 # =====================================================
 
-with open("586c682c-ca2f-461b-9c42-d792d9982965.png", "rb") as image_file:
+with open("24f7ec0f-f914-4e59-90d5-f0ad5533f500.png", "rb") as image_file:
     encoded = base64.b64encode(
         image_file.read()
     ).decode()
 
 # =====================================================
-# ESTILOS CSS
+# ESTILOS
 # =====================================================
 
 st.markdown(f"""
@@ -44,10 +44,6 @@ st.markdown(f"""
 
 [data-testid="stHeader"] {{
     background: rgba(0,0,0,0);
-}}
-
-[data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.75);
 }}
 
 .block-container {{
@@ -109,94 +105,37 @@ h1,h2,h3,label {{
 # LOGIN
 # =====================================================
 
-if "login" not in st.session_state:
-    st.session_state.login = False
-
-USUARIO = "ADMIN"
-CLAVE = "1234"
-
-# =====================================================
-# PANTALLA LOGIN
-# =====================================================
-
-if not st.session_state.login:
-
-    st.markdown("""
-    <h1 style='text-align:center;font-size:72px;font-weight:bold;'>
-    🏦 GERENCIA DE BANCO KPI
-    </h1>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <h2 style='text-align:center;'>
-    CENTRO EJECUTIVO DE INDICADORES BANCARIOS
-    </h2>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-
-    c1, c2, c3 = st.columns([1,1,1])
-
-    with c2:
-
-        st.markdown("""
-        <div class="login-box">
-        <h1 style='text-align:center;'>
-        INICIAR SESION
-        </h1>
-        </div>
-        """, unsafe_allow_html=True)
-
-        usuario = st.text_input("USUARIO")
-
-        clave = st.text_input(
-            "CONTRASEÑA",
-            type="password"
-        )
-
-        if st.button("INGRESAR"):
-
-            if usuario == USUARIO and clave == CLAVE:
-
-                st.session_state.login = True
-                st.rerun()
-
-            else:
-
-                st.error(
-                    "USUARIO O CONTRASEÑA INCORRECTA"
-                )
-
-    st.stop()
-
-# =====================================================
-# DASHBOARD
-# =====================================================
-
 st.markdown("""
-<h1 style='text-align:center;font-size:65px;font-weight:bold;'>
+<h1 style='text-align:center;font-size:72px;font-weight:bold;'>
 🏦 GERENCIA DE BANCO KPI
 </h1>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <h2 style='text-align:center;'>
-DASHBOARD EJECUTIVO BANCARIO
+CENTRO EJECUTIVO DE INDICADORES BANCARIOS
 </h2>
 """, unsafe_allow_html=True)
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("<br><br><br>", unsafe_allow_html=True)
 
-c1, c2, c3, c4 = st.columns(4)
-
-with c1:
-    st.metric("COLABORADORES", "18")
+c1, c2, c3 = st.columns([1,1,1])
 
 with c2:
-    st.metric("KPIs", "33")
 
-with c3:
-    st.metric("EN OBJETIVO", "27")
+    st.markdown("""
+    <div class="login-box">
+    <h1 style='text-align:center;'>
+    INICIAR SESION
+    </h1>
+    </div>
+    """, unsafe_allow_html=True)
 
-with c4:
-    st.metric("EN RIESGO", "4")
+    usuario = st.text_input("USUARIO")
+
+    clave = st.text_input(
+        "CONTRASEÑA",
+        type="password"
+    )
+
+    st.button("INGRESAR")
