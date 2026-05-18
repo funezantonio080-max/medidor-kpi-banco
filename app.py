@@ -9,7 +9,7 @@ import base64
 import os
 
 # =====================================================
-# CONFIG
+# CONFIGURACION
 # =====================================================
 
 st.set_page_config(
@@ -22,16 +22,19 @@ st.set_page_config(
 # IMAGEN PORTADA
 # =====================================================
 
-IMAGEN_PORTADA = "portada.png"
+IMAGEN_PORTADA = "9c24b2b9-e58e-4118-a33d-7c8450749d26.png"
 
 def get_base64(imagen):
+
     with open(imagen, "rb") as f:
         data = f.read()
+
     return base64.b64encode(data).decode()
 
 img = ""
 
 if os.path.exists(IMAGEN_PORTADA):
+
     img = get_base64(IMAGEN_PORTADA)
 
 # =====================================================
@@ -59,7 +62,7 @@ st.markdown(f"""
 }}
 
 [data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.88);
+    background: rgba(0,0,0,0.90);
 }}
 
 .block-container {{
@@ -71,7 +74,7 @@ h1,h2,h3,h4,h5,h6,p,label {{
 }}
 
 .metric {{
-    background: rgba(5,15,35,0.90);
+    background: rgba(5,15,35,0.88);
     padding:20px;
     border-radius:18px;
     text-align:center;
@@ -86,7 +89,7 @@ h1,h2,h3,h4,h5,h6,p,label {{
 }}
 
 .panel {{
-    background: rgba(5,15,35,0.90);
+    background: rgba(5,15,35,0.88);
     padding:20px;
     border-radius:18px;
     border:1px solid rgba(255,255,255,0.08);
@@ -139,9 +142,6 @@ if not st.session_state.login:
     """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-
-    if not os.path.exists(IMAGEN_PORTADA):
-        st.warning("NO SE ENCONTRO portada.png")
 
     c1,c2,c3 = st.columns([1,1,1])
 
@@ -267,6 +267,10 @@ if menu == "DASHBOARD":
 
     c1,c2,c3,c4 = st.columns(4)
 
+    # =================================================
+    # COLABORADORES
+    # =================================================
+
     with c1:
 
         st.markdown(
@@ -283,6 +287,10 @@ if menu == "DASHBOARD":
             unsafe_allow_html=True
         )
 
+    # =================================================
+    # KPIs
+    # =================================================
+
     with c2:
 
         st.markdown(
@@ -298,6 +306,10 @@ if menu == "DASHBOARD":
             """,
             unsafe_allow_html=True
         )
+
+    # =================================================
+    # PROMEDIO
+    # =================================================
 
     with c3:
 
@@ -323,6 +335,10 @@ if menu == "DASHBOARD":
             """,
             unsafe_allow_html=True
         )
+
+    # =================================================
+    # FECHA
+    # =================================================
 
     with c4:
 
@@ -388,294 +404,5 @@ if menu == "DASHBOARD":
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
-            key="dashboard_chart"
+            use_container_width=True
         )
-
-# =====================================================
-# REGISTRAR
-# =====================================================
-
-elif menu == "REGISTRAR":
-
-    st.markdown("""
-    <div class="panel">
-    <h2>REGISTRAR EMPLEADO</h2>
-    </div>
-    """, unsafe_allow_html=True)
-
-    with st.form("registro"):
-
-        c1,c2 = st.columns(2)
-
-        with c1:
-
-            id_emp = st.text_input("ID")
-            nombre = st.text_input("NOMBRE")
-            edad = st.text_input("EDAD")
-
-        with c2:
-
-            estado = st.text_input(
-                "ESTADO CIVIL"
-            )
-
-            profesion = st.text_input(
-                "PROFESION"
-            )
-
-            cargo = st.text_input(
-                "CARGO"
-            )
-
-        foto = st.file_uploader(
-            "FOTO",
-            type=["png","jpg","jpeg"]
-        )
-
-        st.markdown("### KPIs")
-
-        indicadores = []
-
-        for i in range(3):
-
-            st.markdown(f"#### KPI {i+1}")
-
-            ind = st.text_input(
-                f"INDICADOR {i+1}",
-                key=f"ind{i}"
-            )
-
-            meta = st.number_input(
-                f"META {i+1}",
-                key=f"meta{i}"
-            )
-
-            proy = st.number_input(
-                f"PROYECTADO {i+1}",
-                key=f"proy{i}"
-            )
-
-            real = st.number_input(
-                f"REAL {i+1}",
-                key=f"real{i}"
-            )
-
-            indicadores.append(
-                [ind,meta,proy,real]
-            )
-
-        guardar = st.form_submit_button(
-            "GUARDAR"
-        )
-
-        if guardar:
-
-            foto_bytes = (
-                foto.read()
-                if foto
-                else None
-            )
-
-            c.execute("""
-            INSERT OR REPLACE INTO empleados
-            VALUES(?,?,?,?,?,?,?)
-            """,(
-                id_emp,
-                nombre,
-                edad,
-                estado,
-                profesion,
-                cargo,
-                foto_bytes
-            ))
-
-            c.execute("""
-            DELETE FROM indicadores
-            WHERE id_empleado=?
-            """,(id_emp,))
-
-            for x in indicadores:
-
-                c.execute("""
-                INSERT INTO indicadores
-                VALUES(?,?,?,?,?)
-                """,(
-                    id_emp,
-                    x[0],
-                    x[1],
-                    x[2],
-                    x[3]
-                ))
-
-            conn.commit()
-
-            st.success(
-                "EMPLEADO REGISTRADO"
-            )
-
-# =====================================================
-# EMPLEADOS
-# =====================================================
-
-elif menu == "EMPLEADOS":
-
-    st.markdown("""
-    <div class="panel">
-    <h2>EMPLEADOS</h2>
-    </div>
-    """, unsafe_allow_html=True)
-
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
-
-    st.dataframe(
-        empleados.drop(
-            columns=["foto"],
-            errors="ignore"
-        ),
-        use_container_width=True
-    )
-
-# =====================================================
-# ESCANER
-# =====================================================
-
-elif menu == "ESCANER":
-
-    st.markdown("""
-    <div class="panel">
-    <h2>PANEL EJECUTIVO KPI</h2>
-    </div>
-    """, unsafe_allow_html=True)
-
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
-
-    if not empleados.empty:
-
-        empleados["mostrar"] = (
-            empleados["id"]
-            + " - "
-            + empleados["nombre"]
-            + " - "
-            + empleados["cargo"]
-        )
-
-        seleccionado = st.selectbox(
-            "SELECCIONAR EMPLEADO",
-            empleados["mostrar"]
-        )
-
-        emp_id = seleccionado.split(
-            " - "
-        )[0]
-
-        data = pd.read_sql(
-            f"""
-            SELECT * FROM empleados
-            WHERE id='{emp_id}'
-            """,
-            conn
-        ).iloc[0]
-
-        kpis = pd.read_sql(
-            f"""
-            SELECT * FROM indicadores
-            WHERE id_empleado='{emp_id}'
-            """,
-            conn
-        )
-
-        c1,c2 = st.columns([1,2])
-
-        with c1:
-
-            if data["foto"]:
-
-                image = Image.open(
-                    io.BytesIO(data["foto"])
-                )
-
-                st.image(
-                    image,
-                    use_container_width=True
-                )
-
-            st.markdown(f"""
-            ### {data["nombre"].upper()}
-            #### {data["cargo"].upper()}
-            """)
-
-            st.write(
-                "**ID:**",
-                data["id"]
-            )
-
-            st.write(
-                "**EDAD:**",
-                data["edad"]
-            )
-
-            st.write(
-                "**ESTADO CIVIL:**",
-                data["estado"]
-            )
-
-            st.write(
-                "**PROFESION:**",
-                data["profesion"]
-            )
-
-        with c2:
-
-            if not kpis.empty:
-
-                fig = go.Figure()
-
-                fig.add_trace(go.Bar(
-                    x=kpis["indicador"],
-                    y=kpis["meta"],
-                    name="META",
-                    marker_color="#0066ff",
-                    width=0.20
-                ))
-
-                fig.add_trace(go.Bar(
-                    x=kpis["indicador"],
-                    y=kpis["proyectado"],
-                    name="PROYECTADO",
-                    marker_color="#00cc99",
-                    width=0.20
-                ))
-
-                fig.add_trace(go.Bar(
-                    x=kpis["indicador"],
-                    y=kpis["real"],
-                    name="REAL",
-                    marker_color="#00ffcc",
-                    width=0.20
-                ))
-
-                fig.update_layout(
-                    barmode="group",
-                    height=550,
-                    paper_bgcolor="rgba(0,0,0,0)",
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="white")
-                )
-
-                st.plotly_chart(
-                    fig,
-                    use_container_width=True,
-                    key="empleado_chart"
-                )
-
-                st.dataframe(
-                    kpis,
-                    use_container_width=True
-                )
