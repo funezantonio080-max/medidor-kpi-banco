@@ -13,10 +13,10 @@ st.set_page_config(
 )
 
 # =====================================================
-# RUTA REAL DE TU IMAGEN
+# IMAGEN
 # =====================================================
 
-IMAGEN_FONDO = "/mnt/data/645488dc-027d-415b-b368-0dc0027a30ba.png"
+IMAGEN_FONDO = "portada.png"
 
 # =====================================================
 # FUNCION BASE64
@@ -25,25 +25,27 @@ IMAGEN_FONDO = "/mnt/data/645488dc-027d-415b-b368-0dc0027a30ba.png"
 def get_base64(imagen):
 
     with open(imagen, "rb") as f:
-        data = f.read()
+        return base64.b64encode(f.read()).decode()
 
-    return base64.b64encode(data).decode()
+img = ""
 
-img = get_base64(IMAGEN_FONDO)
+if os.path.exists(IMAGEN_FONDO):
+
+    img = get_base64(IMAGEN_FONDO)
 
 # =====================================================
-# CSS FONDO REAL
+# FONDO
 # =====================================================
 
 st.markdown(f"""
 <style>
 
 [data-testid="stAppViewContainer"] {{
+
     background-image:
     linear-gradient(
-        rgba(0,0,0,0.45),
-        rgba(0,0,0,0.45)
-    ),
+    rgba(0,0,0,0.45),
+    rgba(0,0,0,0.45)),
     url("data:image/png;base64,{img}");
 
     background-size: cover;
@@ -60,11 +62,7 @@ st.markdown(f"""
     background: rgba(0,0,0,0.80);
 }}
 
-.block-container {{
-    padding-top: 1rem;
-}}
-
-h1,h2,h3,h4,h5,h6,p,label {{
+h1,h2,h3,label {{
     color: white !important;
 }}
 
@@ -72,24 +70,24 @@ h1,h2,h3,h4,h5,h6,p,label {{
     background: rgba(5,15,35,0.88);
     padding: 35px;
     border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.10);
-    backdrop-filter: blur(10px);
 }}
 
 .stButton > button {{
-    width: 100%;
-    border: none;
-    border-radius: 12px;
-    height: 50px;
-    background: linear-gradient(90deg,#0066ff,#00c6ff);
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-}}
 
-.stTextInput input {{
+    width: 100%;
+    height: 50px;
     border-radius: 12px;
-    height: 45px;
+    border: none;
+
+    background:
+    linear-gradient(
+    90deg,
+    #0066ff,
+    #00c6ff);
+
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
 }}
 
 </style>
@@ -106,13 +104,13 @@ USUARIO = "ADMIN"
 CLAVE = "1234"
 
 # =====================================================
-# PANTALLA LOGIN
+# LOGIN SCREEN
 # =====================================================
 
 if not st.session_state.login:
 
     st.markdown("""
-    <h1 style='text-align:center;font-size:70px;font-weight:bold;'>
+    <h1 style='text-align:center;font-size:70px;'>
     🏦 GERENCIA DE BANCO KPI
     </h1>
     """, unsafe_allow_html=True)
@@ -125,7 +123,7 @@ if not st.session_state.login:
 
     st.markdown("<br><br><br>", unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1,1,1])
+    c1,c2,c3 = st.columns([1,1,1])
 
     with c2:
 
@@ -138,6 +136,7 @@ if not st.session_state.login:
         """, unsafe_allow_html=True)
 
         usuario = st.text_input("USUARIO")
+
         clave = st.text_input(
             "CONTRASEÑA",
             type="password"
@@ -159,7 +158,7 @@ if not st.session_state.login:
     st.stop()
 
 # =====================================================
-# SISTEMA PRINCIPAL
+# DASHBOARD
 # =====================================================
 
 st.markdown("""
@@ -176,7 +175,7 @@ DASHBOARD EJECUTIVO BANCARIO
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-c1, c2, c3, c4 = st.columns(4)
+c1,c2,c3,c4 = st.columns(4)
 
 with c1:
     st.metric("COLABORADORES", "18")
