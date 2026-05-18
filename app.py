@@ -110,6 +110,10 @@ if "login" not in st.session_state:
 USUARIO = "ADMIN"
 CLAVE = "1234"
 
+# =========================================================
+# PORTADA + LOGIN
+# =========================================================
+
 if not st.session_state.login:
 
     st.markdown("""
@@ -134,17 +138,19 @@ if not st.session_state.login:
     # PORTADA
     # =====================================================
 
-    if os.path.exists("portada.png"):
+    nombre_imagen = "160155bf-7604-45c4-9ac7-ba7330fb3b20.png"
+
+    if os.path.exists(nombre_imagen):
 
         st.image(
-            "portada.png",
+            nombre_imagen,
             use_container_width=True
         )
 
     else:
 
-        st.warning(
-            "NO SE ENCONTRO portada.png"
+        st.error(
+            f"NO SE ENCONTRO LA IMAGEN: {nombre_imagen}"
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -159,9 +165,9 @@ if not st.session_state.login:
 
         st.markdown("""
         <div class="panel">
-        <h3 style='text-align:center;'>
+        <h2 style='text-align:center;'>
         INICIAR SESION
-        </h3>
+        </h2>
         </div>
         """, unsafe_allow_html=True)
 
@@ -180,7 +186,9 @@ if not st.session_state.login:
 
             else:
 
-                st.error("CREDENCIALES INCORRECTAS")
+                st.error(
+                    "CREDENCIALES INCORRECTAS"
+                )
 
     st.stop()
 
@@ -279,33 +287,51 @@ if menu == "DASHBOARD":
 
     col1,col2,col3,col4 = st.columns(4)
 
+    # =====================================================
+    # COLABORADORES
+    # =====================================================
+
     with col1:
 
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">
-            COLABORADORES
-            </div>
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">
+                    COLABORADORES
+                </div>
 
-            <div class="metric-value">
-            {len(empleados)}
+                <div class="metric-value">
+                    {len(empleados)}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
+    # =====================================================
+    # KPIS
+    # =====================================================
 
     with col2:
 
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">
-            KPIs
-            </div>
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">
+                    KPIs
+                </div>
 
-            <div class="metric-value">
-            {len(kpis)}
+                <div class="metric-value">
+                    {len(kpis)}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
+    # =====================================================
+    # PROMEDIO
+    # =====================================================
 
     with col3:
 
@@ -317,17 +343,24 @@ if menu == "DASHBOARD":
                 2
             )
 
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">
-            PROMEDIO REAL
-            </div>
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">
+                    PROMEDIO REAL
+                </div>
 
-            <div class="metric-value">
-            {promedio}
+                <div class="metric-value">
+                    {promedio}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
+    # =====================================================
+    # FECHA
+    # =====================================================
 
     with col4:
 
@@ -335,17 +368,20 @@ if menu == "DASHBOARD":
             "%d/%m/%Y"
         )
 
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">
-            FECHA
-            </div>
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">
+                    FECHA
+                </div>
 
-            <div class="metric-value" style="font-size:20px;">
-            {fecha}
+                <div class="metric-value" style="font-size:20px;">
+                    {fecha}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -354,6 +390,10 @@ if menu == "DASHBOARD":
     <h2>📊 KPIs GENERALES</h2>
     </div>
     """, unsafe_allow_html=True)
+
+    # =====================================================
+    # GRAFICO GENERAL
+    # =====================================================
 
     if not kpis.empty:
 
