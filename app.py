@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import base64
 
@@ -13,7 +12,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# IMAGEN REAL
+# CARGAR IMAGEN DE FONDO
 # =====================================================
 
 with open("3572fe68-b4fd-46a1-ad61-85162f44e7fd.png", "rb") as f:
@@ -22,7 +21,7 @@ with open("3572fe68-b4fd-46a1-ad61-85162f44e7fd.png", "rb") as f:
 img = base64.b64encode(data).decode()
 
 # =====================================================
-# FONDO
+# ESTILOS
 # =====================================================
 
 st.markdown(f"""
@@ -32,8 +31,9 @@ st.markdown(f"""
 
     background-image:
     linear-gradient(
-    rgba(0,0,0,0.40),
-    rgba(0,0,0,0.40)),
+        rgba(0,0,0,0.45),
+        rgba(0,0,0,0.45)
+    ),
     url("data:image/png;base64,{img}");
 
     background-size: cover;
@@ -47,7 +47,7 @@ st.markdown(f"""
 }}
 
 [data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.80);
+    background: rgba(0,0,0,0.75);
 }}
 
 .block-container {{
@@ -60,15 +60,15 @@ h1,h2,h3,label {{
 
 .login-box {{
 
-    background: rgba(0,0,0,0.55);
+    background: rgba(0,0,0,0.60);
 
     padding: 40px;
 
     border-radius: 20px;
 
-    backdrop-filter: blur(10px);
-
     border: 1px solid rgba(255,255,255,0.10);
+
+    backdrop-filter: blur(8px);
 }}
 
 .stTextInput input {{
@@ -90,9 +90,10 @@ h1,h2,h3,label {{
 
     background:
     linear-gradient(
-    90deg,
-    #0066ff,
-    #00c6ff);
+        90deg,
+        #0066ff,
+        #00c6ff
+    );
 
     color: white;
 
@@ -121,7 +122,7 @@ CLAVE = "1234"
 if not st.session_state.login:
 
     st.markdown("""
-    <h1 style='text-align:center;font-size:70px;font-weight:bold;'>
+    <h1 style='text-align:center;font-size:72px;font-weight:bold;'>
     🏦 GERENCIA DE BANCO KPI
     </h1>
     """, unsafe_allow_html=True)
@@ -134,7 +135,7 @@ if not st.session_state.login:
 
     st.markdown("<br><br><br>", unsafe_allow_html=True)
 
-    c1,c2,c3 = st.columns([1,1,1])
+    c1, c2, c3 = st.columns([1,1,1])
 
     with c2:
 
@@ -174,7 +175,7 @@ if not st.session_state.login:
 # =====================================================
 
 st.markdown("""
-<h1 style='text-align:center;font-size:65px;'>
+<h1 style='text-align:center;font-size:65px;font-weight:bold;'>
 🏦 GERENCIA DE BANCO KPI
 </h1>
 """, unsafe_allow_html=True)
@@ -187,7 +188,7 @@ DASHBOARD EJECUTIVO BANCARIO
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-c1,c2,c3,c4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     st.metric("COLABORADORES", "18")
@@ -200,4 +201,3 @@ with c3:
 
 with c4:
     st.metric("EN RIESGO", "4")
-```
