@@ -1,6 +1,10 @@
 import streamlit as st
 import base64
 
+# =====================================================
+# CONFIGURACION
+# =====================================================
+
 st.set_page_config(
     page_title="GERENCIA DE BANCO KPI",
     page_icon="🏦",
@@ -8,16 +12,16 @@ st.set_page_config(
 )
 
 # =====================================================
-# IMAGEN DE FONDO
+# CARGAR IMAGEN DE FONDO
 # =====================================================
 
-with open("c95310e2-fce9-47e4-b060-34e38fd422b2.png", "rb") as image_file:
+with open("586c682c-ca2f-461b-9c42-d792d9982965.png", "rb") as image_file:
     encoded = base64.b64encode(
         image_file.read()
     ).decode()
 
 # =====================================================
-# CSS
+# ESTILOS CSS
 # =====================================================
 
 st.markdown(f"""
@@ -40,6 +44,10 @@ st.markdown(f"""
 
 [data-testid="stHeader"] {{
     background: rgba(0,0,0,0);
+}}
+
+[data-testid="stSidebar"] {{
+    background: rgba(0,0,0,0.75);
 }}
 
 .block-container {{
@@ -107,6 +115,10 @@ if "login" not in st.session_state:
 USUARIO = "ADMIN"
 CLAVE = "1234"
 
+# =====================================================
+# PANTALLA LOGIN
+# =====================================================
+
 if not st.session_state.login:
 
     st.markdown("""
@@ -147,7 +159,6 @@ if not st.session_state.login:
             if usuario == USUARIO and clave == CLAVE:
 
                 st.session_state.login = True
-
                 st.rerun()
 
             else:
