@@ -1,8 +1,15 @@
 import streamlit as st
+import pandas as pd
+import sqlite3
+import plotly.graph_objects as go
+from PIL import Image
+import io
+from datetime import datetime
 import base64
+import os
 
 # =====================================================
-# CONFIGURACION GENERAL
+# CONFIGURACION
 # =====================================================
 
 st.set_page_config(
@@ -12,38 +19,41 @@ st.set_page_config(
 )
 
 # =====================================================
-# CARGAR IMAGEN DE FONDO
+# IMAGEN PORTADA
 # =====================================================
 
-# ESTA ES LA IMAGEN NUEVA QUE SUBISTE
-with open("cf28a163-8639-4681-8332-327545f58634.png", "rb") as image_file:
+IMAGEN_PORTADA = "8e2ed00a-50f4-48f2-a807-a11e06a29108.png"
 
-    encoded = base64.b64encode(
-        image_file.read()
-    ).decode()
+def get_base64(imagen):
+
+    with open(imagen, "rb") as f:
+        data = f.read()
+
+    return base64.b64encode(data).decode()
+
+img = ""
+
+if os.path.exists(IMAGEN_PORTADA):
+
+    img = get_base64(IMAGEN_PORTADA)
 
 # =====================================================
-# ESTILOS CSS
+# CSS
 # =====================================================
 
 st.markdown(f"""
 <style>
 
 [data-testid="stAppViewContainer"] {{
-
     background-image:
     linear-gradient(
-        rgba(0,0,0,0.45),
-        rgba(0,0,0,0.45)
-    ),
-    url("data:image/png;base64,{encoded}");
+    rgba(0,0,0,0.72),
+    rgba(0,0,0,0.72)),
+    url("data:image/png;base64,{img}");
 
     background-size: cover;
-
     background-position: center;
-
     background-repeat: no-repeat;
-
     background-attachment: fixed;
 }}
 
@@ -52,97 +62,59 @@ st.markdown(f"""
 }}
 
 [data-testid="stSidebar"] {{
-    background: rgba(0,0,0,0.80);
+    background: rgba(0,0,0,0.92);
 }}
 
 .block-container {{
     padding-top: 1rem;
 }}
 
-h1,h2,h3,label,p {{
-    color: white !important;
+h1,h2,h3,h4,h5,h6,p,label {{
+    color:white !important;
 }}
 
-.login-box {{
+.metric {{
+    background: rgba(5,15,35,0.88);
+    padding:20px;
+    border-radius:18px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 15px rgba(0,0,0,0.5);
+}}
 
-    background: rgba(0,0,0,0.60);
+.valor {{
+    font-size:42px;
+    font-weight:bold;
+    color:#00ffcc;
+}}
 
-    padding: 40px;
+.panel {{
+    background: rgba(5,15,35,0.88);
+    padding:20px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.08);
+}}
 
-    border-radius: 20px;
-
-    border: 1px solid rgba(255,255,255,0.10);
-
-    backdrop-filter: blur(8px);
+.stButton>button {{
+    width:100%;
+    border:none;
+    border-radius:12px;
+    height:48px;
+    background:linear-gradient(90deg,#0066ff,#00c6ff);
+    color:white;
+    font-weight:bold;
+    font-size:16px;
 }}
 
 .stTextInput input {{
-
-    height: 50px;
-
-    border-radius: 12px;
-}}
-
-.stButton > button {{
-
-    width: 100%;
-
-    height: 52px;
-
-    border-radius: 12px;
-
-    border: none;
-
-    background:
-    linear-gradient(
-        90deg,
-        #0066ff,
-        #00c6ff
-    );
-
-    color: white;
-
-    font-size: 18px;
-
-    font-weight: bold;
-}}
-
-.metric-card {{
-
-    background: rgba(0,0,0,0.55);
-
-    padding: 25px;
-
-    border-radius: 18px;
-
-    text-align: center;
-
-    border: 1px solid rgba(255,255,255,0.10);
-}}
-
-.metric-title {{
-
-    color: #ffffff;
-
-    font-size: 22px;
-
-    font-weight: bold;
-}}
-
-.metric-value {{
-
-    color: #00c6ff;
-
-    font-size: 40px;
-
-    font-weight: bold;
+    border-radius:10px;
 }}
 
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# VARIABLES LOGIN
+# LOGIN
 # =====================================================
 
 if "login" not in st.session_state:
@@ -152,43 +124,38 @@ USUARIO = "ADMIN"
 CLAVE = "1234"
 
 # =====================================================
-# LOGIN
+# LOGIN SCREEN
 # =====================================================
 
 if not st.session_state.login:
 
     st.markdown("""
-    <h1 style='text-align:center;
-               font-size:72px;
-               font-weight:bold;'>
+    <h1 style='text-align:center;font-size:62px;'>
     🏦 GERENCIA DE BANCO KPI
     </h1>
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <h2 style='text-align:center;'>
+    <h3 style='text-align:center;'>
     CENTRO EJECUTIVO DE INDICADORES BANCARIOS
-    </h2>
+    </h3>
     """, unsafe_allow_html=True)
 
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-    c1, c2, c3 = st.columns([1,1,1])
+    c1,c2,c3 = st.columns([1,1,1])
 
     with c2:
 
         st.markdown("""
-        <div class="login-box">
-
-        <h1 style='text-align:center;'>
+        <div class="panel">
+        <h2 style='text-align:center;'>
         INICIAR SESION
-        </h1>
-
+        </h2>
         </div>
         """, unsafe_allow_html=True)
 
         usuario = st.text_input("USUARIO")
-
         clave = st.text_input(
             "CONTRASEÑA",
             type="password"
@@ -199,7 +166,6 @@ if not st.session_state.login:
             if usuario == USUARIO and clave == CLAVE:
 
                 st.session_state.login = True
-
                 st.rerun()
 
             else:
@@ -211,91 +177,232 @@ if not st.session_state.login:
     st.stop()
 
 # =====================================================
-# DASHBOARD PRINCIPAL
+# TITULO
 # =====================================================
 
 st.markdown("""
-<h1 style='text-align:center;
-           font-size:65px;
-           font-weight:bold;'>
+<h1 style='text-align:center;font-size:55px;'>
 🏦 GERENCIA DE BANCO KPI
 </h1>
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<h2 style='text-align:center;'>
-DASHBOARD EJECUTIVO BANCARIO
-</h2>
+<h3 style='text-align:center;'>
+CENTRO EJECUTIVO DE INDICADORES BANCARIOS
+</h3>
 """, unsafe_allow_html=True)
 
-st.markdown("<br><br>", unsafe_allow_html=True)
-
 # =====================================================
-# KPIs
+# DATABASE
 # =====================================================
 
-c1, c2, c3, c4 = st.columns(4)
+conn = sqlite3.connect(
+    "banco_kpi.db",
+    check_same_thread=False
+)
 
-with c1:
+c = conn.cursor()
 
-    st.markdown("""
-    <div class="metric-card">
+# =====================================================
+# TABLA EMPLEADOS
+# =====================================================
 
-    <div class="metric-title">
-    COLABORADORES
-    </div>
+c.execute("""
+CREATE TABLE IF NOT EXISTS empleados(
+id TEXT PRIMARY KEY,
+nombre TEXT,
+edad TEXT,
+estado TEXT,
+profesion TEXT,
+cargo TEXT,
+foto BLOB
+)
+""")
 
-    <div class="metric-value">
-    18
-    </div>
+# =====================================================
+# TABLA KPIs
+# =====================================================
 
-    </div>
-    """, unsafe_allow_html=True)
+c.execute("""
+CREATE TABLE IF NOT EXISTS indicadores(
+id_empleado TEXT,
+indicador TEXT,
+meta REAL,
+proyectado REAL,
+real REAL
+)
+""")
 
-with c2:
+conn.commit()
 
-    st.markdown("""
-    <div class="metric-card">
+# =====================================================
+# MENU
+# =====================================================
 
-    <div class="metric-title">
-    KPIs
-    </div>
+menu = st.sidebar.radio(
+    "MENU",
+    [
+        "DASHBOARD",
+        "REGISTRAR",
+        "EMPLEADOS",
+        "ESCANER"
+    ]
+)
 
-    <div class="metric-value">
-    33
-    </div>
+# =====================================================
+# DASHBOARD
+# =====================================================
 
-    </div>
-    """, unsafe_allow_html=True)
+if menu == "DASHBOARD":
 
-with c3:
+    empleados = pd.read_sql(
+        "SELECT * FROM empleados",
+        conn
+    )
 
-    st.markdown("""
-    <div class="metric-card">
+    kpis = pd.read_sql(
+        "SELECT * FROM indicadores",
+        conn
+    )
 
-    <div class="metric-title">
-    EN OBJETIVO
-    </div>
+    c1,c2,c3,c4 = st.columns(4)
 
-    <div class="metric-value">
-    27
-    </div>
+    # =================================================
+    # COLABORADORES
+    # =================================================
 
-    </div>
-    """, unsafe_allow_html=True)
+    with c1:
 
-with c4:
+        st.markdown(
+            f"""
+            <div class="metric">
+            <h3>COLABORADORES</h3>
 
-    st.markdown("""
-    <div class="metric-card">
+            <div class="valor">
+            {len(empleados)}
+            </div>
 
-    <div class="metric-title">
-    EN RIESGO
-    </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    <div class="metric-value">
-    4
-    </div>
+    # =================================================
+    # KPIs
+    # =================================================
 
-    </div>
-    """, unsafe_allow_html=True)
+    with c2:
+
+        st.markdown(
+            f"""
+            <div class="metric">
+            <h3>KPIs</h3>
+
+            <div class="valor">
+            {len(kpis)}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # =================================================
+    # PROMEDIO
+    # =================================================
+
+    with c3:
+
+        promedio = 0
+
+        if not kpis.empty:
+
+            promedio = round(
+                kpis["real"].mean(),
+                2
+            )
+
+        st.markdown(
+            f"""
+            <div class="metric">
+            <h3>PROMEDIO REAL</h3>
+
+            <div class="valor">
+            {promedio}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # =================================================
+    # FECHA
+    # =================================================
+
+    with c4:
+
+        fecha = datetime.now().strftime(
+            "%d/%m/%Y"
+        )
+
+        st.markdown(
+            f"""
+            <div class="metric">
+            <h3>FECHA</h3>
+
+            <div class="valor" style="font-size:22px;">
+            {fecha}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # =================================================
+    # GRAFICO GENERAL
+    # =================================================
+
+    if not kpis.empty:
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Bar(
+            x=kpis["indicador"],
+            y=kpis["meta"],
+            name="META",
+            marker_color="#0066ff",
+            width=0.20
+        ))
+
+        fig.add_trace(go.Bar(
+            x=kpis["indicador"],
+            y=kpis["proyectado"],
+            name="PROYECTADO",
+            marker_color="#00cc99",
+            width=0.20
+        ))
+
+        fig.add_trace(go.Bar(
+            x=kpis["indicador"],
+            y=kpis["real"],
+            name="REAL",
+            marker_color="#00ffcc",
+            width=0.20
+        ))
+
+        fig.update_layout(
+            barmode="group",
+            height=600,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white")
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
