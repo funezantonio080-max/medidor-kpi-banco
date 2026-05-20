@@ -152,16 +152,21 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime
+
 # =========================================================
-# DASHBOARD PERFECCIÓN ABSOLUTA (REPLICA EXACTA CLON V12)
+# DASHBOARD EJECUTIVO PERFECCIONADO (VERSION CLON REAL V14)
 # =========================================================
 
 if menu == "DASHBOARD":
 
-    # 1. INYECCIÓN DE ESTILOS CSS GENERALES (Aislados para evitar roturas)
+    # 1. ESTILOS GENERALES CSS (Contenedores oscuros y textos limpios)
     st.markdown("""
     <style>
-    /* Fondo oscuro e interfaz idéntica a la imagen */
+    /* Fondo oscuro de la app */
     [data-testid="stAppViewContainer"] {
         background-color: #060b13 !important;
     }
@@ -171,13 +176,13 @@ if menu == "DASHBOARD":
         max-width: 96% !important;
     }
     
-    /* ESTILOS DE LOS CONTENEDORES NATIVOS */
+    /* Forzar diseño de tarjetas oscuras usando los contenedores de Streamlit */
     div[data-testid="stVerticalBlock"] > div:has(div.kpi-contenedor-tarjeta) {
         background: #09101a !important;
         border: 1px solid #142334 !important;
         border-radius: 14px !important;
-        padding: 20px !important;
-        margin-bottom: 10px !important;
+        padding: 22px !important;
+        margin-bottom: 12px !important;
     }
 
     /* ENCABEZADO */
@@ -186,7 +191,7 @@ if menu == "DASHBOARD":
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
     }
     .hdr-logo-box {
         background: #09101a;
@@ -228,8 +233,8 @@ if menu == "DASHBOARD":
     .top-val { color: white; font-size: 20px; font-weight: 700; line-height: 1.1; }
     .top-dsc { color: #4f6174; font-size: 10px; }
 
-    /* DETALLES DE CABECERA DE TARJETA PRINCIPAL */
-    .kpi-card-header-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
+    /* DETALLES DE LAS TARJETAS GRANDES */
+    .kpi-card-header-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px; }
     .kpi-card-header-left { display: flex; align-items: center; }
     .badge-sym-frame { background: rgba(0, 230, 118, 0.12); color: #00E676; padding: 3px 9px; border-radius: 6px; font-weight: 800; font-size: 14px; margin-right: 12px; border: 1px solid rgba(0, 230, 118, 0.25); }
     .kpi-title-text { color: white; font-size: 16px; font-weight: 700; }
@@ -240,22 +245,22 @@ if menu == "DASHBOARD":
     .b-meta { background-color: #2196F3; }
     .b-proy { background-color: #FFC107; }
     .b-real { background-color: #00E676; }
-    .lbl-style { color: #7a8b9e; font-weight: 600; }
-    .val-style { color: white; font-weight: 700; font-family: monospace; }
+    .lbl-style { color: #7a8b9e; font-weight: 600; text-transform: uppercase; }
+    .val-style { color: white; font-weight: 700; font-family: monospace; font-size: 13.5px; }
 
-    /* CAJA DE CUMPLIMIENTO INTERNA */
+    /* CAJA DE CUMPLIMIENTO GRIS OSCURO */
     .box-comp-clon { background: #0e1926; border: 1px solid #1a2d42; border-radius: 10px; padding: 12px; text-align: center; margin-top: 15px; width: 100%; }
-    .box-comp-lbl { color: #7a8b9e; font-size: 11px; }
+    .box-comp-lbl { color: #7a8b9e; font-size: 11px; font-weight: 500; }
     .box-comp-val { color: #00E676; font-size: 22px; font-weight: 700; margin: 2px 0; }
     .box-comp-status { color: #00E676; font-size: 11px; font-weight: 600; }
 
-    /* PIE DE TARJETA Y FOOTER */
+    /* NOTAS Y PIE DE PÁGINA */
     .card-footer-note { text-align: center; color: #00E676; font-size: 11px; opacity: 0.6; margin-top: 15px; font-weight: 500; width: 100%; }
-    .footer-bar-clon { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #142334; color: #4f6174; font-size: 11px; margin-top: 25px; width: 100%; }
+    .footer-bar-clon { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #142334; color: #4f6174; font-size: 11px; margin-top: 30px; width: 100%; }
     </style>
     """, unsafe_allow_html=True)
 
-    # Carga de datos de la base de datos SQL
+    # Lectura de datos SQL relacionales
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
@@ -266,7 +271,7 @@ if menu == "DASHBOARD":
     kpis_ok = max(total_kp - kpis_riesgo, 0)
     fecha_badge = datetime.now().strftime("%d/%m/%Y")
 
-    # 1. ENCABEZADO PRINCIPAL (IDÉNTICO A LA FOTO)
+    # 1. RENDERIZADO DEL ENCABEZADO SUPERIOR
     st.markdown(f"""
     <div class='hdr-clon-box'>
         <div class='hdr-logo-box'>🏦</div>
@@ -281,7 +286,7 @@ if menu == "DASHBOARD":
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. SECCIÓN DE LAS 5 TARJETAS SUPERIORES
+    # 2. CINTA DE LAS 5 TARJETAS INFORMATIVAS SUPERIORES
     t1, t2, t3, t4, t5 = st.columns(5)
     with t1:
         st.markdown(f"<div class='top-metric-frame'><div class='top-icon-circle' style='color:#00E676;'>👥</div><div><div class='top-lbl'>Colaboradores</div><div class='top-val'>{total_emp}</div><div class='top-dsc'>Total Personal</div></div></div>", unsafe_allow_html=True)
@@ -295,9 +300,9 @@ if menu == "DASHBOARD":
         c_alert = "#FFC107" if kpis_riesgo > 0 else "#7a8b9e"
         st.markdown(f"<div class='top-metric-frame'><div class='top-icon-circle' style='color:{c_alert};'>⚠️</div><div><div class='top-lbl'>En Riesgo</div><div class='top-val' style='color:{c_alert};'>{kpis_riesgo}</div><div class='top-dsc'>Atención</div></div></div>", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
-    # 3. CONSTRUCCIÓN DE LAS TARJETAS GRANDES (2 por fila usando st.columns nativo)
+    # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
     for index in range(0, len(kpis), 2):
         par_kpis = kpis.iloc[index:index+2]
         bloque_columnas = st.columns(2)
@@ -308,7 +313,7 @@ if menu == "DASHBOARD":
             p_val = row["proyectado"]
             pct_cump = round((r_val / m_val) * 100, 2)
 
-            # Formateo y personalizaciones dinámicas exactas de la referencia
+            # Estructuración de labels de monedas y medidas exactas
             badge_txt = "$"
             ind_title = f"{row['indicador']}"
             txt_footer = "Valores expresados en CÓRDOBAS (C$)"
@@ -327,11 +332,11 @@ if menu == "DASHBOARD":
                 ind_title = "LIQUIDEZ (Disponibilidad de Efectivo)"
 
             with bloque_columnas[col_pos]:
-                # Usamos st.container nativo con un ancla de clase CSS ficticia para pintar el recuadro gris oscuro
                 with st.container():
+                    # Clave de anclaje CSS para dibujar los contenedores grises
                     st.markdown(f"<div class='kpi-contenedor-tarjeta'></div>", unsafe_allow_html=True)
                     
-                    # Fila superior interna de la tarjeta
+                    # Fila superior (Título del KPI + Menú decorativo de tres puntos)
                     st.markdown(f"""
                     <div class='kpi-card-header-row'>
                         <div class='kpi-card-header-left'>
@@ -342,72 +347,75 @@ if menu == "DASHBOARD":
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Dividimos la tarjeta nativamente en Izquierda (Gráfico) y Derecha (Datos)
+                    # Sub-layout interno ordenado nativamente
                     c_grafico, c_datos = st.columns([1.1, 1.2])
 
                     with c_grafico:
-                        # Gráfico Plotly Donut en dos tonos exactos de verde, optimizado sin fugas de código
+                        # CONFIGURACIÓN DONA ANCHA: hole=0.52 y colores vivos idénticos a la foto
                         val_graf_cump = r_val if r_val <= m_val else m_val
                         val_graf_rest = max(m_val - r_val, 0)
                         
                         fig_donut = go.Figure()
                         fig_donut.add_trace(go.Pie(
                             values=[val_graf_cump, val_graf_rest],
-                            hole=0.74,
+                            hole=0.52,  # Ajustado de 0.74 a 0.52 para engrosar el cuerpo significativamente
                             textinfo="none",
                             hoverinfo="none",
-                            marker=dict(colors=["#00E676", "#142c1b"]), # Verde brillante y Verde oscuro de fondo
+                            marker=dict(colors=["#00E676", "#142c1b"]), # Tonos verde claro y verde oscuro originales
                             direction="clockwise",
                             sort=False
                         ))
 
                         fig_donut.update_layout(
-                            height=175,
+                            height=180,
                             margin=dict(t=0, b=0, l=0, r=0),
                             paper_bgcolor="rgba(0,0,0,0)",
                             plot_bgcolor="rgba(0,0,0,0)",
                             showlegend=False,
                             annotations=[dict(
-                                text=f"<b style='font-size:20px;color:white;'>{pct_cump}%</b><br><span style='font-size:10px;color:#7a8b9e;font-weight:600;'>Cumplimiento</span>",
+                                text=f"<b style='font-size:22px;color:white;'>{pct_cump}%</b><br><span style='font-size:10px;color:#7a8b9e;font-weight:600;'>Cumplimiento</span>",
                                 showarrow=False,
                                 font=dict(color="white")
                             )]
                         )
-                        st.plotly_chart(fig_donut, use_container_width=True, key=f"clon_v12_{row['indicador']}", config={'displayModeBar': False})
+                        st.plotly_chart(fig_donut, use_container_width=True, key=f"clon_v14_{row['indicador']}", config={'displayModeBar': False})
 
                     with c_datos:
-                        # Estilos y formateo numérico de monedas/porcentajes
+                        # Formateadores numéricos de precisión string
                         f_str = ",.2f"
                         s_str = "%" if badge_txt == "%" else ""
                         p_str = "C$ " if badge_txt == "$" else ""
 
-                        st.markdown(f"""
-                        <div style='padding-top:5px;'>
-                            <div class='row-data-align'>
-                                <div><span class='bullet-circle b-meta'></span><span class='lbl-style'>META</span></div>
-                                <div class='val-style'>{p_str}{m_val:{f_str}}{s_str}</div>
-                            </div>
-                            <div class='row-data-align'>
-                                <div><span class='bullet-circle b-proy'></span><span class='lbl-style'>PROYECTADO</span></div>
-                                <div class='val-style'>{p_str}{p_val:{f_str}}{s_str}</div>
-                            </div>
-                            <div class='row-data-align'>
-                                <div><span class='bullet-circle b-real'></span><span class='lbl-style'>REAL</span></div>
-                                <div class='val-style'>{p_str}{r_val:{f_str}}{s_str}</div>
-                            </div>
-                            
-                            <div class='box-comp-clon'>
-                                <div class='box-comp-lbl'>Cumplimiento</div>
-                                <div class='box-comp-val'>{pct_cump}%</div>
-                                <div class='box-comp-status'>▲ Por encima de la meta</div>
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        # SOLUCIÓN CRÍTICA ANTI-ROTURAS: Concatenación controlada en una variable lineal sin saltos
+                        bloque_datos_html = (
+                            f"<div style='padding-top:5px; width:100%;'>"
+                            f"  <div class='row-data-align'>"
+                            f"      <div><span class='bullet-circle b-meta'></span><span class='lbl-style'>META</span></div>"
+                            f"      <div class='val-style'>{p_str}{m_val:{f_str}}{s_str}</div>"
+                            f"  </div>"
+                            f"  <div class='row-data-align'>"
+                            f"      <div><span class='bullet-circle b-proy'></span><span class='lbl-style'>PROYECTADO</span></div>"
+                            f"      <div class='val-style'>{p_str}{p_val:{f_str}}{s_str}</div>"
+                            f"  </div>"
+                            f"  <div class='row-data-align'>"
+                            f"      <div><span class='bullet-circle b-real'></span><span class='lbl-style'>REAL</span></div>"
+                            f"      <div class='val-style'>{p_str}{r_val:{f_str}}{s_str}</div>"
+                            f"  </div>"
+                            f"  <div class='box-comp-clon'>"
+                            f"      <div class='box-comp-lbl'>Cumplimiento</div>"
+                            f"      <div class='box-comp-val'>{pct_cump}%</div>"
+                            f"      <div class='box-comp-status'>▲ Por encima de la meta</div>"
+                            f"  </div>"
+                            f"</div>"
+                        )
+                        
+                        # Renderizado único absoluto de la columna de métricas + cajita de cumplimiento
+                        st.markdown(bloque_datos_html, unsafe_allow_html=True)
 
-                    # Nota aclaratoria inferior nativa
+                    # Nota aclaratoria base del KPI
                     st.markdown(f"<div class='card-footer-note'>{txt_footer}</div>", unsafe_allow_html=True)
 
-    # 4. FOOTER GENERAL DEL DASHBOARD
+    # 4. PIE DE PÁGINA GLOBAL DEL PANEL REPLICA V14
     st.markdown("""
     <div class='footer-bar-clon'>
         <div>⚙️ Sistema de Gestión KPI - Banco &nbsp;|&nbsp; Información actualizada en tiempo real</div>
