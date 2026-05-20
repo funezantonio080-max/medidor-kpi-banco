@@ -527,6 +527,9 @@ elif menu == "KPIS":
 # =========================================================
 # ESCÁNER (CON GRÁFICOS)
 # =========================================================
+# =========================================================
+# ESCÁNER VISTA EJECUTIVA
+# =========================================================
 elif menu == "ESCÁNER":
 
     import os
@@ -535,93 +538,172 @@ elif menu == "ESCÁNER":
     st.markdown("""
 <style>
 
-.card{
-background:linear-gradient(145deg,#09111d,#101a2d);
-border:1px solid rgba(132,96,255,.20);
-padding:20px;
-border-radius:18px;
-margin-bottom:18px;
+.main{
+background:#050b16;
 }
 
-.card2{
-background:#0d1526;
-border-radius:14px;
-padding:15px;
-margin-bottom:10px;
+.card{
+background:linear-gradient(
+145deg,
+#081222,
+#111d36
+);
+
+padding:22px;
+
+border-radius:20px;
+
+margin-bottom:20px;
+
+border:1px solid rgba(130,90,255,.18);
+
+box-shadow:
+0 0 50px rgba(130,90,255,.10);
+
 }
 
 .tt{
-font-size:34px;
+font-size:48px;
 font-weight:800;
 color:white;
 }
 
 .sub{
-color:#8c72ff;
+font-size:18px;
+color:#8e6eff;
 }
 
-.info{
-background:#121b2f;
-padding:14px;
-border-radius:12px;
-margin-bottom:10px;
+.box{
+
+background:#111a2d;
+
+padding:18px;
+
+border-radius:14px;
+
+margin-bottom:14px;
+
 }
 
-.green{
-color:#49ff90;
+.lbl{
+
+font-size:16px;
+
+color:#8a95aa;
+
+}
+
+.val{
+
+font-size:26px;
+
 font-weight:700;
+
+color:white;
+
+}
+
+.kpi{
+
+font-size:34px;
+
+font-weight:800;
+
+color:#47ff91;
+
+}
+
+thead tr th{
+
+font-size:20px !important;
+
+}
+
+tbody{
+
+font-size:18px !important;
+
 }
 
 </style>
-""",unsafe_allow_html=True)
+""",
+unsafe_allow_html=True)
 
-    empleados=pd.read_sql(
+    empleados = pd.read_sql(
         "SELECT * FROM empleados",
         conn
     )
 
     if empleados.empty:
-        st.warning("No hay empleados")
+
+        st.warning(
+            "Sin empleados"
+        )
+
         st.stop()
 
     empleados["vista"]=(
-        empleados["id"].astype(str)
-        +" - "+
+
+        empleados["id"]
+
+        +
+
+        " - "
+
+        +
+
         empleados["nombre"]
+
     )
 
-    h1,h2=st.columns([4,2])
+    c1,c2=st.columns(
+        [4,2]
+    )
 
-    with h1:
+    with c1:
 
         st.markdown("""
 <div class='card'>
+
 <div class='tt'>
-📄 ESCÁNER DE EMPLEADO
+
+📄 ESCÁNER EMPLEADO
+
 </div>
 
 <div class='sub'>
-Expediente completo del empleado
-</div>
+
+Perfil • Cargo • KPIs
 
 </div>
-""",unsafe_allow_html=True)
 
-    with h2:
+</div>
 
-        sel=st.selectbox(
-            "Seleccionar empleado",
+""",
+unsafe_allow_html=True)
+
+    with c2:
+
+        emp=st.selectbox(
+
+            "Empleado",
+
             empleados["vista"]
+
         )
 
-    emp=sel.split(" - ")[0]
+    id_emp=emp.split(
+        " - "
+    )[0]
 
     empleado=empleados[
-        empleados["id"]==emp
+        empleados["id"]
+        ==
+        id_emp
     ].iloc[0]
 
     izq,der=st.columns(
-        [1,4]
+        [1,3]
     )
 
     with izq:
@@ -632,19 +714,17 @@ Expediente completo del empleado
         )
 
         st.subheader(
-            "FOTO"
+            "📷 FOTO"
         )
 
-        ruta="fotos"
-
         os.makedirs(
-            ruta,
+            "fotos",
             exist_ok=True
         )
 
-        img=f"{ruta}/{emp}.png"
+        ruta=f"fotos/{id_emp}.png"
 
-        up=st.file_uploader(
+        foto=st.file_uploader(
             "",
             type=[
                 "png",
@@ -652,23 +732,23 @@ Expediente completo del empleado
             ]
         )
 
-        if up:
+        if foto:
 
             with open(
-                img,
+                ruta,
                 "wb"
             ) as f:
 
                 f.write(
-                    up.read()
+                    foto.read()
                 )
 
         if os.path.exists(
-            img
+            ruta
         ):
 
             st.image(
-                img,
+                ruta,
                 use_container_width=True
             )
 
@@ -682,30 +762,37 @@ Expediente completo del empleado
         unsafe_allow_html=True
         )
 
-        st.subheader(
-            "INFORMACIÓN"
-        )
+        for x in [
 
-        cols=[
-            "id",
             "nombre",
+
             "edad",
+
             "estado",
-            "profesion",
-            "cargo"
-        ]
 
-        for c in cols:
+            "profesion"
 
-            if c in empleado:
+        ]:
 
-                st.markdown(
+            st.markdown(
 f"""
-<div class='info'>
-<b>{c.upper()}</b>
-<br>
-{empleado[c]}
+
+<div class='box'>
+
+<div class='lbl'>
+
+{x.upper()}
+
 </div>
+
+<div class='val'>
+
+{empleado[x]}
+
+</div>
+
+</div>
+
 """,
 unsafe_allow_html=True
 )
@@ -723,30 +810,30 @@ unsafe_allow_html=True
         )
 
         st.subheader(
-            "PERFIL DEL EMPLEADO"
+            "👤 PERFIL"
         )
 
-        c1,c2,c3,c4=st.columns(4)
+        a,b=st.columns(2)
 
-        tarjetas=[
+        with a:
 
-("Cargo",empleado["cargo"]),
-("Área","FINANZAS"),
-("Estado",empleado["estado"]),
-("Evaluación","EXCELENTE")
+            st.metric(
 
-]
+                "ÁREA",
 
-        for i,x in enumerate(
-            tarjetas
-        ):
+                "FINANZAS"
 
-            with [c1,c2,c3,c4][i]:
+            )
 
-                st.metric(
-                    x[0],
-                    x[1]
-                )
+        with b:
+
+            st.metric(
+
+                "CARGO",
+
+                empleado["cargo"]
+
+            )
 
         st.markdown(
         "</div>",
@@ -759,16 +846,24 @@ unsafe_allow_html=True
         )
 
         st.subheader(
-            "KPI DEL PUESTO"
+            "📈 KPI DEL PUESTO"
         )
 
-        kpis=pd.read_sql(
-            "SELECT * FROM kpis WHERE id=?",
-            conn,
-            params=(emp,)
-        )
+        datos_kpi=pd.read_sql(
 
-        if not kpis.empty:
+"""
+SELECT *
+FROM kpis
+WHERE id=?
+""",
+
+conn,
+
+params=(id_emp,)
+
+)
+
+        if not datos_kpi.empty:
 
             k1,k2=st.columns(
                 [2,1]
@@ -776,65 +871,161 @@ unsafe_allow_html=True
 
             with k1:
 
+                tabla=datos_kpi[
+
+                    [
+
+                        "indicador",
+
+                        "meta",
+
+                        "proyectado",
+
+                        "real"
+
+                    ]
+
+                ]
+
                 st.dataframe(
-                    kpis,
+
+                    tabla,
+
                     use_container_width=True
+
                 )
 
             with k2:
 
                 meta=max(
-                    kpis["meta"].sum(),
+
+                    datos_kpi[
+                        "meta"
+                    ].sum(),
+
                     1
+
                 )
 
-                real=kpis["real"].sum()
+                real=datos_kpi[
+                    "real"
+                ].sum()
 
                 pct=round(
+
                     (
-                        real/meta
-                    )*100,
+                        real
+                        /
+                        meta
+                    )
+
+                    *100,
+
                     2
+
                 )
 
                 fig=go.Figure()
 
                 fig.add_trace(
+
 go.Pie(
+
 values=[
+
 real,
+
 max(
 meta-real,
 0
 )
+
 ],
-hole=.72,
+
+hole=.55,
+
 marker=dict(
+
 colors=[
-"#42ff87",
-"#152740"
+
+"#46ff88",
+
+"#172744"
+
 ]
+
+),
+
+textinfo="none"
+
 )
-)
+
 )
 
                 fig.update_layout(
-height=350,
-paper_bgcolor="rgba(0,0,0,0)"
+
+height=430,
+
+paper_bgcolor="rgba(0,0,0,0)",
+
+showlegend=False,
+
+annotations=[
+
+dict(
+
+text=f"""
+
+<b>
+
+{pct}%
+
+</b>
+
+<br>
+
+Cumplimiento
+
+""",
+
+showarrow=False,
+
+font=dict(
+
+size=34,
+
+color="white"
+
+)
+
+)
+
+]
+
 )
 
                 st.plotly_chart(
+
                     fig,
+
                     use_container_width=True
+
                 )
 
                 st.markdown(
+
 f"""
-<h1 class='green'>
+
+<div class='kpi'>
+
 {pct}%
-</h1>
+
+</div>
+
 """,
+
 unsafe_allow_html=True
+
 )
 
         st.markdown(
@@ -843,7 +1034,7 @@ unsafe_allow_html=True
         )
 
     st.success(
-        "Escáner cargado"
+        "Escáner actualizado"
     )
 # =========================================================
 # CARGOS
