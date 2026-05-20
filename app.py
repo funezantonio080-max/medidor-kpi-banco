@@ -529,7 +529,13 @@ elif menu == "KPIS":
 # =========================================================
 elif menu == "ESCÁNER":
 
-    st.title("📄 ESCÁNER EMPLEADO")
+  elif menu == "ESCÁNER":
+
+    import streamlit as st
+    import pandas as pd
+    import os
+
+    st.title("📄 ESCÁNER DE EMPLEADO")
 
     try:
 
@@ -538,10 +544,10 @@ elif menu == "ESCÁNER":
             conn
         )
 
-    except:
+    except Exception as e:
 
         st.error(
-            "No existe tabla empleados"
+            f"Error empleados: {e}"
         )
 
         st.stop()
@@ -549,7 +555,7 @@ elif menu == "ESCÁNER":
     if empleados.empty:
 
         st.warning(
-            "No hay registros"
+            "No existen empleados"
         )
 
         st.stop()
@@ -561,17 +567,30 @@ elif menu == "ESCÁNER":
         empleados[columna_id]
         .astype(str)
 
+        +
+
+        " - "
+
+        +
+
+        empleados.iloc[:,1]
+        .astype(str)
+
     )
 
-    empleado_sel = st.selectbox(
+    seleccionado = st.selectbox(
 
-        "Empleado",
+        "👤 Seleccionar empleado",
 
         empleados["vista"]
 
     )
 
-    emp = empleados[
+    id_emp = seleccionado.split(
+        " - "
+    )[0]
+
+    empleado = empleados[
 
         empleados[
             columna_id
@@ -581,29 +600,30 @@ elif menu == "ESCÁNER":
         ==
 
         str(
-            empleado_sel
+            id_emp
         )
 
     ].iloc[0]
 
-    id_emp = str(
-        emp[
-            columna_id
-        ]
-    )
-
     st.markdown("---")
 
-    izq, der = st.columns([1,2])
+    foto, datos = st.columns([1,2])
 
-    with izq:
+    with foto:
 
-        st.subheader("📷 FOTO")
+        st.subheader(
+            "📷 FOTO"
+        )
+
+        os.makedirs(
+            "fotos",
+            exist_ok=True
+        )
 
         ruta = (
             "fotos/"
             +
-            id_emp
+            str(id_emp)
             +
             ".png"
         )
@@ -624,11 +644,6 @@ elif menu == "ESCÁNER":
 
         if archivo:
 
-            os.makedirs(
-                "fotos",
-                exist_ok=True
-            )
-
             with open(
                 ruta,
                 "wb"
@@ -638,52 +653,63 @@ elif menu == "ESCÁNER":
                     archivo.read()
                 )
 
+            st.success(
+                "Foto guardada"
+            )
+
         if os.path.exists(
             ruta
         ):
 
             st.image(
-                ruta
+
+                ruta,
+
+                use_container_width=True
+
             )
 
-    with der:
+    with datos:
 
         st.subheader(
-            "DATOS REGISTRADOS"
+            "👤 PERFIL"
         )
 
-        for c in empleados.columns:
+        for col in empleados.columns:
 
-            if c != "vista":
+            if col != "vista":
+
+                valor = empleado[col]
 
                 st.write(
 
-                    f"**{c}:**",
+                    f"**{col.upper()}**"
 
-                    emp[c]
+                )
 
+                st.write(
+                    valor
                 )
 
     st.markdown("---")
 
     st.subheader(
-        "💼 CARGO"
+        "💼 INFORMACIÓN DEL CARGO"
     )
 
     try:
 
         cargos = pd.read_sql(
-
             "SELECT * FROM cargos",
-
             conn
-
         )
 
         if "cargo" in empleados.columns:
 
-            cargo_emp = str(
-                emp["cargo"]
+            cargo = str(
+                empleado[
+                    "cargo"
+                ]
             )
 
             cargo_data = cargos[
@@ -695,10 +721,15 @@ elif menu == "ESCÁNER":
                 .apply(
 
                     lambda x:
+
                     x.str.contains(
-                        cargo_emp,
+
+                        cargo,
+
                         case=False,
+
                         na=False
+
                     )
 
                 )
@@ -722,13 +753,13 @@ elif menu == "ESCÁNER":
             else:
 
                 st.info(
-                    "Sin información cargo"
+                    "Sin información del cargo"
                 )
 
-    except:
+    except Exception as e:
 
-        st.info(
-            "Tabla cargos no encontrada"
+        st.warning(
+            f"Cargo: {e}"
         )
 
     st.markdown("---")
@@ -749,7 +780,7 @@ elif menu == "ESCÁNER":
 
         if "id" in kpis.columns:
 
-            kpi_emp = kpis[
+            datos_kpi = kpis[
 
                 kpis[
                     "id"
@@ -758,23 +789,75 @@ elif menu == "ESCÁNER":
 
                 ==
 
-                id_emp
+                str(
+                    id_emp
+                )
 
             ]
 
         else:
 
-            kpi_emp = kpis
+            datos_kpi = kpis
 
-        if not kpi_emp.empty:
+        if not datos_kpi.empty:
 
             st.dataframe(
 
-                kpi_emp,
+                datos_kpi,
 
                 use_container_width=True
 
             )
+
+            if (
+
+                "meta"
+                in datos_kpi.columns
+
+                and
+
+                "real"
+                in datos_kpi.columns
+
+            ):
+
+                cumplimiento = round(
+
+                    (
+
+                        datos_kpi[
+                            "real"
+                        ]
+                        .sum()
+
+                        /
+
+                        max(
+
+                            datos_kpi[
+                                "meta"
+                            ]
+                            .sum(),
+
+                            1
+
+                        )
+
+                    )
+
+                    *100,
+
+                    2
+
+                )
+
+                st.metric(
+
+                    "Cumplimiento",
+
+                    f"{cumplimiento}%"
+
+                )
 
         else:
 
@@ -782,11 +865,15 @@ elif menu == "ESCÁNER":
                 "Sin KPI"
             )
 
-    except:
+    except Exception as e:
 
-        st.info(
-            "No existe KPI"
+        st.warning(
+            f"KPI: {e}"
         )
+
+    st.success(
+        "Información cargada correctamente"
+    )
 # =========================================================
 # CARGOS
 # =========================================================
