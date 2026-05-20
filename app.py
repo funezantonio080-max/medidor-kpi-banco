@@ -118,306 +118,380 @@ menu = st.sidebar.radio("MENÚ", [
     "CARGOS"
 ])
 
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime
+
+# =========================================================
+# DASHBOARD PREMIUM PIXEL-PERFECT V5
+# =========================================================
+
 if menu == "DASHBOARD":
 
-    import plotly.graph_objects as go
-    from datetime import datetime
+    # Inyección de CSS Avanzado para calcar la imagen de referencia
+    st.markdown("""
+    <style>
+    /* Reset de contenedor de Streamlit */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        max-width: 95%;
+    }
+    
+    body {
+        background-color: #060b13;
+    }
 
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
+    /* Encabezado */
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .header-title-box {
+        text-align: center;
+        flex-grow: 1;
+    }
+    .main-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .sub-title {
+        color: #00E676;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    .date-box {
+        background-color: #0f1922;
+        border: 1px solid #1c2e3d;
+        border-radius: 8px;
+        padding: 8px 15px;
+        text-align: right;
+    }
 
-    kpis = pd.read_sql(
-        "SELECT * FROM kpis",
-        conn
-    )
+    /* Bloques Superiores KPI */
+    .top-card {
+        background: #0b131c;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #152535;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        height: 85px;
+    }
+    .top-icon-container {
+        font-size: 24px;
+        background: rgba(0, 230, 118, 0.08);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 230, 118, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .top-card-title {
+        color: #7a8b9e;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .top-card-value {
+        color: white;
+        font-size: 22px;
+        font-weight: 700;
+    }
+    .top-card-sub {
+        color: #4f6174;
+        font-size: 11px;
+    }
 
-    total = len(
-        empleados
-    )
+    /* Tarjetas de Indicadores (Grid Principal) */
+    .kpi-main-card {
+        background: #09101a;
+        border-radius: 16px;
+        padding: 22px;
+        border: 1px solid #142334;
+        margin-bottom: 20px;
+        height: 440px;
+        position: relative;
+    }
+    .kpi-card-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .kpi-badge-icon {
+        background: rgba(0, 230, 118, 0.15);
+        color: #00E676;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        margin-right: 12px;
+    }
+    .kpi-card-title {
+        color: white;
+        font-size: 18px;
+        font-weight: 700;
+    }
+    .kpi-card-subtitle {
+        color: #7a8b9e;
+        font-size: 14px;
+        font-weight: 400;
+    }
 
-    total_kpi = len(
-        kpis
-    )
+    /* Filas de Datos Leyenda Derecha */
+    .data-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    .dot {
+        height: 10px;
+        width: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .dot-meta { background-color: #2196F3; }
+    .dot-proy { background-color: #FFC107; }
+    .dot-real { background-color: #00E676; }
+    
+    .lbl-text { color: #a0aec0; }
+    .val-text { color: white; font-weight: 600; font-family: monospace; }
 
+    /* Cuadro de cumplimiento interno derecho */
+    .comp-inner-box {
+        background: #0e1926;
+        border: 1px solid #1a2d42;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        margin-top: 20px;
+    }
+    .comp-inner-title {
+        color: #7a8b9e;
+        font-size: 12px;
+    }
+    .comp-inner-val {
+        color: #00E676;
+        font-size: 24px;
+        font-weight: 700;
+    }
+    .comp-inner-status {
+        color: #00E676;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    /* Nota al pie de tarjeta */
+    .kpi-footer-note {
+        text-align: center;
+        color: #00E676;
+        font-size: 11px;
+        opacity: 0.8;
+        position: absolute;
+        bottom: 15px;
+        width: 90%;
+    }
+
+    /* Footer Institucional */
+    .footer-bar {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        border-top: 1px solid #142334;
+        color: #4f6174;
+        font-size: 12px;
+        margin-top: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Lectura de Datos desde SQLite
+    empleados = pd.read_sql("SELECT * FROM empleados", conn)
+    kpis = pd.read_sql("SELECT * FROM kpis", conn)
+
+    total = len(empleados)
+    total_kpi = len(kpis)
+    
     cumplimiento = 0
-
     if not kpis.empty:
-
-        cumplimiento = round(
-
-            (
-                kpis["real"].sum()
-
-                /
-
-                (
-                    kpis["meta"].sum()
-                    +1
-                )
-
-            )
-
-            *100,
-
-            2
-
-        )
+        cumplimiento = round((kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100, 2)
 
     riesgo = 0
-
     if not kpis.empty:
+        riesgo = len(kpis[kpis["real"] < kpis["meta"]])
 
-        riesgo = len(
+    objetivo = max(total_kpi - riesgo, 0)
+    fecha_actual = datetime.now().strftime("%d/%m/%Y")
 
-            kpis[
-                kpis["real"]
-                <
-                kpis["meta"]
-            ]
+    # 1. HEADER SUPERIOR REPLICADO
+    st.markdown(f"""
+    <div class='header-container'>
+        <div style='font-size: 32px;'>🏦</div>
+        <div class='header-title-box'>
+            <div class='main-title'>🏛️ DASHBOARD EJECUTIVO</div>
+            <div class='sub-title'>GERENCIA DE BANCO KPI</div>
+        </div>
+        <div class='date-box'>
+            <span style='color:#7a8b9e; font-size:10px; display:block;'>FECHA ACTUAL</span>
+            <span style='color:white; font-size:14px; font-weight:700;'>📅 {fecha_actual}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        )
+    # 2. BLOQUE DE 5 MÉTRICAS GENERALES SUPERIORES
+    a, b, c, d, e = st.columns(5)
+    
+    with a:
+        st.markdown(f"<div class='top-card'><div class='top-icon-container' style='color:#00E676;'>👥</div><div><div class='top-card-title'>Colaboradores</div><div class='top-card-value'>{total}</div><div class='top-card-sub'>Total Personal</div></div></div>", unsafe_allow_html=True)
+    with b:
+        st.markdown(f"<div class='top-card'><div class='top-icon-container' style='color:#2196F3;'>📈</div><div><div class='top-card-title'>KPIs Activos</div><div class='top-card-value'>{total_kpi}</div><div class='top-card-sub'>Indicadores</div></div></div>", unsafe_allow_html=True)
+    with c:
+        st.markdown(f"<div class='top-card'><div class='top-icon-container' style='color:#00E676;'>🎯</div><div><div class='top-card-title'>Cumplimiento General</div><div class='top-card-value'>{cumplimiento}%</div><div class='top-card-sub'>Promedio de Cumplimiento</div></div></div>", unsafe_allow_html=True)
+    with d:
+        st.markdown(f"<div class='top-card'><div class='top-icon-container' style='color:#00E676;'>🛡️</div><div><div class='top-card-title'>KPIs en Objetivo</div><div class='top-card-value'>{objetivo}</div><div class='top-card-sub'>Sin Riesgo</div></div></div>", unsafe_allow_html=True)
+    with e:
+        # Si hay riesgo se pone amarillo, si no, se queda apagado igual que en la foto de referencia
+        color_riesgo = "#FFC107" if riesgo > 0 else "#7a8b9e"
+        st.markdown(f"<div class='top-card'><div class='top-icon-container' style='color:{color_riesgo};'>⚠️</div><div><div class='top-card-title'>KPIs en Riesgo</div><div class='top-card-value' style='color:{color_riesgo};'>{riesgo}</div><div class='top-card-sub'>Requieren Atención</div></div></div>", unsafe_allow_html=True)
 
-    objetivo = max(
-        total_kpi-riesgo,
-        0
-    )
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    fecha_actual = datetime.now().strftime(
-        "%d/%m/%Y"
-    )
+    # 3. CONSTRUCCIÓN DE LA CUADRÍCULA (GRID 2x2) DE CONTENEDORES PRINCIPALES
+    # Iteramos los KPIs de la BD en bloques de dos para generar filas perfectas
+    for i in range(0, len(kpis), 2):
+        fila_kpis = kpis.iloc[i:i+2]
+        cols_pantalla = st.columns(2)
 
-    st.title(
-        "🏛️ DASHBOARD EJECUTIVO"
-    )
+        for col, (_, row) in zip(cols_pantalla, fila_kpis.iterrows()):
+            meta = max(row["meta"], 1)
+            real = row["real"]
+            proy = row["proyectado"]
+            comp = round((real / meta) * 100, 2)
 
-    st.caption(
-        f"📅 {fecha_actual}"
-    )
+            # Configuraciones dinámicas de nombres y formatos según la imagen
+            badge_icon = "$"
+            nombre_extendido = ""
+            signo_unidad = ""
+            nota_pie = "Valores expresados en CÓRDOBAS (C$)"
 
-    a,b,c,d,e = st.columns(5)
-
-    a.metric(
-        "👥 COLABORADORES",
-        total
-    )
-
-    b.metric(
-        "📈 KPI",
-        total_kpi
-    )
-
-    c.metric(
-        "🎯 CUMPLIMIENTO",
-        f"{cumplimiento}%"
-    )
-
-    d.metric(
-        "🛡️ OBJETIVO",
-        objetivo
-    )
-
-    e.metric(
-        "⚠️ RIESGO",
-        riesgo
-    )
-
-    st.markdown("---")
-
-    for i in range(
-        0,
-        len(kpis),
-        2
-    ):
-
-        cols = st.columns(2)
-
-        subset = kpis.iloc[
-            i:
-            i+2
-        ]
-
-        for col,
-        (
-            _,
-            row
-
-        ) in zip(
-
-            cols,
-
-            subset.iterrows()
-
-        ):
+            if row["indicador"] == "RENTABILIDAD":
+                nombre_extendido = "RENTABILIDAD (Utilidad Generada)"
+            elif row["indicador"] == "ROA":
+                badge_icon = "%"
+                nombre_extendido = "ROA (Rendimiento sobre Activos)"
+                nota_pie = "Valores expresados en PORCENTAJE (%)"
+            elif row["indicador"] == "ROE":
+                badge_icon = "%"
+                nombre_extendido = "ROE (Rendimiento sobre Patrimonio)"
+                nota_pie = "Valores expresados en PORCENTAJE (%)"
+            elif row["indicador"] == "LIQUIDEZ":
+                nombre_extendido = "LIQUIDEZ (Disponibilidad de Efectivo)"
+            else:
+                nombre_extendido = f"{row['indicador']}"
 
             with col:
+                # Apertura de la tarjeta contenedora externa
+                st.markdown(f"""
+                <div class='kpi-main-card'>
+                    <div class='kpi-card-header'>
+                        <span class='kpi-badge-icon'>{badge_icon}</span>
+                        <span class='kpi-card-title'>{nombre_extendido}</span>
+                    </div>
+                """, unsafe_allow_html=True)
 
-                meta = max(
-                    row["meta"],
-                    1
-                )
+                # Divisiones internas: Gráfico (Izquierda) y Tabla/Estatus (Derecha)
+                l_inner, r_inner = st.columns([1.3, 1.2])
 
-                real = row["real"]
+                with l_inner:
+                    # Render de la Dona usando la paleta exacta de degradados verdes de tu imagen
+                    # Si excede el 100%, rellenamos la dona completa de verde brillante
+                    valores_donat = [real, max(meta - real, 0)] if real <= meta else [100, 0]
+                    colores_donat = ["#00E676", "#11291b"] if real <= meta else ["#7C4DFF" if comp > 110 else "#00E676", "#11291b"]
 
-                proy = row[
-                    "proyectado"
-                ]
+                    # Ajuste fino basado en la imagen: si el cumplimiento es muy alto, usamos tonalidades vivas
+                    if comp > 100:
+                        colores_donat = ["#00E676", "#81C784"] 
 
-                comp = round(
+                    donut = go.Figure()
+                    donut.add_trace(go.Pie(
+                        values=valores_donat,
+                        hole=0.70,
+                        textinfo="none",
+                        hoverinfo="none",
+                        marker=dict(colors=colores_donat),
+                        direction="clockwise"
+                    ))
 
-                    (
-                        real
-                        /
-                        meta
+                    donut.update_layout(
+                        height=240,
+                        margin=dict(t=5, b=5, l=5, r=5),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        showlegend=False,
+                        annotations=[dict(
+                            text=f"<b style='font-size:24px;color:white;'>{comp}%</b><br><span style='font-size:11px;color:#7a8b9e;font-weight:600;'>Cumplimiento</span>",
+                            showarrow=False,
+                            font=dict(color="white")
+                        )]
                     )
 
-                    *100,
+                    st.plotly_chart(donut, use_container_width=True, key=f"chart_premium_{row['indicador']}")
 
-                    2
+                with r_inner:
+                    # Mapeo de formatos numéricos limpios ($ o %)
+                    fmt = ",.2f"
+                    sufijo = "%" if badge_icon == "%" else ""
+                    prefijo = "C$ " if badge_icon == "$" else ""
 
-                )
+                    # Bloque HTML con las filas alineadas de la leyenda personalizada
+                    st.markdown(f"""
+                    <div style='margin-top:10px;'>
+                        <div class='data-row'>
+                            <div><span class='dot dot-meta'></span><span class='lbl-text'>META</span></div>
+                            <div class='val-text'>{prefijo}{meta:{fmt}}{sufijo}</div>
+                        </div>
+                        <div class='data-row'>
+                            <div><span class='dot dot-proy'></span><span class='lbl-text'>PROYECTADO</span></div>
+                            <div class='val-text'>{prefijo}{proy:{fmt}}{sufijo}</div>
+                        </div>
+                        <div class='data-row'>
+                            <div><span class='dot dot-real'></span><span class='lbl-text'>REAL</span></div>
+                            <div class='val-text'>{prefijo}{real:{fmt}}{sufijo}</div>
+                        </div>
+                    </div>
+                    
+                    <div class='comp-inner-box'>
+                        <div class='comp-inner-title'>Cumplimiento</div>
+                        <div class='comp-inner-val'>{comp}%</div>
+                        <div class='comp-inner-status'>▲ Por encima de la meta</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                st.markdown(
-                    "### "
-                    +row[
-                        "indicador"
-                    ]
-                )
+                # Nota aclaratoria y etiqueta de cierre absoluto
+                st.markdown(f"""
+                    <div class='kpi-footer-note'>{nota_pie}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-                izquierda,derecha=st.columns(
-                    [
-                        1.2,
-                        1
-                    ]
-                )
-
-                with izquierda:
-
-                    fig = go.Figure()
-
-                    fig.add_trace(
-
-go.Pie(
-
-values=[
-
-real,
-
-max(
-meta-real,
-1
-)
-
-],
-
-hole=.70,
-
-textinfo="none",
-
-marker=dict(
-
-colors=[
-
-"#00E676",
-
-"#0E1926"
-
-]
-
-)
-
-)
-
-)
-
-                    fig.update_layout(
-
-height=260,
-
-margin=dict(
-
-t=0,
-
-b=0,
-
-l=0,
-
-r=0
-
-),
-
-paper_bgcolor=
-"rgba(0,0,0,0)",
-
-annotations=[
-
-dict(
-
-text=f"""
-
-<b>
-
-{comp}%
-
-</b>
-
-<br>
-
-Cumplimiento
-
-""",
-
-showarrow=False
-
-)
-
-]
-
-)
-
-                    st.plotly_chart(
-
-                        fig,
-
-                        use_container_width=True
-
-                    )
-
-                with derecha:
-
-                    st.write(
-                        "META"
-                    )
-
-                    st.code(
-                        f"{meta:,.2f}"
-                    )
-
-                    st.write(
-                        "PROYECTADO"
-                    )
-
-                    st.code(
-                        f"{proy:,.2f}"
-                    )
-
-                    st.write(
-                        "REAL"
-                    )
-
-                    st.code(
-                        f"{real:,.2f}"
-                    )
-
-                    st.success(
-                        f"{comp}%"
-                    )
-
-                st.caption(
-                    "Valores expresados según el indicador"
-                )
-        
+    # 4. FOOTER INSTITUCIONAL DE LA BASE DE LA IMAGEN
+    st.markdown("""
+    <div class='footer-bar'>
+        <div>⚙️ Sistema de Gestión KPI - Banco &nbsp;|&nbsp; Información actualizada en tiempo real</div>
+        <div style='color:#00E676;'>Datos confiables para decisiones inteligentes 📈</div>
+    </div>
+    """, unsafe_allow_html=True)
 # =========================================================
 # REGISTRAR
 # =========================================================
