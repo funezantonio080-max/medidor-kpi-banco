@@ -529,349 +529,321 @@ elif menu == "KPIS":
 # =========================================================
 elif menu == "ESCÁNER":
 
-
-    import streamlit as st
-    import pandas as pd
     import os
+    import plotly.graph_objects as go
 
-    st.title("📄 ESCÁNER DE EMPLEADO")
+    st.markdown("""
+<style>
 
-    try:
+.card{
+background:linear-gradient(145deg,#09111d,#101a2d);
+border:1px solid rgba(132,96,255,.20);
+padding:20px;
+border-radius:18px;
+margin-bottom:18px;
+}
 
-        empleados = pd.read_sql(
-            "SELECT * FROM empleados",
-            conn
-        )
+.card2{
+background:#0d1526;
+border-radius:14px;
+padding:15px;
+margin-bottom:10px;
+}
 
-    except Exception as e:
+.tt{
+font-size:34px;
+font-weight:800;
+color:white;
+}
 
-        st.error(
-            f"Error empleados: {e}"
-        )
+.sub{
+color:#8c72ff;
+}
 
-        st.stop()
+.info{
+background:#121b2f;
+padding:14px;
+border-radius:12px;
+margin-bottom:10px;
+}
+
+.green{
+color:#49ff90;
+font-weight:700;
+}
+
+</style>
+""",unsafe_allow_html=True)
+
+    empleados=pd.read_sql(
+        "SELECT * FROM empleados",
+        conn
+    )
 
     if empleados.empty:
-
-        st.warning(
-            "No existen empleados"
-        )
-
+        st.warning("No hay empleados")
         st.stop()
 
-    columna_id = empleados.columns[0]
-
-    empleados["vista"] = (
-
-        empleados[columna_id]
-        .astype(str)
-
-        +
-
-        " - "
-
-        +
-
-        empleados.iloc[:,1]
-        .astype(str)
-
+    empleados["vista"]=(
+        empleados["id"].astype(str)
+        +" - "+
+        empleados["nombre"]
     )
 
-    seleccionado = st.selectbox(
+    h1,h2=st.columns([4,2])
 
-        "👤 Seleccionar empleado",
+    with h1:
 
-        empleados["vista"]
+        st.markdown("""
+<div class='card'>
+<div class='tt'>
+📄 ESCÁNER DE EMPLEADO
+</div>
 
-    )
+<div class='sub'>
+Expediente completo del empleado
+</div>
 
-    id_emp = seleccionado.split(
-        " - "
-    )[0]
+</div>
+""",unsafe_allow_html=True)
 
-    empleado = empleados[
+    with h2:
 
-        empleados[
-            columna_id
-        ]
-        .astype(str)
-
-        ==
-
-        str(
-            id_emp
+        sel=st.selectbox(
+            "Seleccionar empleado",
+            empleados["vista"]
         )
 
+    emp=sel.split(" - ")[0]
+
+    empleado=empleados[
+        empleados["id"]==emp
     ].iloc[0]
 
-    st.markdown("---")
+    izq,der=st.columns(
+        [1,4]
+    )
 
-    foto, datos = st.columns([1,2])
+    with izq:
 
-    with foto:
-
-        st.subheader(
-            "📷 FOTO"
+        st.markdown(
+        "<div class='card'>",
+        unsafe_allow_html=True
         )
 
+        st.subheader(
+            "FOTO"
+        )
+
+        ruta="fotos"
+
         os.makedirs(
-            "fotos",
+            ruta,
             exist_ok=True
         )
 
-        ruta = (
-            "fotos/"
-            +
-            str(id_emp)
-            +
-            ".png"
-        )
+        img=f"{ruta}/{emp}.png"
 
-        archivo = st.file_uploader(
-
-            "Subir foto",
-
+        up=st.file_uploader(
+            "",
             type=[
-
                 "png",
-                "jpg",
-                "jpeg"
-
+                "jpg"
             ]
-
         )
 
-        if archivo:
+        if up:
 
             with open(
-                ruta,
+                img,
                 "wb"
             ) as f:
 
                 f.write(
-                    archivo.read()
+                    up.read()
                 )
 
-            st.success(
-                "Foto guardada"
-            )
-
         if os.path.exists(
-            ruta
+            img
         ):
 
             st.image(
-
-                ruta,
-
+                img,
                 use_container_width=True
-
             )
 
-    with datos:
+        st.markdown(
+        "</div>",
+        unsafe_allow_html=True
+        )
+
+        st.markdown(
+        "<div class='card'>",
+        unsafe_allow_html=True
+        )
 
         st.subheader(
-            "👤 PERFIL"
+            "INFORMACIÓN"
         )
 
-        for col in empleados.columns:
+        cols=[
+            "id",
+            "nombre",
+            "edad",
+            "estado",
+            "profesion",
+            "cargo"
+        ]
 
-            if col != "vista":
+        for c in cols:
 
-                valor = empleado[col]
+            if c in empleado:
 
-                st.write(
+                st.markdown(
+f"""
+<div class='info'>
+<b>{c.upper()}</b>
+<br>
+{empleado[c]}
+</div>
+""",
+unsafe_allow_html=True
+)
 
-                    f"**{col.upper()}**"
-
-                )
-
-                st.write(
-                    valor
-                )
-
-    st.markdown("---")
-
-    st.subheader(
-        "💼 INFORMACIÓN DEL CARGO"
-    )
-
-    try:
-
-        cargos = pd.read_sql(
-            "SELECT * FROM cargos",
-            conn
+        st.markdown(
+        "</div>",
+        unsafe_allow_html=True
         )
 
-        if "cargo" in empleados.columns:
+    with der:
 
-            cargo = str(
-                empleado[
-                    "cargo"
-                ]
-            )
-
-            cargo_data = cargos[
-
-                cargos.astype(
-                    str
-                )
-
-                .apply(
-
-                    lambda x:
-
-                    x.str.contains(
-
-                        cargo,
-
-                        case=False,
-
-                        na=False
-
-                    )
-
-                )
-
-                .any(
-                    axis=1
-                )
-
-            ]
-
-            if not cargo_data.empty:
-
-                st.dataframe(
-
-                    cargo_data,
-
-                    use_container_width=True
-
-                )
-
-            else:
-
-                st.info(
-                    "Sin información del cargo"
-                )
-
-    except Exception as e:
-
-        st.warning(
-            f"Cargo: {e}"
+        st.markdown(
+        "<div class='card'>",
+        unsafe_allow_html=True
         )
 
-    st.markdown("---")
-
-    st.subheader(
-        "📈 KPI"
-    )
-
-    try:
-
-        kpis = pd.read_sql(
-
-            "SELECT * FROM kpis",
-
-            conn
-
+        st.subheader(
+            "PERFIL DEL EMPLEADO"
         )
 
-        if "id" in kpis.columns:
+        c1,c2,c3,c4=st.columns(4)
 
-            datos_kpi = kpis[
+        tarjetas=[
 
-                kpis[
-                    "id"
-                ]
-                .astype(str)
+("Cargo",empleado["cargo"]),
+("Área","FINANZAS"),
+("Estado",empleado["estado"]),
+("Evaluación","EXCELENTE")
 
-                ==
+]
 
-                str(
-                    id_emp
-                )
+        for i,x in enumerate(
+            tarjetas
+        ):
 
-            ]
-
-        else:
-
-            datos_kpi = kpis
-
-        if not datos_kpi.empty:
-
-            st.dataframe(
-
-                datos_kpi,
-
-                use_container_width=True
-
-            )
-
-            if (
-
-                "meta"
-                in datos_kpi.columns
-
-                and
-
-                "real"
-                in datos_kpi.columns
-
-            ):
-
-                cumplimiento = round(
-
-                    (
-
-                        datos_kpi[
-                            "real"
-                        ]
-                        .sum()
-
-                        /
-
-                        max(
-
-                            datos_kpi[
-                                "meta"
-                            ]
-                            .sum(),
-
-                            1
-
-                        )
-
-                    )
-
-                    *100,
-
-                    2
-
-                )
+            with [c1,c2,c3,c4][i]:
 
                 st.metric(
-
-                    "Cumplimiento",
-
-                    f"{cumplimiento}%"
-
+                    x[0],
+                    x[1]
                 )
 
-        else:
+        st.markdown(
+        "</div>",
+        unsafe_allow_html=True
+        )
 
-            st.info(
-                "Sin KPI"
+        st.markdown(
+        "<div class='card'>",
+        unsafe_allow_html=True
+        )
+
+        st.subheader(
+            "KPI DEL PUESTO"
+        )
+
+        kpis=pd.read_sql(
+            "SELECT * FROM kpis WHERE id=?",
+            conn,
+            params=(emp,)
+        )
+
+        if not kpis.empty:
+
+            k1,k2=st.columns(
+                [2,1]
             )
 
-    except Exception as e:
+            with k1:
 
-        st.warning(
-            f"KPI: {e}"
+                st.dataframe(
+                    kpis,
+                    use_container_width=True
+                )
+
+            with k2:
+
+                meta=max(
+                    kpis["meta"].sum(),
+                    1
+                )
+
+                real=kpis["real"].sum()
+
+                pct=round(
+                    (
+                        real/meta
+                    )*100,
+                    2
+                )
+
+                fig=go.Figure()
+
+                fig.add_trace(
+go.Pie(
+values=[
+real,
+max(
+meta-real,
+0
+)
+],
+hole=.72,
+marker=dict(
+colors=[
+"#42ff87",
+"#152740"
+]
+)
+)
+)
+
+                fig.update_layout(
+height=350,
+paper_bgcolor="rgba(0,0,0,0)"
+)
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+                st.markdown(
+f"""
+<h1 class='green'>
+{pct}%
+</h1>
+""",
+unsafe_allow_html=True
+)
+
+        st.markdown(
+        "</div>",
+        unsafe_allow_html=True
         )
 
     st.success(
-        "Información cargada correctamente"
+        "Escáner cargado"
     )
 # =========================================================
 # CARGOS
