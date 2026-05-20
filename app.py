@@ -527,30 +527,40 @@ elif menu == "KPIS":
 # =========================================================
 # ESCÁNER (CON GRÁFICOS)
 # =========================================================
-elif menu == "ESCANER CV":
+elif menu=="ESCANER CV":
 
     import streamlit as st
     import pandas as pd
     import os
 
-    st.title("📄 ESCÁNER CV")
+    st.title("📄 ESCÁNER CV EJECUTIVO")
 
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
+    try:
 
-    if empleados.empty:
+        empleados=pd.read_sql(
+            "SELECT * FROM empleados",
+            conn
+        )
 
-        st.warning(
-            "No hay empleados registrados"
+        if empleados.empty:
+
+            st.warning(
+                "No existen empleados"
+            )
+
+            st.stop()
+
+    except Exception as e:
+
+        st.error(
+            f"Error empleados: {e}"
         )
 
         st.stop()
 
-    empleados["mostrar"] = (
+    empleados["vista"]=(
 
-        empleados.iloc[:, 0]
+        empleados.iloc[:,0]
         .astype(str)
 
         +
@@ -559,26 +569,26 @@ elif menu == "ESCANER CV":
 
         +
 
-        empleados.iloc[:, 1]
+        empleados.iloc[:,1]
         .astype(str)
 
     )
 
-    seleccionado = st.selectbox(
+    seleccionado=st.selectbox(
 
-        "👤 Seleccionar empleado",
+        "👤 Empleado",
 
-        empleados["mostrar"]
+        empleados["vista"]
 
     )
 
-    id_emp = seleccionado.split(
+    id_emp=seleccionado.split(
         " - "
     )[0]
 
-    fila = empleados[
+    empleado=empleados[
 
-        empleados.iloc[:, 0]
+        empleados.iloc[:,0]
         .astype(str)
 
         ==
@@ -587,116 +597,9 @@ elif menu == "ESCANER CV":
 
     ].iloc[0]
 
-    st.markdown("---")
-
-    foto, perfil = st.columns(
-        [1, 3]
-    )
-
-    with foto:
-
-        st.subheader(
-            "📷 FOTO"
-        )
-
-        carpeta = "fotos"
-
-        if not os.path.exists(
-            carpeta
-        ):
-
-            os.mkdir(
-                carpeta
-            )
-
-        ruta = (
-            carpeta
-            +
-            "/"
-            +
-            str(id_emp)
-            +
-            ".png"
-        )
-
-        archivo = st.file_uploader(
-
-            "Subir imagen",
-
-            type=[
-
-                "png",
-
-                "jpg",
-
-                "jpeg"
-
-            ]
-
-        )
-
-        if archivo:
-
-            with open(
-                ruta,
-                "wb"
-            ) as f:
-
-                f.write(
-                    archivo.read()
-                )
-
-            st.success(
-                "Foto guardada"
-            )
-
-        if os.path.exists(
-            ruta
-        ):
-
-            st.image(
-
-                ruta,
-
-                use_container_width=True
-
-            )
-
-        else:
-
-            st.info(
-                "Sin fotografía"
-            )
-
-    with perfil:
-
-        st.markdown(
-            "# PERFIL DEL EMPLEADO"
-        )
-
-        for col in empleados.columns:
-
-            if col != "mostrar":
-
-                valor = fila[col]
-
-                st.markdown(
-f"""
-### {col.upper()}
-
-{valor}
-"""
-                )
-
-    st.markdown("---")
-
-    st.subheader(
-        "📈 KPI DEL EMPLEADO"
-    )
-
     try:
 
-        kpis = pd.read_sql(
+        kpis=pd.read_sql(
 
             """
             SELECT *
@@ -710,56 +613,221 @@ f"""
 
         )
 
-        if not kpis.empty:
+    except:
 
-            columnas = [
+        kpis=pd.DataFrame()
 
-                c
+    try:
 
-                for c
+        cargo=empleado.get(
+            "cargo",
+            ""
+        )
 
-                in [
+        cargos=pd.read_sql(
 
-                    "indicador",
+            """
+            SELECT *
+            FROM cargos
+            """,
 
-                    "meta",
+            conn
 
-                    "proyectado",
+        )
 
-                    "real"
+        datos_cargo=cargos[
 
-                ]
+            cargos.iloc[:,0]
+            .astype(str)
 
-                if c in kpis.columns
+            ==
+
+            str(cargo)
+
+        ]
+
+    except:
+
+        datos_cargo=pd.DataFrame()
+
+    st.markdown("---")
+
+    izq,der=st.columns([1,3])
+
+    with izq:
+
+        carpeta="fotos"
+
+        if not os.path.exists(
+            carpeta
+        ):
+
+            os.mkdir(
+                carpeta
+            )
+
+        ruta=f"{carpeta}/{id_emp}.png"
+
+        foto=st.file_uploader(
+
+            "📷 Subir foto",
+
+            type=[
+
+                "png",
+
+                "jpg",
+
+                "jpeg"
 
             ]
 
-            st.dataframe(
+        )
 
-                kpis[
-                    columnas
-                ],
+        if foto:
 
-                use_container_width=True
+            with open(
+                ruta,
+                "wb"
+            ) as f:
+
+                f.write(
+                    foto.read()
+                )
+
+        if os.path.exists(
+            ruta
+        ):
+
+            st.image(
+                ruta
+            )
+
+    with der:
+
+        st.markdown(
+            "# PERFIL"
+        )
+
+        for c in empleados.columns:
+
+            if c!="vista":
+
+                st.write(
+                    f"**{c}:**",
+                    empleado[c]
+                )
+
+    st.markdown("---")
+
+    st.subheader(
+        "💼 INFORMACIÓN DEL CARGO"
+    )
+
+    if not datos_cargo.empty:
+
+        st.dataframe(
+
+            datos_cargo,
+
+            use_container_width=True
+
+        )
+
+    else:
+
+        st.info(
+            "Sin información del cargo"
+        )
+
+    st.markdown("---")
+
+    st.subheader(
+        "📈 KPIs DEL PUESTO"
+    )
+
+    if not kpis.empty:
+
+        mostrar=[]
+
+        for c in [
+
+            "indicador",
+
+            "meta",
+
+            "proyectado",
+
+            "real"
+
+        ]:
+
+            if c in kpis.columns:
+
+                mostrar.append(
+                    c
+                )
+
+        st.dataframe(
+
+            kpis[
+                mostrar
+            ],
+
+            use_container_width=True
+
+        )
+
+        if (
+
+            "meta" in kpis.columns
+            and
+            "real" in kpis.columns
+
+        ):
+
+            prom=round(
+
+                (
+
+                    kpis["real"]
+                    .sum()
+
+                    /
+
+                    max(
+                        kpis["meta"]
+                        .sum(),
+                        1
+                    )
+
+                )
+
+                *100,
+
+                2
 
             )
 
-        else:
+            st.metric(
 
-            st.info(
-                "Sin KPIs registrados"
+                "Cumplimiento",
+
+                f"{prom}%"
+
             )
 
-    except Exception as e:
+    else:
 
-        st.error(
-            f"Error KPI: {e}"
+        st.info(
+            "Sin KPIs"
         )
 
     st.markdown("---")
 
     st.success(
-        "Información cargada correctamente"
+        "CV generado automáticamente"
+    )
     )
 # =========================================================
 # CARGOS
