@@ -118,176 +118,34 @@ menu = st.sidebar.radio("MENÚ", [
     "CARGOS"
 ])
 
-# =========================================================
-# DASHBOARD FOTO PREMIUM V5
-# =========================================================
-
 if menu == "DASHBOARD":
 
-    st.markdown("""
-<style>
+    import plotly.graph_objects as go
+    from datetime import datetime
 
-.block-container{
-padding-top:1rem;
-}
-
-.head{
-text-align:center;
-margin-bottom:30px;
-}
-
-.t1{
-font-size:54px;
-font-weight:800;
-color:white;
-}
-
-.t2{
-color:#5BFF5F;
-font-size:18px;
-}
-
-.top{
-
-background:
-linear-gradient(
-180deg,
-#071220,
-#0F1D37
-);
-
-border-radius:20px;
-
-padding:18px;
-
-border:
-
-1px solid
-rgba(
-91,
-255,
-95,
-.15
-);
-
-}
-
-.num{
-
-font-size:34px;
-
-font-weight:800;
-
-color:white;
-
-}
-
-.kpi{
-
-background:
-linear-gradient(
-180deg,
-#081626,
-#132544
-);
-
-border-radius:26px;
-
-padding:25px;
-
-margin-bottom:25px;
-
-border:
-1px solid
-rgba(
-255,
-255,
-255,
-.05
-);
-
-}
-
-.right{
-
-background:
-
-rgba(
-255,
-255,
-255,
-.03
-);
-
-padding:22px;
-
-border-radius:20px;
-
-}
-
-.lbl{
-
-color:#8CB6FF;
-
-font-size:13px;
-
-}
-
-.big{
-
-font-size:28px;
-
-font-weight:800;
-
-color:white;
-
-}
-
-.ok{
-
-color:#39FF14;
-
-font-size:30px;
-
-font-weight:800;
-
-}
-
-.note{
-
-text-align:center;
-
-color:#6BFF78;
-
-}
-
-</style>
-""",
-unsafe_allow_html=True)
-
-    empleados=pd.read_sql(
+    empleados = pd.read_sql(
         "SELECT * FROM empleados",
         conn
     )
 
-    kpis=pd.read_sql(
+    kpis = pd.read_sql(
         "SELECT * FROM kpis",
         conn
     )
 
-    total=len(
+    total = len(
         empleados
     )
 
-    total_kpi=len(
+    total_kpi = len(
         kpis
     )
 
-    cumplimiento=0
+    cumplimiento = 0
 
     if not kpis.empty:
 
-        cumplimiento=round(
+        cumplimiento = round(
 
             (
                 kpis["real"].sum()
@@ -303,15 +161,15 @@ unsafe_allow_html=True)
 
             *100,
 
-            1
+            2
 
         )
 
-    riesgo=0
+    riesgo = 0
 
     if not kpis.empty:
 
-        riesgo=len(
+        riesgo = len(
 
             kpis[
                 kpis["real"]
@@ -321,129 +179,124 @@ unsafe_allow_html=True)
 
         )
 
-    objetivo=max(
+    objetivo = max(
         total_kpi-riesgo,
         0
     )
 
-    st.markdown("""
-<div class='head'>
+    fecha_actual = datetime.now().strftime(
+        "%d/%m/%Y"
+    )
 
-<div class='t1'>
+    st.title(
+        "🏛️ DASHBOARD EJECUTIVO"
+    )
 
-🏦 DASHBOARD EJECUTIVO
+    st.caption(
+        f"📅 {fecha_actual}"
+    )
 
-</div>
+    a,b,c,d,e = st.columns(5)
 
-<div class='t2'>
+    a.metric(
+        "👥 COLABORADORES",
+        total
+    )
 
-GERENCIA DE BANCO KPI
+    b.metric(
+        "📈 KPI",
+        total_kpi
+    )
 
-</div>
+    c.metric(
+        "🎯 CUMPLIMIENTO",
+        f"{cumplimiento}%"
+    )
 
-</div>
+    d.metric(
+        "🛡️ OBJETIVO",
+        objetivo
+    )
 
-""",
-unsafe_allow_html=True)
+    e.metric(
+        "⚠️ RIESGO",
+        riesgo
+    )
 
-    a,b,c,d,e=st.columns(5)
+    st.markdown("---")
 
-    datos=[
-
-("👥",total),
-
-("📈",total_kpi),
-
-("🎯",f"{cumplimiento}%"),
-
-("✅",objetivo),
-
-("⚠️",riesgo)
-
-]
-
-    for col,v in zip(
-
-        [a,b,c,d,e],
-
-        datos
-
+    for i in range(
+        0,
+        len(kpis),
+        2
     ):
 
-        with col:
+        cols = st.columns(2)
 
-            st.markdown(f"""
+        subset = kpis.iloc[
+            i:
+            i+2
+        ]
 
-<div class='top'>
+        for col,
+        (
+            _,
+            row
 
-<h2>{v[0]}</h2>
+        ) in zip(
 
-<div class='num'>
+            cols,
 
-{v[1]}
+            subset.iterrows()
 
-</div>
+        ):
 
-</div>
+            with col:
 
-""",
-unsafe_allow_html=True)
+                meta = max(
+                    row["meta"],
+                    1
+                )
 
-    st.markdown("<br>",unsafe_allow_html=True)
+                real = row["real"]
 
-    for _,row in kpis.iterrows():
+                proy = row[
+                    "proyectado"
+                ]
 
-        meta=max(
-            row["meta"],
-            1
-        )
+                comp = round(
 
-        real=row["real"]
+                    (
+                        real
+                        /
+                        meta
+                    )
 
-        proy=row["proyectado"]
+                    *100,
 
-        comp=round(
-            (
-                real/meta
-            )
-            *100,
-            1
-        )
+                    2
 
-        signo="$"
+                )
 
-        nota="Valores expresados en C$"
+                st.markdown(
+                    "### "
+                    +row[
+                        "indicador"
+                    ]
+                )
 
-        if row["indicador"] in [
+                izquierda,derecha=st.columns(
+                    [
+                        1.2,
+                        1
+                    ]
+                )
 
-            "ROA",
+                with izquierda:
 
-            "ROE"
+                    fig = go.Figure()
 
-        ]:
-
-            signo="%"
-
-            nota="Valores expresados en %"
-
-        st.markdown(
-            f"""
-<div class='kpi'>
-
-### {signo} {row["indicador"]}
-
-""",
-unsafe_allow_html=True)
-
-        l,r=st.columns(
-            [1.8,.8]
-        )
-
-        with l:
-
-            donut=go.Figure()
-
-            donut.add_trace(
+                    fig.add_trace(
 
 go.Pie(
 
@@ -458,7 +311,7 @@ meta-real,
 
 ],
 
-hole=.74,
+hole=.70,
 
 textinfo="none",
 
@@ -466,9 +319,9 @@ marker=dict(
 
 colors=[
 
-"#39FF14",
+"#00E676",
 
-"#18304A"
+"#0E1926"
 
 ]
 
@@ -478,9 +331,21 @@ colors=[
 
 )
 
-            donut.update_layout(
+                    fig.update_layout(
 
-height=520,
+height=260,
+
+margin=dict(
+
+t=0,
+
+b=0,
+
+l=0,
+
+r=0
+
+),
 
 paper_bgcolor=
 "rgba(0,0,0,0)",
@@ -503,15 +368,7 @@ Cumplimiento
 
 """,
 
-showarrow=False,
-
-font=dict(
-
-size=34,
-
-color="white"
-
-)
+showarrow=False
 
 )
 
@@ -519,102 +376,47 @@ color="white"
 
 )
 
-            st.plotly_chart(
+                    st.plotly_chart(
 
-donut,
+                        fig,
 
-use_container_width=True
+                        use_container_width=True
 
-)
+                    )
 
-            st.markdown(
+                with derecha:
 
-f"""
+                    st.write(
+                        "META"
+                    )
 
-<div class='note'>
+                    st.code(
+                        f"{meta:,.2f}"
+                    )
 
-{nota}
+                    st.write(
+                        "PROYECTADO"
+                    )
 
-</div>
+                    st.code(
+                        f"{proy:,.2f}"
+                    )
 
-""",
+                    st.write(
+                        "REAL"
+                    )
 
-unsafe_allow_html=True
+                    st.code(
+                        f"{real:,.2f}"
+                    )
 
-)
+                    st.success(
+                        f"{comp}%"
+                    )
 
-        with r:
-
-            st.markdown(
-                "<div class='right'>",
-                unsafe_allow_html=True
-            )
-
-            st.write(
-                "META"
-            )
-
-            st.markdown(
-f"""
-<div class='big'>
-{meta:,.2f}
-</div>
-""",
-unsafe_allow_html=True
-)
-
-            st.write(
-                "PROYECTADO"
-            )
-
-            st.markdown(
-f"""
-<div class='big'>
-{proy:,.2f}
-</div>
-""",
-unsafe_allow_html=True
-)
-
-            st.write(
-                "REAL"
-            )
-
-            st.markdown(
-f"""
-<div class='big'>
-{real:,.2f}
-</div>
-""",
-unsafe_allow_html=True
-)
-
-            st.markdown("---")
-
-            st.markdown(
-f"""
-
-<div class='ok'>
-
-{comp}%
-
-</div>
-
-Cumplimiento
-
-""",
-unsafe_allow_html=True
-)
-
-            st.markdown(
-                "</div>",
-                unsafe_allow_html=True
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
+                st.caption(
+                    "Valores expresados según el indicador"
+                )
         
 # =========================================================
 # REGISTRAR
