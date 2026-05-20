@@ -119,7 +119,7 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# DASHBOARD FOTO PREMIUM
+# DASHBOARD FOTO PREMIUM V5
 # =========================================================
 
 if menu == "DASHBOARD":
@@ -127,68 +127,54 @@ if menu == "DASHBOARD":
     st.markdown("""
 <style>
 
-html,body{
-background:#040C18;
+.block-container{
+padding-top:1rem;
 }
 
 .head{
-
 text-align:center;
-
 margin-bottom:30px;
-
 }
 
-.tt{
-
-font-size:56px;
-
+.t1{
+font-size:54px;
 font-weight:800;
-
 color:white;
-
 }
 
-.sub{
-
-font-size:20px;
-
-color:#39FF14;
-
-font-weight:700;
-
+.t2{
+color:#5BFF5F;
+font-size:18px;
 }
 
 .top{
 
 background:
 linear-gradient(
-145deg,
-#081425,
-#0C1835
+180deg,
+#071220,
+#0F1D37
 );
+
+border-radius:20px;
+
+padding:18px;
 
 border:
 
 1px solid
 rgba(
-0,
+91,
 255,
-100,
+95,
 .15
 );
 
-border-radius:20px;
-
-padding:20px;
-
-text-align:center;
-
 }
 
-.topnum{
+.num{
 
-font-size:44px;
+font-size:34px;
 
 font-weight:800;
 
@@ -196,36 +182,23 @@ color:white;
 
 }
 
-.toplabel{
-
-color:#DDE6FF;
-
-}
-
 .kpi{
 
 background:
-
 linear-gradient(
-
 180deg,
-
-#071321,
-
-#101E37
-
+#081626,
+#132544
 );
+
+border-radius:26px;
 
 padding:25px;
 
-border-radius:24px;
-
-margin-bottom:30px;
+margin-bottom:25px;
 
 border:
-
 1px solid
-
 rgba(
 255,
 255,
@@ -235,39 +208,34 @@ rgba(
 
 }
 
-.box{
+.right{
 
 background:
 
 rgba(
-
 255,
-
 255,
-
 255,
-
 .03
-
 );
 
 padding:22px;
 
-border-radius:18px;
+border-radius:20px;
 
 }
 
-.green{
+.lbl{
 
-color:#39FF14;
+color:#8CB6FF;
 
-font-weight:800;
+font-size:13px;
 
 }
 
-.valor{
+.big{
 
-font-size:30px;
+font-size:28px;
 
 font-weight:800;
 
@@ -275,19 +243,21 @@ color:white;
 
 }
 
-.lbl{
+.ok{
 
-color:#7FB3FF;
+color:#39FF14;
 
-font-size:13px;
+font-size:30px;
+
+font-weight:800;
 
 }
 
-.desc{
+.note{
 
 text-align:center;
 
-color:#39FF14;
+color:#6BFF78;
 
 }
 
@@ -305,7 +275,7 @@ unsafe_allow_html=True)
         conn
     )
 
-    total_emp=len(
+    total=len(
         empleados
     )
 
@@ -321,6 +291,7 @@ unsafe_allow_html=True)
 
             (
                 kpis["real"].sum()
+
                 /
 
                 (
@@ -328,9 +299,11 @@ unsafe_allow_html=True)
                     +1
                 )
 
-            )*100,
+            )
 
-            2
+            *100,
+
+            1
 
         )
 
@@ -339,11 +312,13 @@ unsafe_allow_html=True)
     if not kpis.empty:
 
         riesgo=len(
+
             kpis[
                 kpis["real"]
                 <
                 kpis["meta"]
             ]
+
         )
 
     objetivo=max(
@@ -354,44 +329,48 @@ unsafe_allow_html=True)
     st.markdown("""
 <div class='head'>
 
-<div class='tt'>
+<div class='t1'>
 
 🏦 DASHBOARD EJECUTIVO
 
 </div>
 
-<div class='sub'>
+<div class='t2'>
 
 GERENCIA DE BANCO KPI
 
 </div>
 
 </div>
+
 """,
 unsafe_allow_html=True)
 
-    c1,c2,c3,c4,c5=st.columns(5)
+    a,b,c,d,e=st.columns(5)
 
-    cards=[
+    datos=[
 
-("👥",total_emp,"COLABORADORES"),
+("👥",total),
 
-("📈",total_kpi,"KPIs ACTIVOS"),
+("📈",total_kpi),
 
-("🎯",f"{cumplimiento}%","CUMPLIMIENTO"),
+("🎯",f"{cumplimiento}%"),
 
-("✅",objetivo,"KPIs OBJETIVO"),
+("✅",objetivo),
 
-("⚠️",riesgo,"KPIs RIESGO")
+("⚠️",riesgo)
 
 ]
 
-    for c,v in zip(
-        [c1,c2,c3,c4,c5],
-        cards
+    for col,v in zip(
+
+        [a,b,c,d,e],
+
+        datos
+
     ):
 
-        with c:
+        with col:
 
             st.markdown(f"""
 
@@ -399,15 +378,9 @@ unsafe_allow_html=True)
 
 <h2>{v[0]}</h2>
 
-<div class='topnum'>
+<div class='num'>
 
 {v[1]}
-
-</div>
-
-<div class='toplabel'>
-
-{v[2]}
 
 </div>
 
@@ -429,51 +402,48 @@ unsafe_allow_html=True)
 
         proy=row["proyectado"]
 
-        cumplimiento_kpi=round(
-
+        comp=round(
             (
                 real/meta
             )
-
             *100,
-
-            2
-
+            1
         )
 
-        icon="$"
+        signo="$"
 
-        texto="Valores expresados en CÓRDOBAS (C$)"
+        nota="Valores expresados en C$"
 
-        titulo=row["indicador"]
+        if row["indicador"] in [
 
-        if titulo in [
             "ROA",
+
             "ROE"
+
         ]:
 
-            icon="%"
+            signo="%"
 
-            texto="Valores expresados en PORCENTAJE (%)"
+            nota="Valores expresados en %"
 
         st.markdown(
             f"""
 <div class='kpi'>
 
-### {icon} {titulo}
+### {signo} {row["indicador"]}
 
 """,
 unsafe_allow_html=True)
 
-        a,b=st.columns(
-            [1.2,.8]
+        l,r=st.columns(
+            [1.8,.8]
         )
 
-        with a:
+        with l:
 
-            fig=go.Figure()
+            donut=go.Figure()
 
-            fig.add_trace(
+            donut.add_trace(
 
 go.Pie(
 
@@ -488,7 +458,7 @@ meta-real,
 
 ],
 
-hole=.68,
+hole=.74,
 
 textinfo="none",
 
@@ -496,9 +466,9 @@ marker=dict(
 
 colors=[
 
-"#56FF45",
+"#39FF14",
 
-"#20453C"
+"#18304A"
 
 ]
 
@@ -508,9 +478,9 @@ colors=[
 
 )
 
-            fig.update_layout(
+            donut.update_layout(
 
-height=450,
+height=520,
 
 paper_bgcolor=
 "rgba(0,0,0,0)",
@@ -523,7 +493,7 @@ text=f"""
 
 <b>
 
-{cumplimiento_kpi}%
+{comp}%
 
 </b>
 
@@ -537,7 +507,7 @@ showarrow=False,
 
 font=dict(
 
-size=32,
+size=34,
 
 color="white"
 
@@ -550,17 +520,20 @@ color="white"
 )
 
             st.plotly_chart(
-                fig,
-                use_container_width=True
-            )
+
+donut,
+
+use_container_width=True
+
+)
 
             st.markdown(
 
 f"""
 
-<div class='desc'>
+<div class='note'>
 
-{texto}
+{nota}
 
 </div>
 
@@ -570,55 +543,68 @@ unsafe_allow_html=True
 
 )
 
-        with b:
+        with r:
 
             st.markdown(
-                "<br>",
+                "<div class='right'>",
                 unsafe_allow_html=True
             )
 
-            st.markdown(
-                "<div class='box'>",
-                unsafe_allow_html=True
+            st.write(
+                "META"
             )
 
-            st.write("🔵 META")
             st.markdown(
-                f"<div class='valor'>{meta:,.2f}</div>",
-                unsafe_allow_html=True
+f"""
+<div class='big'>
+{meta:,.2f}
+</div>
+""",
+unsafe_allow_html=True
+)
+
+            st.write(
+                "PROYECTADO"
             )
 
-            st.write("🟡 PROYECTADO")
             st.markdown(
-                f"<div class='valor'>{proy:,.2f}</div>",
-                unsafe_allow_html=True
+f"""
+<div class='big'>
+{proy:,.2f}
+</div>
+""",
+unsafe_allow_html=True
+)
+
+            st.write(
+                "REAL"
             )
 
-            st.write("🟢 REAL")
             st.markdown(
-                f"<div class='valor'>{real:,.2f}</div>",
-                unsafe_allow_html=True
-            )
+f"""
+<div class='big'>
+{real:,.2f}
+</div>
+""",
+unsafe_allow_html=True
+)
 
             st.markdown("---")
 
             st.markdown(
 f"""
 
-<div class='green'>
+<div class='ok'>
+
+{comp}%
+
+</div>
 
 Cumplimiento
 
-</div>
-
-<div class='valor'>
-
-{cumplimiento_kpi}%
-
-</div>
-
 """,
-unsafe_allow_html=True)
+unsafe_allow_html=True
+)
 
             st.markdown(
                 "</div>",
@@ -629,6 +615,7 @@ unsafe_allow_html=True)
             "</div>",
             unsafe_allow_html=True
         )
+        
 # =========================================================
 # REGISTRAR
 # =========================================================
