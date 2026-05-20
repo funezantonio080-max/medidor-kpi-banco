@@ -527,7 +527,7 @@ elif menu == "KPIS":
 # =========================================================
 # ESCÁNER (CON GRÁFICOS)
 # =========================================================
-elif menu=="ESCANER CV":
+elif menu == "ESCANER CV":
 
     import streamlit as st
     import pandas as pd
@@ -535,153 +535,96 @@ elif menu=="ESCANER CV":
 
     st.title("📄 ESCÁNER CV EJECUTIVO")
 
-    try:
+    empleados = pd.read_sql(
+        "SELECT * FROM empleados",
+        conn
+    )
 
-        empleados=pd.read_sql(
-            "SELECT * FROM empleados",
-            conn
-        )
-
-        if empleados.empty:
-
-            st.warning(
-                "No existen empleados"
-            )
-
-            st.stop()
-
-    except Exception as e:
-
-        st.error(
-            f"Error empleados: {e}"
-        )
-
+    if empleados.empty:
+        st.warning("No hay empleados")
         st.stop()
 
-    empleados["vista"]=(
-
-        empleados.iloc[:,0]
-        .astype(str)
-
-        +
-
-        " - "
-
-        +
-
-        empleados.iloc[:,1]
-        .astype(str)
-
+    empleados["vista"] = (
+        empleados.iloc[:, 0].astype(str)
+        + " - "
+        + empleados.iloc[:, 1].astype(str)
     )
 
-    seleccionado=st.selectbox(
-
-        "👤 Empleado",
-
+    seleccion = st.selectbox(
+        "👤 Seleccionar empleado",
         empleados["vista"]
-
     )
 
-    id_emp=seleccionado.split(
-        " - "
-    )[0]
+    id_emp = seleccion.split(" - ")[0]
 
-    empleado=empleados[
-
-        empleados.iloc[:,0]
-        .astype(str)
-
-        ==
-
-        str(id_emp)
-
+    empleado = empleados[
+        empleados.iloc[:, 0].astype(str)
+        == str(id_emp)
     ].iloc[0]
 
     try:
 
-        kpis=pd.read_sql(
-
+        kpis = pd.read_sql(
             """
             SELECT *
             FROM kpis
             WHERE id=?
             """,
-
             conn,
-
             params=[id_emp]
-
         )
 
     except:
 
-        kpis=pd.DataFrame()
+        kpis = pd.DataFrame()
 
     try:
 
-        cargo=empleado.get(
-            "cargo",
-            ""
-        )
-
-        cargos=pd.read_sql(
-
-            """
-            SELECT *
-            FROM cargos
-            """,
-
+        cargos = pd.read_sql(
+            "SELECT * FROM cargos",
             conn
-
         )
 
-        datos_cargo=cargos[
+        cargo = str(
+            empleado.get(
+                "cargo",
+                ""
+            )
+        )
 
-            cargos.iloc[:,0]
+        cargo_info = cargos[
+            cargos.iloc[:, 0]
             .astype(str)
-
             ==
-
-            str(cargo)
-
+            cargo
         ]
 
     except:
 
-        datos_cargo=pd.DataFrame()
+        cargo_info = pd.DataFrame()
 
     st.markdown("---")
 
-    izq,der=st.columns([1,3])
+    col1, col2 = st.columns([1, 3])
 
-    with izq:
+    with col1:
 
-        carpeta="fotos"
+        carpeta = "fotos"
 
-        if not os.path.exists(
-            carpeta
-        ):
+        os.makedirs(
+            carpeta,
+            exist_ok=True
+        )
 
-            os.mkdir(
-                carpeta
-            )
+        ruta = f"{carpeta}/{id_emp}.png"
 
-        ruta=f"{carpeta}/{id_emp}.png"
-
-        foto=st.file_uploader(
-
-            "📷 Subir foto",
-
+        foto = st.file_uploader(
+            "📷 Foto",
             type=[
-
                 "png",
-
                 "jpg",
-
                 "jpeg"
-
             ]
-
         )
 
         if foto:
@@ -700,21 +643,25 @@ elif menu=="ESCANER CV":
         ):
 
             st.image(
-                ruta
+                ruta,
+                use_container_width=True
             )
 
-    with der:
+    with col2:
 
-        st.markdown(
-            "# PERFIL"
+        st.subheader(
+            "PERFIL EMPLEADO"
         )
 
         for c in empleados.columns:
 
-            if c!="vista":
+            if c != "vista":
 
                 st.write(
-                    f"**{c}:**",
+                    f"**{c}**"
+                )
+
+                st.write(
                     empleado[c]
                 )
 
@@ -724,14 +671,11 @@ elif menu=="ESCANER CV":
         "💼 INFORMACIÓN DEL CARGO"
     )
 
-    if not datos_cargo.empty:
+    if not cargo_info.empty:
 
         st.dataframe(
-
-            datos_cargo,
-
+            cargo_info,
             use_container_width=True
-
         )
 
     else:
@@ -743,35 +687,32 @@ elif menu=="ESCANER CV":
     st.markdown("---")
 
     st.subheader(
-        "📈 KPIs DEL PUESTO"
+        "📈 KPIs"
     )
 
     if not kpis.empty:
 
-        mostrar=[]
+        columnas = []
 
-        for c in [
+        for x in [
 
             "indicador",
-
             "meta",
-
             "proyectado",
-
             "real"
 
         ]:
 
-            if c in kpis.columns:
+            if x in kpis.columns:
 
-                mostrar.append(
-                    c
+                columnas.append(
+                    x
                 )
 
         st.dataframe(
 
             kpis[
-                mostrar
+                columnas
             ],
 
             use_container_width=True
@@ -780,16 +721,19 @@ elif menu=="ESCANER CV":
 
         if (
 
-            "meta" in kpis.columns
+            "meta"
+            in kpis.columns
+
             and
-            "real" in kpis.columns
+
+            "real"
+            in kpis.columns
 
         ):
 
-            prom=round(
+            cumplimiento = round(
 
                 (
-
                     kpis["real"]
                     .sum()
 
@@ -803,18 +747,15 @@ elif menu=="ESCANER CV":
 
                 )
 
-                *100,
+                * 100,
 
                 2
 
             )
 
             st.metric(
-
                 "Cumplimiento",
-
-                f"{prom}%"
-
+                f"{cumplimiento}%"
             )
 
     else:
@@ -823,11 +764,8 @@ elif menu=="ESCANER CV":
             "Sin KPIs"
         )
 
-    st.markdown("---")
-
     st.success(
-        "CV generado automáticamente"
-    )
+        "CV generado correctamente"
     )
 # =========================================================
 # CARGOS
