@@ -525,14 +525,14 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ESCÁNER VISTA EJECUTIVA (FUENTES AGRANDADAS)
+# ESCÁNER VISTA EJECUTIVA (TABLA A 20PX)
 # =========================================================
 elif menu == "ESCÁNER":
 
     import os
     import plotly.graph_objects as go
 
-    # Inyección de estilos CSS modificados con fuentes más grandes
+    # Inyección de estilos CSS modificados con fuentes a 20px para la tabla
     st.markdown("""
     <style>
     /* Fondo global oscuro */
@@ -558,7 +558,7 @@ elif menu == "ESCÁNER":
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     
-    /* Subtítulo AGRANDADO a 16px */
+    /* Subtítulo */
     .sub {
         font-size: 16px; 
         color: #7b52ff;
@@ -590,7 +590,7 @@ elif menu == "ESCÁNER":
     }
     
     .lbl {
-        font-size: 13px;
+        font-size: 14px;
         color: #637393;
         font-weight: 700;
         text-transform: uppercase;
@@ -598,7 +598,7 @@ elif menu == "ESCÁNER":
     }
     
     .val {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 700;
         color: white;
     }
@@ -634,7 +634,6 @@ elif menu == "ESCÁNER":
         height: 55px;
     }
     
-    /* Etiquetas del perfil (ÁREA y CARGO) AGRANDADAS a 16px */
     .lbl-profile {
         font-size: 16px;
         color: #7b52ff;
@@ -642,7 +641,6 @@ elif menu == "ESCÁNER":
         letter-spacing: 0.5px;
     }
     
-    /* Valores de perfil (FINANZAS, ANALISTA...) AGRANDADOS a 22px */
     .val-profile {
         font-size: 22px;
         font-weight: 700;
@@ -670,19 +668,30 @@ elif menu == "ESCÁNER":
         margin-top: 2px;
     }
     
-    /* ESTILOS FUERTES PARA LA TABLA DE KPIS (Letras y números más grandes) */
-    .stDataFrame th {
-        font-size: 16px !important;
-        font-weight: 700 !important;
-        color: #7b52ff !important;
-    }
-    
-    .stDataFrame td {
-        font-size: 16px !important;
+    /* =========================================================
+       CRÍTICO: CONTROL ULTRA-AGRESIVO PARA DATA FRAME A 20PX
+       =========================================================
+    */
+    /* Encabezados de la tabla nativa de Streamlit */
+    .stDataFrame div[data-testid="stTableDataCell"] p, 
+    .stDataFrame div[data-testid="stHeaderCell"] p,
+    .stDataFrame th, .stDataFrame td,
+    div[data-role="grid"] div {
+        font-size: 20px !important;
         font-weight: 600 !important;
+    }
+
+    /* Forzar color morado a los encabezados y blanco al contenido */
+    .stDataFrame div[data-testid="stHeaderCell"] p {
+        color: #7b52ff !important;
+        font-weight: 700 !important;
+    }
+
+    .stDataFrame div[data-testid="stTableDataCell"] p {
         color: white !important;
     }
 
+    /* Estilos del Selectbox selector */
     div[data-baseweb="select"] {
         background-color: #0b1326 !important;
         border: 1px solid #172033 !important;
@@ -691,7 +700,7 @@ elif menu == "ESCÁNER":
     
     div[data-baseweb="select"] div {
         color: white !important;
-        font-size: 16px !important;
+        font-size: 18px !important;
     }
     
     .stDataFrame {
@@ -734,8 +743,8 @@ elif menu == "ESCÁNER":
     id_emp = emp.split(" - ")[0]
     empleado = empleados[empleados["id"].astype(str) == id_emp].iloc[0]
 
-    # --- DISTRIBUCIÓN PRINCIPAL ---
-    izq, der = st.columns([1.2, 3])
+    # --- DISTRIBUCIÓN PRINCIPAL (Ajuste leve para pantallas ultra anchas) ---
+    izq, der = st.columns([1.3, 3])
 
     # ================= COLUMNA IZQUIERDA =================
     with izq:
@@ -780,7 +789,7 @@ elif menu == "ESCÁNER":
 
     # ================= COLUMNA DERECHA =================
     with der:
-        # Tarjeta superior de Perfil Profesional (Modificada con las nuevas clases)
+        # Tarjeta superior de Perfil Profesional
         st.markdown(f"""
         <div class='card'>
             <div class='section-title'>👤 PERFIL</div>
@@ -811,10 +820,11 @@ elif menu == "ESCÁNER":
         datos_kpi = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(id_emp,))
 
         if not datos_kpi.empty:
-            k1, k2 = st.columns([1.8, 1.2])
+            k1, k2 = st.columns([1.9, 1.1])
 
             with k1:
                 tabla = datos_kpi[["indicador", "meta", "proyectado", "real"]]
+                # Al renderizar, st.dataframe tomará el tamaño de 20px gracias a los selectores específicos añadidos arriba
                 st.dataframe(tabla, use_container_width=True, hide_index=True)
 
             with k2:
