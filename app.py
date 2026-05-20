@@ -119,31 +119,264 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# DASHBOARD
+# DASHBOARD CEO PREMIUM
 # =========================================================
+
 if menu == "DASHBOARD":
-    st.title("📊 DASHBOARD GENERAL")
 
-    empleados = pd.read_sql("SELECT * FROM empleados", conn)
-    kpis = pd.read_sql("SELECT * FROM kpis", conn)
+    st.markdown("""
+<style>
+
+.titulo{
+text-align:center;
+font-size:56px;
+font-weight:800;
+color:white;
+}
+
+.sub{
+text-align:center;
+color:#94A3B8;
+font-size:18px;
+}
+
+.card{
+
+background:
+linear-gradient(
+145deg,
+#0B1220,
+#172554
+);
+
+padding:24px;
+
+border-radius:20px;
+
+border:
+1px solid rgba(255,255,255,.08);
+
+box-shadow:
+0 0 35px rgba(0,80,255,.15);
+
+}
+
+.valor{
+
+font-size:42px;
+
+font-weight:800;
+
+color:#38BDF8;
+
+text-align:center;
+
+}
+
+.texto{
+
+text-align:center;
+
+color:white;
+
+}
+
+</style>
+""",
+unsafe_allow_html=True)
+
+    st.markdown("""
+<div class='titulo'>
+🏦 GERENCIA DE BANCO KPI
+</div>
+
+<div class='sub'>
+CENTRO EJECUTIVO DE INDICADORES
+</div>
+
+<br>
+""",
+unsafe_allow_html=True)
+
+    empleados = pd.read_sql(
+        "SELECT * FROM empleados",
+        conn
+    )
+
+    kpis = pd.read_sql(
+        "SELECT * FROM kpis",
+        conn
+    )
+
+    total_emp = len(
+        empleados
+    )
+
+    total_kpi = len(
+        kpis
+    )
+
+    cumplimiento = 0
+
+    if not kpis.empty:
+
+        cumplimiento = round(
+
+            (
+                kpis["real"].sum()
+                /
+
+                (
+                    kpis["meta"].sum()
+                    + 1
+                )
+
+            ) * 100,
+
+            1
+
+        )
+
+    riesgo = 0
+
+    if not kpis.empty:
+
+        riesgo = len(
+
+            kpis[
+                kpis["real"]
+                <
+                kpis["meta"]
+            ]
+
+        )
+
+    c1,c2,c3,c4 = st.columns(4)
+
+    with c1:
+
+        st.markdown(f"""
+<div class='card'>
+<div class='valor'>
+{total_emp}
+</div>
+<div class='texto'>
+COLABORADORES
+</div>
+</div>
+""",
+unsafe_allow_html=True)
+
+    with c2:
+
+        st.markdown(f"""
+<div class='card'>
+<div class='valor'>
+{total_kpi}
+</div>
+<div class='texto'>
+KPIs ACTIVOS
+</div>
+</div>
+""",
+unsafe_allow_html=True)
+
+    with c3:
+
+        st.markdown(f"""
+<div class='card'>
+<div class='valor'>
+{cumplimiento}%
+</div>
+<div class='texto'>
+CUMPLIMIENTO
+</div>
+</div>
+""",
+unsafe_allow_html=True)
+
+    with c4:
+
+        st.markdown(f"""
+<div class='card'>
+<div class='valor'>
+{riesgo}
+</div>
+<div class='texto'>
+RIESGO
+</div>
+</div>
+""",
+unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     if not empleados.empty:
-        empleados_view = empleados.drop(columns=["foto"], errors="ignore")
-        st.dataframe(mayus(empleados_view))
 
-    # EXPORTAR EXCEL (SIN XLSXWRITER)
+        empleados_view = empleados.drop(
+            columns=["foto"],
+            errors="ignore"
+        )
+
+        st.subheader(
+            "👥 BASE GENERAL"
+        )
+
+        st.dataframe(
+            mayus(
+                empleados_view
+            ),
+            use_container_width=True
+        )
+
+    if not kpis.empty:
+
+        st.subheader(
+            "📈 RENDIMIENTO KPI"
+        )
+
+        resumen = (
+            kpis
+            .groupby(
+                "indicador"
+            )["real"]
+            .sum()
+        )
+
+        st.bar_chart(
+            resumen
+        )
+
     if not empleados.empty:
+
         output = BytesIO()
 
-        with pd.ExcelWriter(output) as writer:
-            empleados_view.to_excel(writer, sheet_name='EMPLEADOS', index=False)
-            kpis.to_excel(writer, sheet_name='KPIS', index=False)
+        with pd.ExcelWriter(
+            output
+        ) as writer:
+
+            empleados_view.to_excel(
+                writer,
+                sheet_name="EMPLEADOS",
+                index=False
+            )
+
+            kpis.to_excel(
+                writer,
+                sheet_name="KPIS",
+                index=False
+            )
 
         st.download_button(
-            label="📥 EXPORTAR A EXCEL",
-            data=output.getvalue(),
-            file_name="reporte_banco.xlsx",
+
+            "📥 EXPORTAR EXCEL",
+
+            output.getvalue(),
+
+            "reporte_banco.xlsx",
+
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
         )
 
 # =========================================================
