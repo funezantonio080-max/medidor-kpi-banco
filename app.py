@@ -124,79 +124,7 @@ menu = st.sidebar.radio("MENÚ", [
 
 if menu == "DASHBOARD":
 
-    st.markdown("""
-<style>
-
-.titulo{
-text-align:center;
-font-size:56px;
-font-weight:800;
-color:white;
-}
-
-.sub{
-text-align:center;
-color:#94A3B8;
-font-size:18px;
-}
-
-.card{
-
-background:
-linear-gradient(
-145deg,
-#0B1220,
-#172554
-);
-
-padding:24px;
-
-border-radius:20px;
-
-border:
-1px solid rgba(255,255,255,.08);
-
-box-shadow:
-0 0 35px rgba(0,80,255,.15);
-
-}
-
-.valor{
-
-font-size:42px;
-
-font-weight:800;
-
-color:#38BDF8;
-
-text-align:center;
-
-}
-
-.texto{
-
-text-align:center;
-
-color:white;
-
-}
-
-</style>
-""",
-unsafe_allow_html=True)
-
-    st.markdown("""
-<div class='titulo'>
-🏦 GERENCIA DE BANCO KPI
-</div>
-
-<div class='sub'>
-CENTRO EJECUTIVO DE INDICADORES
-</div>
-
-<br>
-""",
-unsafe_allow_html=True)
+    st.title("🏦 DASHBOARD EJECUTIVO")
 
     empleados = pd.read_sql(
         "SELECT * FROM empleados",
@@ -224,6 +152,7 @@ unsafe_allow_html=True)
 
             (
                 kpis["real"].sum()
+
                 /
 
                 (
@@ -231,7 +160,9 @@ unsafe_allow_html=True)
                     + 1
                 )
 
-            ) * 100,
+            )
+
+            * 100,
 
             1
 
@@ -239,87 +170,163 @@ unsafe_allow_html=True)
 
     riesgo = 0
 
+    objetivo = 0
+
     if not kpis.empty:
 
         riesgo = len(
-
             kpis[
                 kpis["real"]
                 <
                 kpis["meta"]
             ]
+        )
 
+        objetivo = len(
+            kpis[
+                kpis["real"]
+                >=
+                kpis["meta"]
+            ]
         )
 
     c1,c2,c3,c4 = st.columns(4)
 
     with c1:
 
-        st.markdown(f"""
-<div class='card'>
-<div class='valor'>
-{total_emp}
-</div>
-<div class='texto'>
-COLABORADORES
-</div>
-</div>
-""",
-unsafe_allow_html=True)
+        st.metric(
+            "👥 COLABORADORES",
+            total_emp
+        )
 
     with c2:
 
-        st.markdown(f"""
-<div class='card'>
-<div class='valor'>
-{total_kpi}
-</div>
-<div class='texto'>
-KPIs ACTIVOS
-</div>
-</div>
-""",
-unsafe_allow_html=True)
+        st.metric(
+            "📈 KPIs",
+            total_kpi
+        )
 
     with c3:
 
-        st.markdown(f"""
-<div class='card'>
-<div class='valor'>
-{cumplimiento}%
-</div>
-<div class='texto'>
-CUMPLIMIENTO
-</div>
-</div>
-""",
-unsafe_allow_html=True)
+        st.metric(
+            "✅ CUMPLIMIENTO",
+            f"{cumplimiento}%"
+        )
 
     with c4:
 
-        st.markdown(f"""
-<div class='card'>
-<div class='valor'>
-{riesgo}
-</div>
-<div class='texto'>
-RIESGO
-</div>
-</div>
-""",
-unsafe_allow_html=True)
+        st.metric(
+            "⚠️ EN RIESGO",
+            riesgo
+        )
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
+
+    g1,g2 = st.columns(2)
+
+    with g1:
+
+        st.subheader(
+            "🥧 KPIs EN OBJETIVO"
+        )
+
+        fig = go.Figure(
+            go.Pie(
+
+                labels=[
+                    "OBJETIVO",
+                    "RIESGO"
+                ],
+
+                values=[
+                    objetivo,
+                    riesgo
+                ],
+
+                hole=.55
+
+            )
+        )
+
+        fig.update_layout(
+
+            height=500,
+
+            paper_bgcolor="rgba(0,0,0,0)",
+
+            font_color="white"
+
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    with g2:
+
+        st.subheader(
+            "📊 DISTRIBUCIÓN KPI"
+        )
+
+        if not kpis.empty:
+
+            resumen = (
+
+                kpis
+
+                .groupby(
+                    "indicador"
+                )["real"]
+
+                .sum()
+
+            )
+
+            fig2 = go.Figure(
+
+                go.Pie(
+
+                    labels=
+                    resumen.index,
+
+                    values=
+                    resumen.values,
+
+                    hole=.45
+
+                )
+
+            )
+
+            fig2.update_layout(
+
+                height=500,
+
+                paper_bgcolor=
+                "rgba(0,0,0,0)",
+
+                font_color=
+                "white"
+
+            )
+
+            st.plotly_chart(
+                fig2,
+                use_container_width=True
+            )
+
+    st.markdown("---")
 
     if not empleados.empty:
+
+        st.subheader(
+            "👥 PERSONAL"
+        )
 
         empleados_view = empleados.drop(
             columns=["foto"],
             errors="ignore"
-        )
-
-        st.subheader(
-            "👥 BASE GENERAL"
         )
 
         st.dataframe(
@@ -329,55 +336,39 @@ unsafe_allow_html=True)
             use_container_width=True
         )
 
-    if not kpis.empty:
+    st.markdown("---")
 
-        st.subheader(
-            "📈 RENDIMIENTO KPI"
+    st.subheader(
+        "📥 EXPORTAR"
+    )
+
+    output = BytesIO()
+
+    with pd.ExcelWriter(
+        output
+    ) as writer:
+
+        empleados.to_excel(
+            writer,
+            index=False,
+            sheet_name="EMPLEADOS"
         )
 
-        resumen = (
-            kpis
-            .groupby(
-                "indicador"
-            )["real"]
-            .sum()
+        kpis.to_excel(
+            writer,
+            index=False,
+            sheet_name="KPIS"
         )
 
-        st.bar_chart(
-            resumen
-        )
+    st.download_button(
 
-    if not empleados.empty:
+        "📥 EXPORTAR EXCEL",
 
-        output = BytesIO()
+        output.getvalue(),
 
-        with pd.ExcelWriter(
-            output
-        ) as writer:
+        "dashboard_banco.xlsx"
 
-            empleados_view.to_excel(
-                writer,
-                sheet_name="EMPLEADOS",
-                index=False
-            )
-
-            kpis.to_excel(
-                writer,
-                sheet_name="KPIS",
-                index=False
-            )
-
-        st.download_button(
-
-            "📥 EXPORTAR EXCEL",
-
-            output.getvalue(),
-
-            "reporte_banco.xlsx",
-
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-        )
+    )
 
 # =========================================================
 # REGISTRAR
