@@ -525,14 +525,14 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ESCÁNER VISTA EJECUTIVA (TABLA A 20PX)
+# ESCÁNER VISTA EJECUTIVA (TABLA MAXIMIZADA Y EN NEGRESIDA)
 # =========================================================
 elif menu == "ESCÁNER":
 
     import os
     import plotly.graph_objects as go
 
-    # Inyección de estilos CSS modificados con fuentes a 20px para la tabla
+    # Inyección de estilos CSS ultra-agresivos para la tabla de KPIs
     st.markdown("""
     <style>
     /* Fondo global oscuro */
@@ -555,7 +555,6 @@ elif menu == "ESCÁNER":
         font-weight: 700;
         color: white;
         letter-spacing: 0.5px;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     
     /* Subtítulo */
@@ -569,8 +568,8 @@ elif menu == "ESCÁNER":
     /* Subtítulos de secciones */
     .section-title {
         color: white;
-        font-size: 20px;
-        font-weight: 600;
+        font-size: 22px;
+        font-weight: 700;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
@@ -594,11 +593,10 @@ elif menu == "ESCÁNER":
         color: #637393;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     
     .val {
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 700;
         color: white;
     }
@@ -635,14 +633,13 @@ elif menu == "ESCÁNER":
     }
     
     .lbl-profile {
-        font-size: 16px;
+        font-size: 18px;
         color: #7b52ff;
         font-weight: 700;
-        letter-spacing: 0.5px;
     }
     
     .val-profile {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 700;
         color: white;
     }
@@ -654,44 +651,50 @@ elif menu == "ESCÁNER":
     }
     
     .kpi-total-val {
-        font-size: 36px;
+        font-size: 38px;
         font-weight: 800;
         color: #1aff74;
     }
     
     .kpi-total-lbl {
-        font-size: 13px;
+        font-size: 14px;
         color: white;
         font-weight: 700;
-        letter-spacing: 0.5px;
         text-transform: uppercase;
-        margin-top: 2px;
     }
     
     /* =========================================================
-       CRÍTICO: CONTROL ULTRA-AGRESIVO PARA DATA FRAME A 20PX
+       NUEVO CSS ULTRA-AGRESIVO PARA MAXIMIZAR LA TABLA (st.dataframe)
        =========================================================
     */
-    /* Encabezados de la tabla nativa de Streamlit */
-    .stDataFrame div[data-testid="stTableDataCell"] p, 
-    .stDataFrame div[data-testid="stHeaderCell"] p,
-    .stDataFrame th, .stDataFrame td,
-    div[data-role="grid"] div {
-        font-size: 20px !important;
-        font-weight: 600 !important;
-    }
-
-    /* Forzar color morado a los encabezados y blanco al contenido */
-    .stDataFrame div[data-testid="stHeaderCell"] p {
-        color: #7b52ff !important;
+    /* Aumenta celdas generales y texto de datos */
+    .stDataFrame td, 
+    .stDataFrame div[data-testid="stTableDataCell"] p,
+    .stDataFrame data-grid-canvas,
+    div[data-role="grid"] cell {
+        font-size: 24px !important;
         font-weight: 700 !important;
-    }
-
-    .stDataFrame div[data-testid="stTableDataCell"] p {
         color: white !important;
     }
 
-    /* Estilos del Selectbox selector */
+    /* ENCABEZADOS MASIVOS Y EN NEGRITA EXTRA */
+    .stDataFrame th, 
+    .stDataFrame div[data-testid="stHeaderCell"] p,
+    .stDataFrame div[data-testid="stHeaderCell"] span,
+    .stDataFrame div[data-grid-header-cell] {
+        font-size: 26px !important;
+        font-weight: 900 !important; /* Negrita extra fuerte */
+        color: #8e6eff !important; /* Color morado neón para que resalte */
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+
+    /* Forzar altura de filas de la tabla para que quepan las letras grandes */
+    .stDataFrame div[data-testid="stDataFrame"] {
+        line-height: 2.2 !important;
+    }
+
+    /* Selector de empleado */
     div[data-baseweb="select"] {
         background-color: #0b1326 !important;
         border: 1px solid #172033 !important;
@@ -700,7 +703,8 @@ elif menu == "ESCÁNER":
     
     div[data-baseweb="select"] div {
         color: white !important;
-        font-size: 18px !important;
+        font-size: 20px !important;
+        font-weight: 600 !important;
     }
     
     .stDataFrame {
@@ -721,7 +725,7 @@ elif menu == "ESCÁNER":
     empleados["vista"] = empleados["id"].astype(str) + " - " + empleados["nombre"]
 
     # --- ENCABEZADO SUPERIOR ---
-    c1, c2 = st.columns([4, 2])
+    c1, c2 = st.columns([3.8, 2.2])
     
     with c1:
         st.markdown("""
@@ -737,13 +741,13 @@ elif menu == "ESCÁNER":
         """, unsafe_allow_html=True)
 
     with c2:
-        st.markdown("<p style='color:#637393; font-size:14px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#637393; font-size:16px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
         emp = st.selectbox("Empleado", empleados["vista"], label_visibility="collapsed")
 
     id_emp = emp.split(" - ")[0]
     empleado = empleados[empleados["id"].astype(str) == id_emp].iloc[0]
 
-    # --- DISTRIBUCIÓN PRINCIPAL (Ajuste leve para pantallas ultra anchas) ---
+    # --- DISTRIBUCIÓN PRINCIPAL ---
     izq, der = st.columns([1.3, 3])
 
     # ================= COLUMNA IZQUIERDA =================
@@ -820,11 +824,11 @@ elif menu == "ESCÁNER":
         datos_kpi = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(id_emp,))
 
         if not datos_kpi.empty:
-            k1, k2 = st.columns([1.9, 1.1])
+            k1, k2 = st.columns([1.8, 1.2])
 
             with k1:
                 tabla = datos_kpi[["indicador", "meta", "proyectado", "real"]]
-                # Al renderizar, st.dataframe tomará el tamaño de 20px gracias a los selectores específicos añadidos arriba
+                # st.dataframe se acopla dinámicamente a las configuraciones masivas del CSS de arriba
                 st.dataframe(tabla, use_container_width=True, hide_index=True)
 
             with k2:
@@ -848,7 +852,7 @@ elif menu == "ESCÁNER":
                     plot_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
                     annotations=[dict(
-                        text=f"<span style='font-size:32px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:12px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
+                        text=f"<span style='font-size:34px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:13px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
                         showarrow=False,
                         align="center"
                     )]
