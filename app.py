@@ -371,16 +371,68 @@ if menu == "DASHBOARD":
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. BLOQUE DE METRICAS SUPERIORES
+  # 2. BLOQUE DE METRICAS SUPERIORES (CORREGIDO CON COMILLAS TRIPLES)
     a, b, c, d, e = st.columns(5)
     with a:
-        st.markdown(f"<div class='top-card'><div class='top-icon-container'>👥</div><div><div class='top-card-title'>Colaboradores</div><div class='top-card-value'>{total}</div><div class='top-card-sub'>Total Personal</div></div></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class='top-card'>
+            <div class='top-icon-container'>👥</div>
+            <div>
+                <div class='top-card-title'>Colaboradores</div>
+                <div class='top-card-value'>{total}</div>
+                <div class='top-card-sub'>Total Personal</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
     with b:
-        st.markdown(f"<div class='top-card'><div class='top-icon-container'>📈</div><div><div class='top-card-title'>KPIs Activos</div><div class='top-card-value'>{total_kpi}</div><div class='top-card-sub'>Indicadores</div></div></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class='top-card'>
+            <div class='top-icon-container'>📈</div>
+            <div>
+                <div class='top-card-title'>KPIs Activos</div>
+                <div class='top-card-value'>{total_kpi}</div>
+                <div class='top-card-sub'>Indicadores</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
     with c:
-        st.markdown(f"<div class='top-card'><div class='top-icon-container'>🎯</div><div><div class='top-card-title'>Cumplimiento General</div><div class='top-card-value'>{cumplimiento}%</div><div class='top-card-sub'>Promedio de Cumplimiento</div></div></div>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class='top-card'>
+            <div class='top-icon-container'>🎯</div>
+            <div>
+                <div class='top-card-title'>Cumplimiento General</div>
+                <div class='top-card-value'>{cumplimiento}%</div>
+                <div class='top-card-sub'>Promedio de Cumplimiento</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
     with d:
-        st.markdown(f"<div class='top-
+        st.markdown(f"""
+        <div class='top-card'>
+            <div class='top-icon-container'>✅</div>
+            <div>
+                <div class='top-card-title'>KPIs en Objetivo</div>
+                <div class='top-card-value'>{objetivo}</div>
+                <div class='top-card-sub'>Sin Riesgo</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with e:
+        color_r = "#FFC107" if riesgo > 0 else "#7a8b9e"
+        st.markdown(f"""
+        <div class='top-card'>
+            <div class='top-icon-container'>⚠️</div>
+            <div>
+                <div class='top-card-title'>KPIs en Riesgo</div>
+                <div class='top-card-value' style='color:{color_r};'>{riesgo}</div>
+                <div class='top-card-sub'>Requieren Atención</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 # =========================================================
 # REGISTRAR
 # =========================================================
