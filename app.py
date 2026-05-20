@@ -119,7 +119,7 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# DASHBOARD PREMIUM BANCO KPI V3
+# DASHBOARD EJECUTIVO PREMIUM V4
 # =========================================================
 
 if menu == "DASHBOARD":
@@ -127,48 +127,30 @@ if menu == "DASHBOARD":
     st.markdown("""
 <style>
 
-.card{
+.kheader{
+text-align:center;
+margin-bottom:25px;
+}
+
+.ktitle{
+font-size:56px;
+font-weight:800;
+color:white;
+}
+
+.ksub{
+font-size:18px;
+font-weight:700;
+color:#39FF14;
+}
+
+.kcard{
 
 background:
 linear-gradient(
 180deg,
-#071120,
-#0D1C35
-);
-
-border-radius:22px;
-
-padding:20px;
-
-border:
-
-1px solid
-rgba(
-57,
-255,
-20,
-.15
-);
-
-box-shadow:
-
-0 0 35px
-rgba(
-57,
-255,
-20,
-.08
-);
-
-}
-
-.top{
-
-background:
-linear-gradient(
-145deg,
-#071120,
-#112347
+#071321,
+#0E1830
 );
 
 padding:18px;
@@ -177,47 +159,88 @@ border-radius:18px;
 
 border:
 1px solid
-rgba(
-57,
-255,
-20,
-.20
-);
+rgba(57,255,20,.14);
 
-text-align:center;
+box-shadow:
+0 0 18px
+rgba(57,255,20,.08);
 
 }
 
-.numero{
+.kpi{
 
-font-size:38px;
+background:
+linear-gradient(
+180deg,
+#09172C,
+#11213D
+);
 
-font-weight:800;
+padding:18px;
 
-color:#39FF14;
+border-radius:22px;
+
+border:
+1px solid
+rgba(255,255,255,.06);
+
+margin-bottom:20px;
 
 }
 
 .valor{
 
-font-size:26px;
-
-font-weight:700;
-
 color:#39FF14;
 
+font-size:32px;
+
+font-weight:800;
+
+}
+
+.mini{
+
+background:
+rgba(
+255,
+255,
+255,
+0.03
+);
+
+padding:18px;
+
+border-radius:16px;
+
+}
+
+.lbl{
+color:#8EBBFF;
+font-size:14px;
+}
+
+.v{
+color:white;
+font-size:28px;
+font-weight:700;
+}
+
+.note{
+text-align:center;
+color:#39FF14;
+font-size:14px;
 }
 
 </style>
 """,
 unsafe_allow_html=True)
 
-    empleados = pd.read_sql(
+    empleados=pd.read_sql(
         "SELECT * FROM empleados",
         conn
     )
 
-    kpis = pd.read_sql(
+    kpis=pd.read_sql(
         "SELECT * FROM kpis",
         conn
     )
@@ -238,20 +261,14 @@ unsafe_allow_html=True)
 
             (
                 kpis["real"].sum()
-
                 /
-
                 (
                     kpis["meta"].sum()
                     +1
                 )
-
             )
-
             *100,
-
             2
-
         )
 
     riesgo=0
@@ -259,13 +276,11 @@ unsafe_allow_html=True)
     if not kpis.empty:
 
         riesgo=len(
-
             kpis[
                 kpis["real"]
                 <
                 kpis["meta"]
             ]
-
         )
 
     objetivo=max(
@@ -273,43 +288,45 @@ unsafe_allow_html=True)
         0
     )
 
-    st.markdown("""
-<h1 style='text-align:center;color:white;'>
+    st.markdown(f"""
+
+<div class='kheader'>
+
+<div class='ktitle'>
 
 🏦 DASHBOARD EJECUTIVO
 
-</h1>
+</div>
 
-<h2 style='
-text-align:center;
-color:#39FF14;
-'>
+<div class='ksub'>
 
 GERENCIA DE BANCO KPI
 
-</h2>
+</div>
+
+</div>
 
 """,
 unsafe_allow_html=True)
 
-    c1,c2,c3,c4,c5=st.columns(5)
+    a,b,c,d,e=st.columns(5)
 
     tarjetas=[
 
-("COLABORADORES",total_emp),
+("👥","COLABORADORES",total_emp),
 
-("KPIs",total_kpi),
+("📈","KPIs ACTIVOS",total_kpi),
 
-("CUMPLIMIENTO",f"{cumplimiento}%"),
+("🎯","CUMPLIMIENTO",f"{cumplimiento}%"),
 
-("OBJETIVO",objetivo),
+("✅","KPIs OBJETIVO",objetivo),
 
-("RIESGO",riesgo)
+("⚠️","EN RIESGO",riesgo)
 
 ]
 
-    for col,d in zip(
-        [c1,c2,c3,c4,c5],
+    for col,t in zip(
+        [a,b,c,d,e],
         tarjetas
     ):
 
@@ -317,15 +334,17 @@ unsafe_allow_html=True)
 
             st.markdown(f"""
 
-<div class='top'>
+<div class='kcard'>
 
-<div class='numero'>
+<h2>{t[0]}</h2>
 
-{d[1]}
+<div class='valor'>
+
+{t[2]}
 
 </div>
 
-{d[0]}
+{t[1]}
 
 </div>
 
@@ -334,65 +353,65 @@ unsafe_allow_html=True)
 
     st.markdown("---")
 
-    if not kpis.empty:
+    for i in range(
+        len(kpis)
+    ):
 
-        for x in range(
+        row=kpis.iloc[i]
 
-            0,
+        meta=max(
+            row["meta"],
+            1
+        )
 
-            len(kpis),
+        real=row["real"]
 
+        proy=row["proyectado"]
+
+        porcentaje=round(
+            (
+                real
+                /
+                meta
+            )
+            *100,
             2
+        )
 
-        ):
+        icono="$"
 
-            columnas=st.columns(2)
+        descripcion="Valores expresados en CÓRDOBAS (C$)"
 
-            for j,col in enumerate(columnas):
+        if row["indicador"] in [
 
-                if x+j<len(kpis):
+            "ROA",
 
-                    row=kpis.iloc[
-                        x+j
-                    ]
+            "ROE"
 
-                    with col:
+        ]:
 
-                        st.markdown(
-                            "<div class='card'>",
-                            unsafe_allow_html=True
-                        )
+            icono="%"
 
-                        meta=max(
-                            row["meta"],
-                            1
-                        )
+            descripcion="Valores expresados en PORCENTAJE (%)"
 
-                        proy=row[
-                            "proyectado"
-                        ]
+        col1,col2=st.columns(
+            [1.7,1]
+        )
 
-                        real=row[
-                            "real"
-                        ]
+        with col1:
 
-                        porcentaje=round(
+            st.markdown(
+                f"""
+<div class='kpi'>
 
-                            (
-                                real
-                                /
-                                meta
-                            )
+### {icono} {row["indicador"]}
 
-                            *100,
+""",
+unsafe_allow_html=True)
 
-                            2
+            fig=go.Figure()
 
-                        )
-
-                        fig=go.Figure()
-
-                        fig.add_trace(
+            fig.add_trace(
 
 go.Pie(
 
@@ -407,7 +426,7 @@ meta-real,
 
 ],
 
-hole=.62,
+hole=.68,
 
 textinfo="none",
 
@@ -427,9 +446,9 @@ colors=[
 
 )
 
-                        fig.update_layout(
+            fig.update_layout(
 
-height=430,
+height=360,
 
 paper_bgcolor=
 "rgba(0,0,0,0)",
@@ -456,7 +475,7 @@ showarrow=False,
 
 font=dict(
 
-size=24,
+size=26,
 
 color="white"
 
@@ -468,74 +487,89 @@ color="white"
 
 )
 
-                        a,b=st.columns(
-                            [1.5,1]
-                        )
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
 
-                        with a:
+            st.markdown(
 
-                            st.subheader(
-                                row["indicador"]
-                            )
+f"""
 
-                            st.plotly_chart(
+<div class='note'>
 
-fig,
+{descripcion}
 
-use_container_width=True
+</div>
+
+</div>
+
+""",
+
+unsafe_allow_html=True
 
 )
 
-                        with b:
+        with col2:
 
-                            st.markdown(
-                                "<br>",
-                                unsafe_allow_html=True
-                            )
+            st.markdown(
+                "<br>",
+                unsafe_allow_html=True
+            )
 
-                            st.write(
-                                "🔵 META"
-                            )
-
-                            st.markdown(
+            st.markdown(
 
 f"""
-### {meta:,.2f}
-"""
 
-)
+<div class='mini'>
 
-                            st.write(
-                                "🟡 PROYECTADO"
-                            )
+<div class='lbl'>
 
-                            st.markdown(
+META
 
-f"""
-### {proy:,.2f}
-"""
+</div>
 
-)
+<div class='v'>
 
-                            st.write(
-                                "🟢 REAL"
-                            )
+{meta:,.2f}
 
-                            st.markdown(
+</div>
 
-f"""
-### {real:,.2f}
-"""
+<br>
 
-)
+<div class='lbl'>
 
-                            st.markdown(
-                                "---"
-                            )
+PROYECTADO
 
-                            st.markdown(
+</div>
 
-f"""
+<div class='v'>
+
+{proy:,.2f}
+
+</div>
+
+<br>
+
+<div class='lbl'>
+
+REAL
+
+</div>
+
+<div class='v'>
+
+{real:,.2f}
+
+</div>
+
+<hr>
+
+<div class='lbl'>
+
+CUMPLIMIENTO
+
+</div>
 
 <div class='valor'>
 
@@ -543,30 +577,25 @@ f"""
 
 </div>
 
-"""
+</div>
 
-,
+""",
 
 unsafe_allow_html=True
 
 )
 
-                            if porcentaje>=100:
+            if porcentaje>=100:
 
-                                st.success(
-"▲ Por encima de la meta"
-                                )
+                st.success(
+                    "▲ Por encima de la meta"
+                )
 
-                            else:
+            else:
 
-                                st.warning(
-"▼ Debajo meta"
-                                )
-
-                        st.markdown(
-                            "</div>",
-                            unsafe_allow_html=True
-                        )
+                st.warning(
+                    "▼ Debajo de meta"
+                )
 # =========================================================
 # REGISTRAR
 # =========================================================
