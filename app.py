@@ -529,9 +529,9 @@ elif menu == "KPIS":
 # =========================================================
 elif menu == "ESCANER CV":
 
-    import os
-    import pandas as pd
     import streamlit as st
+    import pandas as pd
+    import os
 
     st.title("📄 ESCÁNER CV")
 
@@ -550,7 +550,7 @@ elif menu == "ESCANER CV":
 
     empleados["mostrar"] = (
 
-        empleados.iloc[:,0]
+        empleados.iloc[:, 0]
         .astype(str)
 
         +
@@ -559,40 +559,47 @@ elif menu == "ESCANER CV":
 
         +
 
-        empleados.iloc[:,1]
+        empleados.iloc[:, 1]
         .astype(str)
 
     )
 
-    seleccion = st.selectbox(
+    seleccionado = st.selectbox(
 
-        "Seleccionar empleado",
+        "👤 Seleccionar empleado",
 
         empleados["mostrar"]
 
     )
 
-    id_emp = seleccion.split(
+    id_emp = seleccionado.split(
         " - "
     )[0]
 
     fila = empleados[
 
-        empleados.iloc[:,0]
+        empleados.iloc[:, 0]
         .astype(str)
 
         ==
-        id_emp
+
+        str(id_emp)
 
     ].iloc[0]
 
     st.markdown("---")
 
-    c1,c2=st.columns([1,3])
+    foto, perfil = st.columns(
+        [1, 3]
+    )
 
-    with c1:
+    with foto:
 
-        carpeta="fotos"
+        st.subheader(
+            "📷 FOTO"
+        )
+
+        carpeta = "fotos"
 
         if not os.path.exists(
             carpeta
@@ -602,11 +609,19 @@ elif menu == "ESCANER CV":
                 carpeta
             )
 
-        ruta=f"{carpeta}/{id_emp}.png"
+        ruta = (
+            carpeta
+            +
+            "/"
+            +
+            str(id_emp)
+            +
+            ".png"
+        )
 
-        foto=st.file_uploader(
+        archivo = st.file_uploader(
 
-            "Subir foto",
+            "Subir imagen",
 
             type=[
 
@@ -620,7 +635,7 @@ elif menu == "ESCANER CV":
 
         )
 
-        if foto:
+        if archivo:
 
             with open(
                 ruta,
@@ -628,38 +643,49 @@ elif menu == "ESCANER CV":
             ) as f:
 
                 f.write(
-                    foto.read()
+                    archivo.read()
                 )
+
+            st.success(
+                "Foto guardada"
+            )
 
         if os.path.exists(
             ruta
         ):
 
             st.image(
-                ruta
+
+                ruta,
+
+                use_container_width=True
+
             )
 
-    with c2:
+        else:
+
+            st.info(
+                "Sin fotografía"
+            )
+
+    with perfil:
 
         st.markdown(
-            "# PERFIL"
+            "# PERFIL DEL EMPLEADO"
         )
 
         for col in empleados.columns:
 
-            if col!="mostrar":
+            if col != "mostrar":
 
-                valor=fila[col]
+                valor = fila[col]
 
                 st.markdown(
-
 f"""
-**{col.upper()}**
+### {col.upper()}
 
 {valor}
-
 """
-
                 )
 
     st.markdown("---")
@@ -670,25 +696,49 @@ f"""
 
     try:
 
-        kpis=pd.read_sql(
+        kpis = pd.read_sql(
 
-"""
-SELECT *
-FROM kpis
-WHERE id=?
-""",
+            """
+            SELECT *
+            FROM kpis
+            WHERE id=?
+            """,
 
-conn,
+            conn,
 
-params=(id_emp,)
+            params=[id_emp]
 
-)
+        )
 
         if not kpis.empty:
 
+            columnas = [
+
+                c
+
+                for c
+
+                in [
+
+                    "indicador",
+
+                    "meta",
+
+                    "proyectado",
+
+                    "real"
+
+                ]
+
+                if c in kpis.columns
+
+            ]
+
             st.dataframe(
 
-                kpis,
+                kpis[
+                    columnas
+                ],
 
                 use_container_width=True
 
@@ -697,21 +747,20 @@ params=(id_emp,)
         else:
 
             st.info(
-                "Sin KPI"
+                "Sin KPIs registrados"
             )
 
-    except:
+    except Exception as e:
 
-        st.warning(
-            "No existe tabla KPI"
+        st.error(
+            f"Error KPI: {e}"
         )
 
     st.markdown("---")
 
     st.success(
-        "Información cargada desde registro"
+        "Información cargada correctamente"
     )
-        )
 # =========================================================
 # CARGOS
 # =========================================================
