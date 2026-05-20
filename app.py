@@ -525,14 +525,16 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ESCÁNER VISTA EJECUTIVA (TABLA MAXIMIZADA Y EN NEGRESIDA)
+# ESCÁNER VISTA EJECUTIVA (CON GENERADOR DE CÓDIGO QR)
 # =========================================================
 elif menu == "ESCÁNER":
 
     import os
+    import io
+    import qrcode  # Requieres instalarlo: pip install qrcode
     import plotly.graph_objects as go
 
-    # Inyección de estilos CSS ultra-agresivos para la tabla de KPIs
+    # Inyección de estilos CSS modificados para incluir el área del QR
     st.markdown("""
     <style>
     /* Fondo global oscuro */
@@ -648,6 +650,7 @@ elif menu == "ESCÁNER":
     .kpi-total-box {
         text-align: center;
         margin-top: -10px;
+        margin-bottom: 15px;
     }
     
     .kpi-total-val {
@@ -662,12 +665,21 @@ elif menu == "ESCÁNER":
         font-weight: 700;
         text-transform: uppercase;
     }
+
+    /* Caja contenedora para el QR */
+    .qr-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #0b1326;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #172033;
+        margin-top: 20px;
+    }
     
-    /* =========================================================
-       NUEVO CSS ULTRA-AGRESIVO PARA MAXIMIZAR LA TABLA (st.dataframe)
-       =========================================================
-    */
-    /* Aumenta celdas generales y texto de datos */
+    /* CSS PARA LA TABLA A 24PX */
     .stDataFrame td, 
     .stDataFrame div[data-testid="stTableDataCell"] p,
     .stDataFrame data-grid-canvas,
@@ -677,24 +689,21 @@ elif menu == "ESCÁNER":
         color: white !important;
     }
 
-    /* ENCABEZADOS MASIVOS Y EN NEGRITA EXTRA */
     .stDataFrame th, 
     .stDataFrame div[data-testid="stHeaderCell"] p,
     .stDataFrame div[data-testid="stHeaderCell"] span,
     .stDataFrame div[data-grid-header-cell] {
         font-size: 26px !important;
-        font-weight: 900 !important; /* Negrita extra fuerte */
-        color: #8e6eff !important; /* Color morado neón para que resalte */
+        font-weight: 900 !important;
+        color: #8e6eff !important;
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
     }
 
-    /* Forzar altura de filas de la tabla para que quepan las letras grandes */
     .stDataFrame div[data-testid="stDataFrame"] {
         line-height: 2.2 !important;
     }
 
-    /* Selector de empleado */
     div[data-baseweb="select"] {
         background-color: #0b1326 !important;
         border: 1px solid #172033 !important;
@@ -724,6 +733,17 @@ elif menu == "ESCÁNER":
 
     empleados["vista"] = empleados["id"].astype(str) + " - " + empleados["nombre"]
 
+    # --- 🛠️ LÓGICA DE ESCANEO QR (LEER PARÁMETRO DE LA URL) ---
+    # Si la URL contiene un ID válido, pre-seleccionamos ese empleado automáticamente
+    parametros_url = st.query_params
+    indice_por_defecto = 0
+    
+    if "emp_id" in parametros_url:
+        id_buscado = str(parametros_url["emp_id"])
+        coincidencias = empleados[empleados["id"].astype(str) == id_buscado].index
+        if not coincidencias.empty:
+            indice_por_defecto = int(coincidencias[0])
+
     # --- ENCABEZADO SUPERIOR ---
     c1, c2 = st.columns([3.8, 2.2])
     
@@ -742,7 +762,8 @@ elif menu == "ESCÁNER":
 
     with c2:
         st.markdown("<p style='color:#637393; font-size:16px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
-        emp = st.selectbox("Empleado", empleados["vista"], label_visibility="collapsed")
+        # Añadido index=indice_por_defecto para responder dinámicamente al QR
+        emp = st.selectbox("Empleado", empleados["vista"], index=indice_por_defecto, label_visibility="collapsed")
 
     id_emp = emp.split(" - ")[0]
     empleado = empleados[empleados["id"].astype(str) == id_emp].iloc[0]
@@ -828,7 +849,6 @@ elif menu == "ESCÁNER":
 
             with k1:
                 tabla = datos_kpi[["indicador", "meta", "proyectado", "real"]]
-                # st.dataframe se acopla dinámicamente a las configuraciones masivas del CSS de arriba
                 st.dataframe(tabla, use_container_width=True, hide_index=True)
 
             with k2:
@@ -866,6 +886,34 @@ elif menu == "ESCÁNER":
                     <div class='kpi-total-lbl'>Cumplimiento Total</div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
+                # Reemplaza 'http://localhost:8501' con el link real si lo subes a la nube (ej. Streamlit Community Cloud)
+                url_base = "http://localhost:8501" 
+                url_compartible = f"{url_base}/?emp_id={id_emp}"
+                
+                # Crear la matriz del QR acoplada estéticamente (Fondo oscuro, QR blanco)
+                qr = qrcode.QRCode(version=1, box_size=10, border=1)
+                qr.add_data(url_compartible)
+                qr.make(fit=True)
+                
+                img_qr = qr.make_image(fill_color="#ffffff", back_color="#0b1326")
+                
+                # Convertir a bytes para que Streamlit lo pueda renderizar sin guardarlo físicamente
+                buf = io.BytesIO()
+                img_qr.save(buf, format="PNG")
+                byte_im = buf.getvalue()
+                
+                # Renderizado del QR en la UI
+                st.markdown("""
+                <div class='qr-container'>
+                    <div style='color:#637393; font-size:12px; font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;'>🔗 ACCESO MÓVIL DIRECTO</div>
+                """, unsafe_allow_html=True)
+                
+                st.image(byte_im, width=160)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+                
         else:
             st.info("Sin registros de KPIs vinculados a este ID.")
 
