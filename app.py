@@ -529,7 +529,6 @@ elif menu == "KPIS":
 # =========================================================
 elif menu == "ESCÁNER":
 
-  elif menu == "ESCÁNER":
 
     import streamlit as st
     import pandas as pd
