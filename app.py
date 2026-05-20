@@ -124,251 +124,375 @@ menu = st.sidebar.radio("MENÚ", [
 
 if menu == "DASHBOARD":
 
-    st.title("🏦 DASHBOARD EJECUTIVO")
+    st.markdown("""
+<style>
 
-    empleados = pd.read_sql(
+.card{
+
+background:
+linear-gradient(
+145deg,
+#06111f,
+#0b1830
+);
+
+border-radius:20px;
+
+padding:20px;
+
+border:
+1px solid
+rgba(0,255,120,.18);
+
+box-shadow:
+0 0 20px
+rgba(0,255,120,.10);
+
+}
+
+.numero{
+
+font-size:42px;
+
+font-weight:800;
+
+color:#00FF7F;
+
+}
+
+.texto{
+
+color:white;
+
+font-size:15px;
+
+}
+
+</style>
+""",
+unsafe_allow_html=True)
+
+    empleados=pd.read_sql(
         "SELECT * FROM empleados",
         conn
     )
 
-    kpis = pd.read_sql(
+    kpis=pd.read_sql(
         "SELECT * FROM kpis",
         conn
     )
 
-    total_emp = len(
+    total_emp=len(
         empleados
     )
 
-    total_kpi = len(
+    total_kpi=len(
         kpis
     )
 
-    cumplimiento = 0
+    cumplimiento=0
 
     if not kpis.empty:
 
-        cumplimiento = round(
+        cumplimiento=round(
 
             (
                 kpis["real"].sum()
-
                 /
-
                 (
-                    kpis["meta"].sum()
-                    + 1
+                    kpis["meta"].sum()+1
                 )
 
             )
 
-            * 100,
+            *
+            100,
 
-            1
+            2
 
         )
 
-    riesgo = 0
-
-    objetivo = 0
+    riesgo=0
 
     if not kpis.empty:
 
-        riesgo = len(
+        riesgo=len(
+
             kpis[
                 kpis["real"]
                 <
                 kpis["meta"]
             ]
+
         )
 
-        objetivo = len(
-            kpis[
-                kpis["real"]
-                >=
-                kpis["meta"]
-            ]
-        )
+    objetivo=total_kpi-riesgo
 
-    c1,c2,c3,c4 = st.columns(4)
+    st.title(
+        "🏦 DASHBOARD EJECUTIVO"
+    )
 
-    with c1:
+    st.success(
+        "GERENCIA DE BANCO KPI"
+    )
 
-        st.metric(
-            "👥 COLABORADORES",
-            total_emp
-        )
+    c1,c2,c3,c4,c5=st.columns(5)
 
-    with c2:
+    datos=[
 
-        st.metric(
-            "📈 KPIs",
-            total_kpi
-        )
+        ("COLABORADORES",total_emp),
 
-    with c3:
+        ("KPIs",total_kpi),
 
-        st.metric(
-            "✅ CUMPLIMIENTO",
-            f"{cumplimiento}%"
-        )
+        ("CUMPLIMIENTO",f"{cumplimiento}%"),
 
-    with c4:
+        ("OBJETIVO",objetivo),
 
-        st.metric(
-            "⚠️ EN RIESGO",
-            riesgo
-        )
+        ("RIESGO",riesgo)
+
+    ]
+
+    for col,d in zip(
+
+        [c1,c2,c3,c4,c5],
+
+        datos
+
+    ):
+
+        with col:
+
+            st.markdown(f"""
+
+<div class='card'>
+
+<div class='numero'>
+
+{d[1]}
+
+</div>
+
+<div class='texto'>
+
+{d[0]}
+
+</div>
+
+</div>
+
+""",
+unsafe_allow_html=True)
 
     st.markdown("---")
 
-    g1,g2 = st.columns(2)
+    if not kpis.empty:
 
-    with g1:
+        filas=[]
 
-        st.subheader(
-            "🥧 KPIs EN OBJETIVO"
-        )
+        for i,row in kpis.iterrows():
 
-        fig = go.Figure(
-            go.Pie(
-
-                labels=[
-                    "OBJETIVO",
-                    "RIESGO"
-                ],
-
-                values=[
-                    objetivo,
-                    riesgo
-                ],
-
-                hole=.55
-
+            meta=max(
+                row["meta"],
+                1
             )
-        )
 
-        fig.update_layout(
+            porcentaje=round(
 
-            height=500,
+                (
+                    row["real"]
+                    /
+                    meta
+                )
 
-            paper_bgcolor="rgba(0,0,0,0)",
+                *
+                100,
 
-            font_color="white"
-
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    with g2:
-
-        st.subheader(
-            "📊 DISTRIBUCIÓN KPI"
-        )
-
-        if not kpis.empty:
-
-            resumen = (
-
-                kpis
-
-                .groupby(
-                    "indicador"
-                )["real"]
-
-                .sum()
+                1
 
             )
 
-            fig2 = go.Figure(
+            fig=go.Figure(
 
                 go.Pie(
 
-                    labels=
-                    resumen.index,
+                    values=[
 
-                    values=
-                    resumen.values,
+                        porcentaje,
 
-                    hole=.45
+                        max(
+                            100-porcentaje,
+                            0
+                        )
+
+                    ],
+
+                    labels=[
+
+                        "Cumple",
+
+                        "Pendiente"
+
+                    ],
+
+                    hole=.70,
+
+                    marker=dict(
+
+                        colors=[
+
+                            "#39FF14",
+
+                            "#1B2A41"
+
+                        ]
+
+                    ),
+
+                    textinfo="none"
 
                 )
 
             )
 
-            fig2.update_layout(
+            fig.update_layout(
 
-                height=500,
+                height=420,
 
                 paper_bgcolor=
                 "rgba(0,0,0,0)",
 
-                font_color=
-                "white"
+                annotations=[
+
+                    dict(
+
+                        text=f"""
+
+<b>
+
+{porcentaje}%
+
+</b>
+
+<br>
+
+Cumplimiento
+
+""",
+
+                        showarrow=False,
+
+                        font=dict(
+
+                            size=22,
+
+                            color="white"
+
+                        )
+
+                    )
+
+                ]
 
             )
 
-            st.plotly_chart(
-                fig2,
-                use_container_width=True
+            filas.append(
+
+                (
+
+                    row,
+
+                    fig,
+
+                    porcentaje
+
+                )
+
             )
+
+        for i in range(
+
+            0,
+
+            len(
+                filas
+            ),
+
+            2
+
+        ):
+
+            cols=st.columns(2)
+
+            for j,col in enumerate(cols):
+
+                if i+j<len(filas):
+
+                    row,fig,p=filas[i+j]
+
+                    with col:
+
+                        st.markdown(
+                            f"""
+### {row["indicador"]}
+""")
+
+                        st.plotly_chart(
+                            fig,
+                            use_container_width=True
+                        )
+
+                        st.write(
+                            "META:",
+                            row["meta"]
+                        )
+
+                        st.write(
+                            "PROYECTADO:",
+                            row["proyectado"]
+                        )
+
+                        st.write(
+                            "REAL:",
+                            row["real"]
+                        )
+
+                        if p>=100:
+
+                            st.success(
+                                "ENCIMA DE META"
+                            )
+
+                        else:
+
+                            st.warning(
+                                "DEBAJO META"
+                            )
 
     st.markdown("---")
 
     if not empleados.empty:
 
         st.subheader(
-            "👥 PERSONAL"
-        )
-
-        empleados_view = empleados.drop(
-            columns=["foto"],
-            errors="ignore"
+            "PERSONAL"
         )
 
         st.dataframe(
+
             mayus(
-                empleados_view
+
+                empleados.drop(
+
+                    columns=["foto"],
+
+                    errors="ignore"
+
+                )
+
             ),
+
             use_container_width=True
+
         )
-
-    st.markdown("---")
-
-    st.subheader(
-        "📥 EXPORTAR"
-    )
-
-    output = BytesIO()
-
-    with pd.ExcelWriter(
-        output
-    ) as writer:
-
-        empleados.to_excel(
-            writer,
-            index=False,
-            sheet_name="EMPLEADOS"
-        )
-
-        kpis.to_excel(
-            writer,
-            index=False,
-            sheet_name="KPIS"
-        )
-
-    st.download_button(
-
-        "📥 EXPORTAR EXCEL",
-
-        output.getvalue(),
-
-        "dashboard_banco.xlsx"
-
-    )
 
 # =========================================================
 # REGISTRAR
