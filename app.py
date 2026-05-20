@@ -119,7 +119,7 @@ menu = st.sidebar.radio("MENÚ", [
 ])
 
 # =========================================================
-# DASHBOARD CEO PREMIUM
+# DASHBOARD EJECUTIVO PREMIUM
 # =========================================================
 
 if menu == "DASHBOARD":
@@ -127,40 +127,52 @@ if menu == "DASHBOARD":
     st.markdown("""
 <style>
 
-.card{
+.kcard{
 
 background:
 linear-gradient(
 145deg,
-#06111f,
-#0b1830
+#061120,
+#0C1730
 );
-
-border-radius:20px;
 
 padding:20px;
 
+border-radius:18px;
+
 border:
+
 1px solid
-rgba(0,255,120,.18);
+rgba(
+0,
+255,
+120,
+.20
+);
 
 box-shadow:
+
 0 0 20px
-rgba(0,255,120,.10);
+rgba(
+0,
+255,
+120,
+.12
+);
 
 }
 
-.numero{
+.knum{
 
-font-size:42px;
+font-size:40px;
 
 font-weight:800;
 
-color:#00FF7F;
+color:#39FF14;
 
 }
 
-.texto{
+.ktitle{
 
 color:white;
 
@@ -199,14 +211,15 @@ unsafe_allow_html=True)
             (
                 kpis["real"].sum()
                 /
+
                 (
-                    kpis["meta"].sum()+1
+                    kpis["meta"].sum()
+                    +1
                 )
 
             )
 
-            *
-            100,
+            *100,
 
             2
 
@@ -226,35 +239,73 @@ unsafe_allow_html=True)
 
         )
 
-    objetivo=total_kpi-riesgo
-
-    st.title(
-        "🏦 DASHBOARD EJECUTIVO"
+    objetivo=max(
+        total_kpi-riesgo,
+        0
     )
 
-    st.success(
-        "GERENCIA DE BANCO KPI"
-    )
+    st.markdown("""
+<h1 style='
+text-align:center;
+color:white;
+font-size:56px;
+'>
 
-    c1,c2,c3,c4,c5=st.columns(5)
+🏦 DASHBOARD EJECUTIVO
+
+</h1>
+
+<h3 style='
+text-align:center;
+color:#39FF14;
+'>
+
+GERENCIA DE BANCO KPI
+
+</h3>
+
+""",
+unsafe_allow_html=True)
+
+    a,b,c,d,e=st.columns(5)
 
     datos=[
 
-        ("COLABORADORES",total_emp),
+        (
+            "👥",
+            "COLABORADORES",
+            total_emp
+        ),
 
-        ("KPIs",total_kpi),
+        (
+            "📈",
+            "KPIs",
+            total_kpi
+        ),
 
-        ("CUMPLIMIENTO",f"{cumplimiento}%"),
+        (
+            "🎯",
+            "CUMPLIMIENTO",
+            f"{cumplimiento}%"
+        ),
 
-        ("OBJETIVO",objetivo),
+        (
+            "✅",
+            "OBJETIVO",
+            objetivo
+        ),
 
-        ("RIESGO",riesgo)
+        (
+            "⚠️",
+            "RIESGO",
+            riesgo
+        )
 
     ]
 
-    for col,d in zip(
+    for col,v in zip(
 
-        [c1,c2,c3,c4,c5],
+        [a,b,c,d,e],
 
         datos
 
@@ -264,17 +315,23 @@ unsafe_allow_html=True)
 
             st.markdown(f"""
 
-<div class='card'>
+<div class='kcard'>
 
-<div class='numero'>
+<h1>
 
-{d[1]}
+{v[0]}
+
+</h1>
+
+<div class='knum'>
+
+{v[2]}
 
 </div>
 
-<div class='texto'>
+<div class='ktitle'>
 
-{d[0]}
+{v[1]}
 
 </div>
 
@@ -287,85 +344,102 @@ unsafe_allow_html=True)
 
     if not kpis.empty:
 
-        filas=[]
+        for i in range(
 
-        for i,row in kpis.iterrows():
+            0,
 
-            meta=max(
-                row["meta"],
-                1
-            )
+            len(kpis),
 
-            porcentaje=round(
+            2
 
-                (
-                    row["real"]
-                    /
-                    meta
-                )
+        ):
 
-                *
-                100,
+            cols=st.columns(2)
 
-                1
+            for j,col in enumerate(cols):
 
-            )
+                if i+j<len(kpis):
 
-            fig=go.Figure(
+                    row=kpis.iloc[i+j]
 
-                go.Pie(
+                    with col:
 
-                    values=[
-
-                        porcentaje,
-
-                        max(
-                            100-porcentaje,
-                            0
+                        meta=max(
+                            row["meta"],
+                            1
                         )
 
-                    ],
+                        real=row["real"]
 
-                    labels=[
+                        proy=row["proyectado"]
 
-                        "Cumple",
+                        porcentaje=round(
 
-                        "Pendiente"
+                            (
+                                real
+                                /
+                                meta
+                            )
 
-                    ],
+                            *100,
 
-                    hole=.70,
+                            1
 
-                    marker=dict(
+                        )
 
-                        colors=[
+                        restante=max(
 
-                            "#39FF14",
+                            100-
+                            porcentaje,
 
-                            "#1B2A41"
+                            0
 
-                        ]
+                        )
 
-                    ),
+                        fig=go.Figure(
 
-                    textinfo="none"
+                            go.Pie(
 
-                )
+                                values=[
 
-            )
+                                    porcentaje,
 
-            fig.update_layout(
+                                    restante
 
-                height=420,
+                                ],
 
-                paper_bgcolor=
-                "rgba(0,0,0,0)",
+                                hole=.72,
 
-                annotations=[
+                                textinfo="none",
 
-                    dict(
+                                marker=dict(
 
-                        text=f"""
+                                    colors=[
+
+                                        "#39FF14",
+
+                                        "#17304B"
+
+                                    ]
+
+                                )
+
+                            )
+
+                        )
+
+                        fig.update_layout(
+
+                            height=450,
+
+                            paper_bgcolor=
+                            "rgba(0,0,0,0)",
+
+                            annotations=[
+
+                                dict(
+
+                                    text=f"""
 
 <b>
 
@@ -379,93 +453,62 @@ Cumplimiento
 
 """,
 
-                        showarrow=False,
+                                    showarrow=False,
 
-                        font=dict(
+                                    font=dict(
 
-                            size=22,
+                                        size=26,
 
-                            color="white"
+                                        color="white"
+
+                                    )
+
+                                )
+
+                            ]
 
                         )
-
-                    )
-
-                ]
-
-            )
-
-            filas.append(
-
-                (
-
-                    row,
-
-                    fig,
-
-                    porcentaje
-
-                )
-
-            )
-
-        for i in range(
-
-            0,
-
-            len(
-                filas
-            ),
-
-            2
-
-        ):
-
-            cols=st.columns(2)
-
-            for j,col in enumerate(cols):
-
-                if i+j<len(filas):
-
-                    row,fig,p=filas[i+j]
-
-                    with col:
 
                         st.markdown(
-                            f"""
+
+f"""
 ### {row["indicador"]}
-""")
+"""
+)
 
                         st.plotly_chart(
+
                             fig,
+
                             use_container_width=True
+
                         )
 
                         st.write(
-                            "META:",
-                            row["meta"]
+                            "🔵 META:",
+                            f"{meta:,.2f}"
                         )
 
                         st.write(
-                            "PROYECTADO:",
-                            row["proyectado"]
+                            "🟡 PROYECTADO:",
+                            f"{proy:,.2f}"
                         )
 
                         st.write(
-                            "REAL:",
-                            row["real"]
+                            "🟢 REAL:",
+                            f"{real:,.2f}"
                         )
 
-                        if p>=100:
+                        if porcentaje>=100:
 
                             st.success(
-                                "ENCIMA DE META"
+                                "▲ POR ENCIMA DE META"
                             )
 
                         else:
 
                             st.warning(
-                                "DEBAJO META"
+                                "▼ POR DEBAJO DE META"
                             )
 
     st.markdown("---")
@@ -473,27 +516,53 @@ Cumplimiento
     if not empleados.empty:
 
         st.subheader(
-            "PERSONAL"
+            "👥 PERSONAL"
+        )
+
+        tabla=empleados.drop(
+
+            columns=["foto"],
+
+            errors="ignore"
+
         )
 
         st.dataframe(
 
             mayus(
-
-                empleados.drop(
-
-                    columns=["foto"],
-
-                    errors="ignore"
-
-                )
-
+                tabla
             ),
 
             use_container_width=True
 
         )
 
+    output=BytesIO()
+
+    with pd.ExcelWriter(
+        output
+    ) as writer:
+
+        empleados.to_excel(
+            writer,
+            index=False
+        )
+
+        kpis.to_excel(
+            writer,
+            sheet_name="KPIS",
+            index=False
+        )
+
+    st.download_button(
+
+        "📥 EXPORTAR EXCEL",
+
+        output.getvalue(),
+
+        "dashboard.xlsx"
+
+    )
 # =========================================================
 # REGISTRAR
 # =========================================================
