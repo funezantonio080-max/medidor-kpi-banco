@@ -525,14 +525,14 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ESCÁNER VISTA EJECUTIVA (ESTILO DASHBOARD NEÓN)
+# ESCÁNER VISTA EJECUTIVA (FUENTES AGRANDADAS)
 # =========================================================
 elif menu == "ESCÁNER":
 
     import os
     import plotly.graph_objects as go
 
-    # Inyección de estilos CSS para calcar la interfaz de la captura
+    # Inyección de estilos CSS modificados con fuentes más grandes
     st.markdown("""
     <style>
     /* Fondo global oscuro */
@@ -549,26 +549,27 @@ elif menu == "ESCÁNER":
         border: 1px solid #141b2d;
     }
     
-    /* Títulos principales */
+    /* Título principal */
     .tt {
-        font-size: 36px;
+        font-size: 38px;
         font-weight: 700;
         color: white;
         letter-spacing: 0.5px;
         font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
     
+    /* Subtítulo AGRANDADO a 16px */
     .sub {
-        font-size: 14px;
+        font-size: 16px; 
         color: #7b52ff;
-        font-weight: 500;
-        margin-top: 4px;
+        font-weight: 600;
+        margin-top: 6px;
     }
     
     /* Subtítulos de secciones */
     .section-title {
         color: white;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 600;
         margin-bottom: 20px;
         display: flex;
@@ -589,7 +590,7 @@ elif menu == "ESCÁNER":
     }
     
     .lbl {
-        font-size: 11px;
+        font-size: 13px;
         color: #637393;
         font-weight: 700;
         text-transform: uppercase;
@@ -625,12 +626,27 @@ elif menu == "ESCÁNER":
         color: #7b52ff;
         padding: 12px;
         border-radius: 50px;
-        font-size: 24px;
+        font-size: 26px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 50px;
-        height: 50px;
+        width: 55px;
+        height: 55px;
+    }
+    
+    /* Etiquetas del perfil (ÁREA y CARGO) AGRANDADAS a 16px */
+    .lbl-profile {
+        font-size: 16px;
+        color: #7b52ff;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Valores de perfil (FINANZAS, ANALISTA...) AGRANDADOS a 22px */
+    .val-profile {
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
     }
     
     /* Texto inferior de Cumplimiento Total */
@@ -646,7 +662,7 @@ elif menu == "ESCÁNER":
     }
     
     .kpi-total-lbl {
-        font-size: 12px;
+        font-size: 13px;
         color: white;
         font-weight: 700;
         letter-spacing: 0.5px;
@@ -654,7 +670,19 @@ elif menu == "ESCÁNER":
         margin-top: 2px;
     }
     
-    /* Modificadores estéticos para componentes nativos de Streamlit */
+    /* ESTILOS FUERTES PARA LA TABLA DE KPIS (Letras y números más grandes) */
+    .stDataFrame th {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        color: #7b52ff !important;
+    }
+    
+    .stDataFrame td {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: white !important;
+    }
+
     div[data-baseweb="select"] {
         background-color: #0b1326 !important;
         border: 1px solid #172033 !important;
@@ -663,6 +691,7 @@ elif menu == "ESCÁNER":
     
     div[data-baseweb="select"] div {
         color: white !important;
+        font-size: 16px !important;
     }
     
     .stDataFrame {
@@ -680,7 +709,6 @@ elif menu == "ESCÁNER":
         st.warning("Sin empleados")
         st.stop()
 
-    # Formateo seguro de la vista de selección
     empleados["vista"] = empleados["id"].astype(str) + " - " + empleados["nombre"]
 
     # --- ENCABEZADO SUPERIOR ---
@@ -700,14 +728,13 @@ elif menu == "ESCÁNER":
         """, unsafe_allow_html=True)
 
     with c2:
-        st.markdown("<p style='color:#637393; font-size:12px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#637393; font-size:14px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
         emp = st.selectbox("Empleado", empleados["vista"], label_visibility="collapsed")
 
-    # Obtención de datos del empleado seleccionado
     id_emp = emp.split(" - ")[0]
     empleado = empleados[empleados["id"].astype(str) == id_emp].iloc[0]
 
-    # --- DISTRIBUCIÓN PRINCIPAL (Columnas) ---
+    # --- DISTRIBUCIÓN PRINCIPAL ---
     izq, der = st.columns([1.2, 3])
 
     # ================= COLUMNA IZQUIERDA =================
@@ -729,7 +756,6 @@ elif menu == "ESCÁNER":
         if os.path.exists(ruta):
             st.image(ruta, use_container_width=True)
         else:
-            # Estilo del cuadro para subir foto si está vacío
             st.markdown("""
             <div style='border: 2px dashed #242f4d; border-radius: 10px; padding: 30px; text-align: center; background: #070c18;'>
                 <div style='font-size: 30px; color: #7b52ff; margin-bottom: 8px;'>📥</div>
@@ -754,7 +780,7 @@ elif menu == "ESCÁNER":
 
     # ================= COLUMNA DERECHA =================
     with der:
-        # Tarjeta superior de Perfil Profesional
+        # Tarjeta superior de Perfil Profesional (Modificada con las nuevas clases)
         st.markdown(f"""
         <div class='card'>
             <div class='section-title'>👤 PERFIL</div>
@@ -762,16 +788,16 @@ elif menu == "ESCÁNER":
                 <div class='profile-item'>
                     <div class='profile-icon'>🏢</div>
                     <div>
-                        <div class='lbl' style='color: #7b52ff;'>ÁREA</div>
-                        <div class='val' style='font-size: 22px;'>FINANZAS</div>
+                        <div class='lbl-profile'>ÁREA</div>
+                        <div class='val-profile'>FINANZAS</div>
                     </div>
                 </div>
-                <div style='width: 1px; height: 40px; background: #1c263c;'></div>
+                <div style='width: 1px; height: 45px; background: #1c263c;'></div>
                 <div class='profile-item'>
                     <div class='profile-icon'>💼</div>
                     <div>
-                        <div class='lbl' style='color: #7b52ff;'>CARGO</div>
-                        <div class='val' style='font-size: 22px;'>{empleado['cargo'].upper()}</div>
+                        <div class='lbl-profile'>CARGO</div>
+                        <div class='val-profile'>{empleado['cargo'].upper()}</div>
                     </div>
                 </div>
             </div>
@@ -785,26 +811,20 @@ elif menu == "ESCÁNER":
         datos_kpi = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(id_emp,))
 
         if not datos_kpi.empty:
-            k1, k2 = st.columns([1.7, 1.3])
+            k1, k2 = st.columns([1.8, 1.2])
 
             with k1:
                 tabla = datos_kpi[["indicador", "meta", "proyectado", "real"]]
-                # Forzar visualización limpia sin índices numéricos nativos
                 st.dataframe(tabla, use_container_width=True, hide_index=True)
 
             with k2:
-                # Ojo: Para emular tu captura donde da 1071.57%, sumamos los valores directos 
-                # (Si requieres porcentaje real de cumplimiento promedio, ajusta esta fórmula)
                 meta = max(datos_kpi["meta"].sum(), 1)
                 real = datos_kpi["real"].sum()
-                
-                # Replicando el cálculo matemático estricto que arrojaba el dato de tu imagen
                 pct = round((real / meta) * 100, 2)
 
-                # Configuración exacta del gráfico tipo dona de Plotly
                 fig = go.Figure()
                 fig.add_trace(go.Pie(
-                    values=[100, 0], # Forzado circular completo color neón como la captura
+                    values=[100, 0], 
                     hole=0.72,
                     marker=dict(colors=["#1aff74", "#090e1d"]),
                     textinfo="none",
@@ -818,7 +838,7 @@ elif menu == "ESCÁNER":
                     plot_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
                     annotations=[dict(
-                        text=f"<span style='font-size:30px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:11px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
+                        text=f"<span style='font-size:32px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:12px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
                         showarrow=False,
                         align="center"
                     )]
@@ -826,7 +846,6 @@ elif menu == "ESCÁNER":
 
                 st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
                 
-                # Bloque inferior del porcentaje de texto
                 st.markdown(f"""
                 <div class='kpi-total-box'>
                     <div class='kpi-total-val'>{pct}%</div>
@@ -838,7 +857,7 @@ elif menu == "ESCÁNER":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Notificación inferior sutil estilo barra oscura
+    # Notificación inferior
     st.markdown("""
     <div style='background: #061f14; border: 1px solid #0d4d2a; padding: 10px 20px; border-radius: 6px; color: #1aff74; font-size: 14px; display: flex; align-items: center; gap: 10px; margin-top: 10px;'>
         <span>✔️</span> Escáner actualizado con éxito
