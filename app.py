@@ -529,14 +529,11 @@ elif menu == "KPIS":
 # =========================================================
 elif menu == "ESCANER CV":
 
-    import streamlit as st
-    import pandas as pd
     import os
+    import pandas as pd
+    import streamlit as st
 
     st.title("📄 ESCÁNER CV")
-
-    if not os.path.exists("fotos"):
-        os.mkdir("fotos")
 
     empleados = pd.read_sql(
         "SELECT * FROM empleados",
@@ -551,9 +548,10 @@ elif menu == "ESCANER CV":
 
         st.stop()
 
-    empleados["vista"] = (
+    empleados["mostrar"] = (
 
-        empleados["id"].astype(str)
+        empleados.iloc[:,0]
+        .astype(str)
 
         +
 
@@ -561,41 +559,54 @@ elif menu == "ESCANER CV":
 
         +
 
-        empleados["nombre"].astype(str)
+        empleados.iloc[:,1]
+        .astype(str)
 
     )
 
     seleccion = st.selectbox(
 
-        "👤 Seleccionar empleado",
+        "Seleccionar empleado",
 
-        empleados["vista"]
+        empleados["mostrar"]
 
     )
 
-    id_emp = seleccion.split(" - ")[0]
+    id_emp = seleccion.split(
+        " - "
+    )[0]
 
-    emp = empleados[
-        empleados["id"].astype(str)
+    fila = empleados[
+
+        empleados.iloc[:,0]
+        .astype(str)
+
         ==
-        str(id_emp)
+        id_emp
+
     ].iloc[0]
 
     st.markdown("---")
 
-    foto, info = st.columns([1,3])
+    c1,c2=st.columns([1,3])
 
-    with foto:
+    with c1:
 
-        st.markdown(
-            "### 📷 FOTO"
-        )
+        carpeta="fotos"
 
-        ruta = f"fotos/{id_emp}.png"
+        if not os.path.exists(
+            carpeta
+        ):
 
-        archivo = st.file_uploader(
+            os.mkdir(
+                carpeta
+            )
 
-            "Subir imagen",
+        ruta=f"{carpeta}/{id_emp}.png"
+
+        foto=st.file_uploader(
+
+            "Subir foto",
 
             type=[
 
@@ -609,7 +620,7 @@ elif menu == "ESCANER CV":
 
         )
 
-        if archivo:
+        if foto:
 
             with open(
                 ruta,
@@ -617,215 +628,67 @@ elif menu == "ESCANER CV":
             ) as f:
 
                 f.write(
-                    archivo.read()
+                    foto.read()
                 )
 
-        if os.path.exists(ruta):
+        if os.path.exists(
+            ruta
+        ):
 
             st.image(
-
-                ruta,
-
-                use_container_width=True
-
+                ruta
             )
 
-        else:
-
-            st.info(
-                "Sin fotografía"
-            )
-
-    with info:
+    with c2:
 
         st.markdown(
+            "# PERFIL"
+        )
+
+        for col in empleados.columns:
+
+            if col!="mostrar":
+
+                valor=fila[col]
+
+                st.markdown(
 
 f"""
+**{col.upper()}**
 
-# {emp.get("nombre","")}
-
-🆔 ID:
-{emp.get("id","")}
-
-💼 Cargo:
-{emp.get("cargo","No definido")}
-
-📧 Correo:
-{emp.get("correo","No registrado")}
-
-☎ Teléfono:
-{emp.get("telefono","No registrado")}
-
-📍 Dirección:
-{emp.get("direccion","No registrada")}
-
-🎂 Edad:
-{emp.get("edad","No registrada")}
-
-🏢 Área:
-{emp.get("departamento","No registrada")}
+{valor}
 
 """
 
-        )
-
-    st.markdown("---")
-
-    izquierda, derecha = st.columns([1,2])
-
-    with izquierda:
-
-        st.subheader(
-            "COMPETENCIAS"
-        )
-
-        competencias = st.text_area(
-
-            "",
-
-            value=emp.get(
-
-                "competencias",
-
-                ""
-
-            ),
-
-            height=180
-
-        )
-
-        st.subheader(
-            "APTITUDES"
-        )
-
-        aptitudes = st.text_area(
-
-            "",
-
-            value=emp.get(
-
-                "aptitudes",
-
-                ""
-
-            ),
-
-            height=180
-
-        )
-
-    with derecha:
-
-        st.subheader(
-            "PERFIL"
-        )
-
-        perfil = st.text_area(
-
-            "",
-
-            value=emp.get(
-
-                "perfil",
-
-                ""
-
-            ),
-
-            height=180
-
-        )
-
-        st.subheader(
-            "EXPERIENCIA"
-        )
-
-        experiencia = st.text_area(
-
-            "",
-
-            value=emp.get(
-
-                "experiencia",
-
-                ""
-
-            ),
-
-            height=180
-
-        )
-
-        st.subheader(
-            "FORMACIÓN"
-        )
-
-        formacion = st.text_area(
-
-            "",
-
-            value=emp.get(
-
-                "formacion",
-
-                ""
-
-            ),
-
-            height=160
-
-        )
+                )
 
     st.markdown("---")
 
     st.subheader(
-        "📈 KPI DEL PUESTO"
+        "📈 KPI DEL EMPLEADO"
     )
 
     try:
 
-        kpi = pd.read_sql(
+        kpis=pd.read_sql(
 
-            """
+"""
+SELECT *
+FROM kpis
+WHERE id=?
+""",
 
-            SELECT *
+conn,
 
-            FROM kpis
+params=(id_emp,)
 
-            WHERE id=?
+)
 
-            """,
-
-            conn,
-
-            params=[
-
-                id_emp
-
-            ]
-
-        )
-
-        if not kpi.empty:
+        if not kpis.empty:
 
             st.dataframe(
 
-                kpi[
-
-                    [
-
-                        "indicador",
-
-                        "meta",
-
-                        "proyectado",
-
-                        "real"
-
-                    ]
-
-                ],
+                kpis,
 
                 use_container_width=True
 
@@ -834,25 +697,20 @@ f"""
         else:
 
             st.info(
-                "No hay KPIs"
+                "Sin KPI"
             )
 
     except:
 
         st.warning(
-            "No se encontró tabla KPI"
+            "No existe tabla KPI"
         )
 
     st.markdown("---")
 
-    guardar = st.button(
-        "💾 GUARDAR CV"
+    st.success(
+        "Información cargada desde registro"
     )
-
-    if guardar:
-
-        st.success(
-            "CV actualizado"
         )
 # =========================================================
 # CARGOS
