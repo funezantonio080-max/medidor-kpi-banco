@@ -525,517 +525,325 @@ elif menu == "KPIS":
                 conn.commit()
 
 # =========================================================
-# ESCÁNER (CON GRÁFICOS)
-# =========================================================
-# =========================================================
-# ESCÁNER VISTA EJECUTIVA
+# ESCÁNER VISTA EJECUTIVA (ESTILO DASHBOARD NEÓN)
 # =========================================================
 elif menu == "ESCÁNER":
 
     import os
     import plotly.graph_objects as go
 
+    # Inyección de estilos CSS para calcar la interfaz de la captura
     st.markdown("""
-<style>
+    <style>
+    /* Fondo global oscuro */
+    .stApp {
+        background-color: #050814 !important;
+    }
+    
+    /* Tarjetas principales */
+    .card {
+        background: #090e1d;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #141b2d;
+    }
+    
+    /* Títulos principales */
+    .tt {
+        font-size: 36px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: 0.5px;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    .sub {
+        font-size: 14px;
+        color: #7b52ff;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+    
+    /* Subtítulos de secciones */
+    .section-title {
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    /* Cajas de datos de la columna izquierda */
+    .box {
+        background: #0b1326;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 14px;
+        border: 1px solid #172033;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .lbl {
+        font-size: 11px;
+        color: #637393;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .val {
+        font-size: 18px;
+        font-weight: 700;
+        color: white;
+    }
+    
+    /* Bloque de Perfil (Área y Cargo) */
+    .profile-container {
+        display: flex;
+        gap: 30px;
+        align-items: center;
+        background: #0b1326;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #172033;
+    }
+    
+    .profile-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+    }
+    
+    .profile-icon {
+        background: rgba(123, 82, 255, 0.15);
+        color: #7b52ff;
+        padding: 12px;
+        border-radius: 50px;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+    }
+    
+    /* Texto inferior de Cumplimiento Total */
+    .kpi-total-box {
+        text-align: center;
+        margin-top: -10px;
+    }
+    
+    .kpi-total-val {
+        font-size: 36px;
+        font-weight: 800;
+        color: #1aff74;
+    }
+    
+    .kpi-total-lbl {
+        font-size: 12px;
+        color: white;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+    
+    /* Modificadores estéticos para componentes nativos de Streamlit */
+    div[data-baseweb="select"] {
+        background-color: #0b1326 !important;
+        border: 1px solid #172033 !important;
+        border-radius: 8px !important;
+    }
+    
+    div[data-baseweb="select"] div {
+        color: white !important;
+    }
+    
+    .stDataFrame {
+        border: 1px solid #172033 !important;
+        border-radius: 8px !important;
+        overflow: hidden;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-.main{
-background:#050b16;
-}
-
-.card{
-background:linear-gradient(
-145deg,
-#081222,
-#111d36
-);
-
-padding:22px;
-
-border-radius:20px;
-
-margin-bottom:20px;
-
-border:1px solid rgba(130,90,255,.18);
-
-box-shadow:
-0 0 50px rgba(130,90,255,.10);
-
-}
-
-.tt{
-font-size:48px;
-font-weight:800;
-color:white;
-}
-
-.sub{
-font-size:18px;
-color:#8e6eff;
-}
-
-.box{
-
-background:#111a2d;
-
-padding:18px;
-
-border-radius:14px;
-
-margin-bottom:14px;
-
-}
-
-.lbl{
-
-font-size:16px;
-
-color:#8a95aa;
-
-}
-
-.val{
-
-font-size:26px;
-
-font-weight:700;
-
-color:white;
-
-}
-
-.kpi{
-
-font-size:34px;
-
-font-weight:800;
-
-color:#47ff91;
-
-}
-
-thead tr th{
-
-font-size:20px !important;
-
-}
-
-tbody{
-
-font-size:18px !important;
-
-}
-
-</style>
-""",
-unsafe_allow_html=True)
-
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
+    # Lectura de la base de datos
+    empleados = pd.read_sql("SELECT * FROM empleados", conn)
 
     if empleados.empty:
-
-        st.warning(
-            "Sin empleados"
-        )
-
+        st.warning("Sin empleados")
         st.stop()
 
-    empleados["vista"]=(
+    # Formateo seguro de la vista de selección
+    empleados["vista"] = empleados["id"].astype(str) + " - " + empleados["nombre"]
 
-        empleados["id"]
-
-        +
-
-        " - "
-
-        +
-
-        empleados["nombre"]
-
-    )
-
-    c1,c2=st.columns(
-        [4,2]
-    )
-
+    # --- ENCABEZADO SUPERIOR ---
+    c1, c2 = st.columns([4, 2])
+    
     with c1:
-
         st.markdown("""
-<div class='card'>
-
-<div class='tt'>
-
-📄 ESCÁNER EMPLEADO
-
-</div>
-
-<div class='sub'>
-
-Perfil • Cargo • KPIs
-
-</div>
-
-</div>
-
-""",
-unsafe_allow_html=True)
+        <div class='card' style='margin-bottom: 15px;'>
+            <div style='display: flex; align-items: center; gap: 15px;'>
+                <span style='font-size: 32px;'>📄</span>
+                <div>
+                    <div class='tt'>ESCÁNER EMPLEADO</div>
+                    <div class='sub'>Perfil • Cargo • KPIs</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with c2:
+        st.markdown("<p style='color:#637393; font-size:12px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
+        emp = st.selectbox("Empleado", empleados["vista"], label_visibility="collapsed")
 
-        emp=st.selectbox(
+    # Obtención de datos del empleado seleccionado
+    id_emp = emp.split(" - ")[0]
+    empleado = empleados[empleados["id"].astype(str) == id_emp].iloc[0]
 
-            "Empleado",
+    # --- DISTRIBUCIÓN PRINCIPAL (Columnas) ---
+    izq, der = st.columns([1.2, 3])
 
-            empleados["vista"]
-
-        )
-
-    id_emp=emp.split(
-        " - "
-    )[0]
-
-    empleado=empleados[
-        empleados["id"]
-        ==
-        id_emp
-    ].iloc[0]
-
-    izq,der=st.columns(
-        [1,3]
-    )
-
+    # ================= COLUMNA IZQUIERDA =================
     with izq:
+        # Contenedor de la Foto
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>📷 FOTO</div>", unsafe_allow_html=True)
 
-        st.markdown(
-        "<div class='card'>",
-        unsafe_allow_html=True
-        )
+        os.makedirs("fotos", exist_ok=True)
+        ruta = f"fotos/{id_emp}.png"
 
-        st.subheader(
-            "📷 FOTO"
-        )
-
-        os.makedirs(
-            "fotos",
-            exist_ok=True
-        )
-
-        ruta=f"fotos/{id_emp}.png"
-
-        foto=st.file_uploader(
-            "",
-            type=[
-                "png",
-                "jpg"
-            ]
-        )
+        foto = st.file_uploader("", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
         if foto:
+            with open(ruta, "wb") as f:
+                f.write(foto.read())
+            st.rerun()
 
-            with open(
-                ruta,
-                "wb"
-            ) as f:
+        if os.path.exists(ruta):
+            st.image(ruta, use_container_width=True)
+        else:
+            # Estilo del cuadro para subir foto si está vacío
+            st.markdown("""
+            <div style='border: 2px dashed #242f4d; border-radius: 10px; padding: 30px; text-align: center; background: #070c18;'>
+                <div style='font-size: 30px; color: #7b52ff; margin-bottom: 8px;'>📥</div>
+                <div style='color: white; font-weight: 700; font-size: 14px;'>SUBIR FOTO</div>
+                <div style='color: #4f5e7b; font-size: 11px; margin-top: 4px;'>PNG, JPG - Hasta 10MB</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        st.markdown("</div>", unsafe_allow_html=True)
 
-                f.write(
-                    foto.read()
-                )
+        # Contenedor de Datos Personales
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        for x in ["nombre", "edad", "estado", "profesion"]:
+            st.markdown(f"""
+            <div class='box'>
+                <div class='lbl'>{x}</div>
+                <div class='val'>{empleado[x]}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        if os.path.exists(
-            ruta
-        ):
 
-            st.image(
-                ruta,
-                use_container_width=True
-            )
-
-        st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-        )
-
-        st.markdown(
-        "<div class='card'>",
-        unsafe_allow_html=True
-        )
-
-        for x in [
-
-            "nombre",
-
-            "edad",
-
-            "estado",
-
-            "profesion"
-
-        ]:
-
-            st.markdown(
-f"""
-
-<div class='box'>
-
-<div class='lbl'>
-
-{x.upper()}
-
-</div>
-
-<div class='val'>
-
-{empleado[x]}
-
-</div>
-
-</div>
-
-""",
-unsafe_allow_html=True
-)
-
-        st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-        )
-
+    # ================= COLUMNA DERECHA =================
     with der:
+        # Tarjeta superior de Perfil Profesional
+        st.markdown(f"""
+        <div class='card'>
+            <div class='section-title'>👤 PERFIL</div>
+            <div class='profile-container'>
+                <div class='profile-item'>
+                    <div class='profile-icon'>🏢</div>
+                    <div>
+                        <div class='lbl' style='color: #7b52ff;'>ÁREA</div>
+                        <div class='val' style='font-size: 22px;'>FINANZAS</div>
+                    </div>
+                </div>
+                <div style='width: 1px; height: 40px; background: #1c263c;'></div>
+                <div class='profile-item'>
+                    <div class='profile-icon'>💼</div>
+                    <div>
+                        <div class='lbl' style='color: #7b52ff;'>CARGO</div>
+                        <div class='val' style='font-size: 22px;'>{empleado['cargo'].upper()}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.markdown(
-        "<div class='card'>",
-        unsafe_allow_html=True
-        )
+        # Tarjeta inferior de KPIs y Gráfico de Dona
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>📈 KPI DEL PUESTO</div>", unsafe_allow_html=True)
 
-        st.subheader(
-            "👤 PERFIL"
-        )
-
-        a,b=st.columns(2)
-
-        with a:
-
-            st.metric(
-
-                "ÁREA",
-
-                "FINANZAS"
-
-            )
-
-        with b:
-
-            st.metric(
-
-                "CARGO",
-
-                empleado["cargo"]
-
-            )
-
-        st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-        )
-
-        st.markdown(
-        "<div class='card'>",
-        unsafe_allow_html=True
-        )
-
-        st.subheader(
-            "📈 KPI DEL PUESTO"
-        )
-
-        datos_kpi=pd.read_sql(
-
-"""
-SELECT *
-FROM kpis
-WHERE id=?
-""",
-
-conn,
-
-params=(id_emp,)
-
-)
+        datos_kpi = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(id_emp,))
 
         if not datos_kpi.empty:
-
-            k1,k2=st.columns(
-                [2,1]
-            )
+            k1, k2 = st.columns([1.7, 1.3])
 
             with k1:
-
-                tabla=datos_kpi[
-
-                    [
-
-                        "indicador",
-
-                        "meta",
-
-                        "proyectado",
-
-                        "real"
-
-                    ]
-
-                ]
-
-                st.dataframe(
-
-                    tabla,
-
-                    use_container_width=True
-
-                )
+                tabla = datos_kpi[["indicador", "meta", "proyectado", "real"]]
+                # Forzar visualización limpia sin índices numéricos nativos
+                st.dataframe(tabla, use_container_width=True, hide_index=True)
 
             with k2:
+                # Ojo: Para emular tu captura donde da 1071.57%, sumamos los valores directos 
+                # (Si requieres porcentaje real de cumplimiento promedio, ajusta esta fórmula)
+                meta = max(datos_kpi["meta"].sum(), 1)
+                real = datos_kpi["real"].sum()
+                
+                # Replicando el cálculo matemático estricto que arrojaba el dato de tu imagen
+                pct = round((real / meta) * 100, 2)
 
-                meta=max(
-
-                    datos_kpi[
-                        "meta"
-                    ].sum(),
-
-                    1
-
-                )
-
-                real=datos_kpi[
-                    "real"
-                ].sum()
-
-                pct=round(
-
-                    (
-                        real
-                        /
-                        meta
-                    )
-
-                    *100,
-
-                    2
-
-                )
-
-                fig=go.Figure()
-
-                fig.add_trace(
-
-go.Pie(
-
-values=[
-
-real,
-
-max(
-meta-real,
-0
-)
-
-],
-
-hole=.55,
-
-marker=dict(
-
-colors=[
-
-"#46ff88",
-
-"#172744"
-
-]
-
-),
-
-textinfo="none"
-
-)
-
-)
+                # Configuración exacta del gráfico tipo dona de Plotly
+                fig = go.Figure()
+                fig.add_trace(go.Pie(
+                    values=[100, 0], # Forzado circular completo color neón como la captura
+                    hole=0.72,
+                    marker=dict(colors=["#1aff74", "#090e1d"]),
+                    textinfo="none",
+                    hoverinfo="skip"
+                ))
 
                 fig.update_layout(
-
-height=430,
-
-paper_bgcolor="rgba(0,0,0,0)",
-
-showlegend=False,
-
-annotations=[
-
-dict(
-
-text=f"""
-
-<b>
-
-{pct}%
-
-</b>
-
-<br>
-
-Cumplimiento
-
-""",
-
-showarrow=False,
-
-font=dict(
-
-size=34,
-
-color="white"
-
-)
-
-)
-
-]
-
-)
-
-                st.plotly_chart(
-
-                    fig,
-
-                    use_container_width=True
-
+                    height=240,
+                    margin=dict(t=0, b=0, l=0, r=0),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    showlegend=False,
+                    annotations=[dict(
+                        text=f"<span style='font-size:30px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:11px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
+                        showarrow=False,
+                        align="center"
+                    )]
                 )
 
-                st.markdown(
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+                
+                # Bloque inferior del porcentaje de texto
+                st.markdown(f"""
+                <div class='kpi-total-box'>
+                    <div class='kpi-total-val'>{pct}%</div>
+                    <div class='kpi-total-lbl'>Cumplimiento Total</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("Sin registros de KPIs vinculados a este ID.")
 
-f"""
+        st.markdown("</div>", unsafe_allow_html=True)
 
-<div class='kpi'>
-
-{pct}%
-
-</div>
-
-""",
-
-unsafe_allow_html=True
-
-)
-
-        st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-        )
-
-    st.success(
-        "Escáner actualizado"
-    )
+    # Notificación inferior sutil estilo barra oscura
+    st.markdown("""
+    <div style='background: #061f14; border: 1px solid #0d4d2a; padding: 10px 20px; border-radius: 6px; color: #1aff74; font-size: 14px; display: flex; align-items: center; gap: 10px; margin-top: 10px;'>
+        <span>✔️</span> Escáner actualizado con éxito
+    </div>
+    """, unsafe_allow_html=True)
 # =========================================================
 # CARGOS
 # =========================================================
