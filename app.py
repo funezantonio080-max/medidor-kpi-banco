@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import qrcode
 import json
 import base64
+import os
 from io import BytesIO
 
 # =========================================================
@@ -18,28 +19,36 @@ st.set_page_config(
 )
 
 # =========================================================
-# FONDO EJECUTIVO
+# FONDO SOLO LOGIN
 # =========================================================
 
-def get_base64(file):
-    with open(file, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+def aplicar_fondo_login():
 
-try:
+    imagen = "fondo.png"
 
-    img = get_base64("fondo.png")
+    if not os.path.exists(imagen):
+        return
+
+    with open(imagen, "rb") as f:
+
+        img = base64.b64encode(
+            f.read()
+        ).decode()
 
     st.markdown(f"""
     <style>
 
     [data-testid="stAppViewContainer"] {{
 
-        background-image:
+        background:
         linear-gradient(
-        rgba(0,0,0,0.55),
-        rgba(0,0,0,0.55)),
-        url("data:image/png;base64,{img}");
+        rgba(0,0,0,.25),
+        rgba(0,0,0,.55)
+        ),
+
+        url(
+        "data:image/png;base64,{img}"
+        );
 
         background-size: cover;
         background-position: center;
@@ -48,7 +57,7 @@ try:
     }}
 
     [data-testid="stHeader"] {{
-        background: rgba(0,0,0,0);
+        background: transparent;
     }}
 
     [data-testid="stSidebar"] {{
@@ -59,15 +68,31 @@ try:
         color:white !important;
     }}
 
+    .stTextInput input {{
+
+        background:
+        rgba(0,0,0,.35);
+
+        color:white;
+
+        border-radius:14px;
+    }}
+
+    .stButton button {{
+
+        border-radius:14px;
+
+        background:#0066ff;
+
+        color:white;
+    }}
+
     .stDataFrame {{
         background: rgba(0,0,0,0.5);
     }}
 
     </style>
     """, unsafe_allow_html=True)
-
-except:
-    st.warning("NO SE ENCONTRO fondo.png")
 
 # =========================================================
 # LOGIN
@@ -80,40 +105,55 @@ USERS = {
 if "auth" not in st.session_state:
     st.session_state.auth = False
 
-st.sidebar.title("🔐 LOGIN")
-
-user = st.sidebar.text_input(
-    "USUARIO"
-).upper()
-
-password = st.sidebar.text_input(
-    "CONTRASEÑA",
-    type="password"
-)
-
-if st.sidebar.button("INGRESAR"):
-
-    if USERS.get(user) == password:
-
-        st.session_state.auth = True
-
-    else:
-
-        st.sidebar.error("ACCESO INCORRECTO")
-
 if not st.session_state.auth:
+
+    aplicar_fondo_login()
 
     st.markdown("""
     <h1 style='text-align:center;font-size:70px;'>
+
     🏦 GERENCIA DE BANCO KPI
+
     </h1>
     """, unsafe_allow_html=True)
 
     st.markdown("""
     <h2 style='text-align:center;'>
+
     CENTRO EJECUTIVO DE INDICADORES BANCARIOS
+
     </h2>
     """, unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns([1,1,1])
+
+    with c2:
+
+        st.sidebar.title("🔐 LOGIN")
+
+        user = st.text_input(
+            "USUARIO"
+        ).upper()
+
+        password = st.text_input(
+            "CONTRASEÑA",
+            type="password"
+        )
+
+        if st.button("INGRESAR"):
+
+            if USERS.get(user) == password:
+
+                st.session_state.auth = True
+                st.rerun()
+
+            else:
+
+                st.error(
+                    "ACCESO INCORRECTO"
+                )
 
     st.stop()
 
@@ -459,6 +499,8 @@ elif menu == "REGISTRAR":
 
             regenerar_kpis(id, cargo)
 
+            conn.commit()
+
             st.success(
                 "EMPLEADO REGISTRADO"
             )
@@ -556,275 +598,3 @@ elif menu == "EDITAR":
             st.success(
                 "ACTUALIZADO"
             )
-
-# =========================================================
-# KPIS
-# =========================================================
-
-elif menu == "KPIS":
-
-    st.title("📊 KPIs")
-
-    df = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
-
-    if not df.empty:
-
-        emp_id = st.selectbox(
-            "EMPLEADO",
-            df["id"]
-        )
-
-        kpis = pd.read_sql(
-            "SELECT * FROM kpis WHERE id=?",
-            conn,
-            params=(emp_id,)
-        )
-
-        for i, row in kpis.iterrows():
-
-            st.subheader(
-                row["indicador"]
-            )
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-
-                m = st.number_input(
-                    "META",
-                    value=float(row["meta"]),
-                    key=f"m{i}"
-                )
-
-            with col2:
-
-                p = st.number_input(
-                    "PROYECTADO",
-                    value=float(row["proyectado"]),
-                    key=f"p{i}"
-                )
-
-            with col3:
-
-                r = st.number_input(
-                    "REAL",
-                    value=float(row["real"]),
-                    key=f"r{i}"
-                )
-
-            if st.button(
-                f"GUARDAR {row['indicador']}"
-            ):
-
-                c.execute("""
-                UPDATE kpis
-                SET meta=?,
-                    real=?,
-                    proyectado=?
-                WHERE id=?
-                AND indicador=?
-                """, (
-                    m,
-                    r,
-                    p,
-                    emp_id,
-                    row["indicador"]
-                ))
-
-                conn.commit()
-
-                st.success(
-                    "KPI ACTUALIZADO"
-                )
-
-# =========================================================
-# ESCANER
-# =========================================================
-
-elif menu == "ESCÁNER":
-
-    st.title("🔍 ESCÁNER")
-
-    df = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
-
-    if not df.empty:
-
-        df["display"] = (
-            df["id"]
-            + " - "
-            + df["nombre"]
-            + " - "
-            + df["cargo"]
-        )
-
-        sel = st.selectbox(
-            "SELECCIONAR",
-            df["display"]
-        )
-
-        emp_id = df[
-            df["display"] == sel
-        ]["id"].values[0]
-
-        data = df[
-            df["id"] == emp_id
-        ].iloc[0]
-
-        kpis = pd.read_sql(
-            "SELECT * FROM kpis WHERE id=?",
-            conn,
-            params=(emp_id,)
-        )
-
-        col1, col2 = st.columns([1,2])
-
-        with col1:
-
-            st.dataframe(
-                mayus(
-                    pd.DataFrame([data]).drop(
-                        columns=["foto"],
-                        errors="ignore"
-                    )
-                )
-            )
-
-            if data["foto"]:
-
-                st.image(
-                    data["foto"],
-                    width=140
-                )
-
-            st.image(
-                generar_qr(data, kpis),
-                width=140
-            )
-
-        with col2:
-
-            st.dataframe(
-                mayus(kpis)
-            )
-
-            for i, row in kpis.iterrows():
-
-                labels = [
-                    "META",
-                    "PROYECTADO",
-                    "REAL"
-                ]
-
-                valores = [
-                    row["meta"],
-                    row["proyectado"],
-                    row["real"]
-                ]
-
-                fig = go.Figure()
-
-                fig.add_trace(go.Bar(
-                    x=labels,
-                    y=valores,
-                    marker=dict(
-                        color=[
-                            "#A8D5BA",
-                            "#7FB77E",
-                            "#4CAF50"
-                        ]
-                    ),
-                    width=0.25
-                ))
-
-                fig.add_trace(go.Scatter(
-                    x=labels,
-                    y=valores,
-                    mode="lines+markers",
-                    showlegend=False
-                ))
-
-                st.plotly_chart(
-                    fig,
-                    key=f"graf_{i}"
-                )
-
-# =========================================================
-# CARGOS
-# =========================================================
-
-elif menu == "CARGOS":
-
-    st.title("⚙️ CARGOS")
-
-    cargos = pd.read_sql(
-        "SELECT DISTINCT nombre FROM cargos",
-        conn
-    )
-
-    cargo_sel = st.selectbox(
-        "CARGO",
-        cargos["nombre"]
-    )
-
-    kpis = pd.read_sql(
-        "SELECT indicador FROM cargos WHERE nombre=?",
-        conn,
-        params=(cargo_sel,)
-    )
-
-    st.write(
-        "KPIs:",
-        kpis["indicador"].tolist()
-    )
-
-    nuevo = st.text_input(
-        "NUEVO KPI"
-    )
-
-    if st.button(
-        "AGREGAR KPI"
-    ):
-
-        c.execute(
-            "INSERT INTO cargos VALUES (?,?)",
-            (
-                cargo_sel,
-                nuevo.upper()
-            )
-        )
-
-        conn.commit()
-
-        st.success(
-            "KPI AGREGADO"
-        )
-
-    eliminar = st.selectbox(
-        "ELIMINAR KPI",
-        kpis["indicador"]
-    )
-
-    if st.button(
-        "ELIMINAR KPI"
-    ):
-
-        c.execute("""
-        DELETE FROM cargos
-        WHERE nombre=?
-        AND indicador=?
-        """, (
-            cargo_sel,
-            eliminar
-        ))
-
-        conn.commit()
-
-        st.success(
-            "KPI ELIMINADO"
-        )
