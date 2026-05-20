@@ -531,8 +531,6 @@ elif menu == "ESCANER CV":
 
     import streamlit as st
     import pandas as pd
-    import sqlite3
-    from PIL import Image
     import os
 
     st.title("📄 ESCÁNER CV")
@@ -546,50 +544,70 @@ elif menu == "ESCANER CV":
     )
 
     if empleados.empty:
-        st.warning("No hay empleados")
+
+        st.warning(
+            "No hay empleados registrados"
+        )
+
         st.stop()
 
-    empleados["mostrar"] = (
-        empleados["id"]
+    empleados["vista"] = (
+
+        empleados["id"].astype(str)
+
         +
+
         " - "
+
         +
-        empleados["nombre"]
+
+        empleados["nombre"].astype(str)
+
     )
 
-    empleado = st.selectbox(
-        "Empleado",
-        empleados["mostrar"]
+    seleccion = st.selectbox(
+
+        "👤 Seleccionar empleado",
+
+        empleados["vista"]
+
     )
 
-    id_emp = empleado.split(" - ")[0]
+    id_emp = seleccion.split(" - ")[0]
 
     emp = empleados[
-        empleados["id"]
+        empleados["id"].astype(str)
         ==
-        id_emp
+        str(id_emp)
     ].iloc[0]
 
     st.markdown("---")
 
-    izquierda, derecha = st.columns(
-        [1,3]
-    )
+    foto, info = st.columns([1,3])
 
-    with izquierda:
+    with foto:
 
-        st.subheader("📷 FOTO")
-
-        archivo = st.file_uploader(
-            "Subir foto",
-            type=[
-                "jpg",
-                "jpeg",
-                "png"
-            ]
+        st.markdown(
+            "### 📷 FOTO"
         )
 
         ruta = f"fotos/{id_emp}.png"
+
+        archivo = st.file_uploader(
+
+            "Subir imagen",
+
+            type=[
+
+                "png",
+
+                "jpg",
+
+                "jpeg"
+
+            ]
+
+        )
 
         if archivo:
 
@@ -605,112 +623,158 @@ elif menu == "ESCANER CV":
         if os.path.exists(ruta):
 
             st.image(
+
                 ruta,
-                width=250
+
+                use_container_width=True
+
             )
 
-    with derecha:
+        else:
+
+            st.info(
+                "Sin fotografía"
+            )
+
+    with info:
 
         st.markdown(
-f"""
-# {emp["nombre"]}
 
-📌 ID: {emp["id"]}
+f"""
+
+# {emp.get("nombre","")}
+
+🆔 ID:
+{emp.get("id","")}
 
 💼 Cargo:
-{emp["cargo"]}
+{emp.get("cargo","No definido")}
 
-📧 correo@empresa.com
+📧 Correo:
+{emp.get("correo","No registrado")}
 
-📍 Nicaragua
+☎ Teléfono:
+{emp.get("telefono","No registrado")}
 
-☎ +505
-0000-0000
+📍 Dirección:
+{emp.get("direccion","No registrada")}
+
+🎂 Edad:
+{emp.get("edad","No registrada")}
+
+🏢 Área:
+{emp.get("departamento","No registrada")}
 
 """
-)
+
+        )
 
     st.markdown("---")
 
-    c1,c2=st.columns([1,2])
+    izquierda, derecha = st.columns([1,2])
 
-    with c1:
+    with izquierda:
 
         st.subheader(
             "COMPETENCIAS"
         )
 
-        comp = st.text_area(
+        competencias = st.text_area(
+
             "",
-            value="""
-• Liderazgo
 
-• Comunicación
+            value=emp.get(
 
-• Trabajo en equipo
+                "competencias",
 
-• Resolución problemas
-"""
+                ""
+
+            ),
+
+            height=180
+
         )
 
         st.subheader(
             "APTITUDES"
         )
 
-        apt = st.text_area(
+        aptitudes = st.text_area(
+
             "",
-            value="""
-• Organización
 
-• Productividad
+            value=emp.get(
 
-• Gestión KPI
-"""
+                "aptitudes",
+
+                ""
+
+            ),
+
+            height=180
+
         )
 
-    with c2:
+    with derecha:
 
         st.subheader(
             "PERFIL"
         )
 
         perfil = st.text_area(
+
             "",
-            value="""
-Profesional con experiencia
-en gestión bancaria y
-cumplimiento KPI.
-""",
-            height=140
+
+            value=emp.get(
+
+                "perfil",
+
+                ""
+
+            ),
+
+            height=180
+
         )
 
         st.subheader(
             "EXPERIENCIA"
         )
 
-        exp = st.text_area(
+        experiencia = st.text_area(
+
             "",
-            value="""
-Analista
 
-Supervisor
+            value=emp.get(
 
-Coordinador
-""",
+                "experiencia",
+
+                ""
+
+            ),
+
             height=180
+
         )
 
         st.subheader(
             "FORMACIÓN"
         )
 
-        form = st.text_area(
-            "",
-            value="""
-Universidad
+        formacion = st.text_area(
 
-Diplomados
-"""
+            "",
+
+            value=emp.get(
+
+                "formacion",
+
+                ""
+
+            ),
+
+            height=160
+
         )
 
     st.markdown("---")
@@ -719,45 +783,73 @@ Diplomados
         "📈 KPI DEL PUESTO"
     )
 
-    kpi = pd.read_sql(
-        """
-        SELECT *
-        FROM kpis
-        WHERE id=?
-        """,
-        conn,
-        params=[
-            id_emp
-        ]
-    )
+    try:
 
-    if not kpi.empty:
+        kpi = pd.read_sql(
 
-        mostrar = kpi[
-            [
-                "indicador",
-                "meta",
-                "proyectado",
-                "real"
+            """
+
+            SELECT *
+
+            FROM kpis
+
+            WHERE id=?
+
+            """,
+
+            conn,
+
+            params=[
+
+                id_emp
+
             ]
-        ]
 
-        st.dataframe(
-            mostrar,
-            use_container_width=True
         )
 
-    else:
+        if not kpi.empty:
 
-        st.info(
-            "Sin KPIs"
+            st.dataframe(
+
+                kpi[
+
+                    [
+
+                        "indicador",
+
+                        "meta",
+
+                        "proyectado",
+
+                        "real"
+
+                    ]
+
+                ],
+
+                use_container_width=True
+
+            )
+
+        else:
+
+            st.info(
+                "No hay KPIs"
+            )
+
+    except:
+
+        st.warning(
+            "No se encontró tabla KPI"
         )
 
     st.markdown("---")
 
-    if st.button(
+    guardar = st.button(
         "💾 GUARDAR CV"
-    ):
+    )
+
+    if guardar:
 
         st.success(
             "CV actualizado"
