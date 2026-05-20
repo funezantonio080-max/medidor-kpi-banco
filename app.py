@@ -527,56 +527,241 @@ elif menu == "KPIS":
 # =========================================================
 # ESCÁNER (CON GRÁFICOS)
 # =========================================================
-elif menu == "ESCÁNER":
-    st.title("🔍 ESCÁNER")
+elif menu == "ESCANER CV":
 
-    df = pd.read_sql("SELECT * FROM empleados", conn)
+    import streamlit as st
+    import pandas as pd
+    import sqlite3
+    from PIL import Image
+    import os
 
-    if not df.empty:
-        df["display"] = df["id"] + " - " + df["nombre"] + " - " + df["cargo"]
+    st.title("📄 ESCÁNER CV")
 
-        sel = st.selectbox("SELECCIONAR", df["display"])
-        emp_id = df[df["display"] == sel]["id"].values[0]
+    if not os.path.exists("fotos"):
+        os.mkdir("fotos")
 
-        data = df[df["id"] == emp_id].iloc[0]
-        kpis = pd.read_sql("SELECT * FROM kpis WHERE id=?", conn, params=(emp_id,))
+    empleados = pd.read_sql(
+        "SELECT * FROM empleados",
+        conn
+    )
 
-        col1, col2 = st.columns([1,2])
+    if empleados.empty:
+        st.warning("No hay empleados")
+        st.stop()
 
-        with col1:
-            st.dataframe(mayus(pd.DataFrame([data]).drop(columns=["foto"], errors="ignore")))
+    empleados["mostrar"] = (
+        empleados["id"]
+        +
+        " - "
+        +
+        empleados["nombre"]
+    )
 
-            if data["foto"]:
-                st.image(data["foto"], width=140)
+    empleado = st.selectbox(
+        "Empleado",
+        empleados["mostrar"]
+    )
 
-            st.image(generar_qr(data,kpis), width=140)
+    id_emp = empleado.split(" - ")[0]
 
-        with col2:
-            st.dataframe(mayus(kpis))
+    emp = empleados[
+        empleados["id"]
+        ==
+        id_emp
+    ].iloc[0]
 
-            for i, row in kpis.iterrows():
+    st.markdown("---")
 
-                labels = ["META","PROYECTADO","REAL"]
-                valores = [row["meta"], row["proyectado"], row["real"]]
+    izquierda, derecha = st.columns(
+        [1,3]
+    )
 
-                fig = go.Figure()
+    with izquierda:
 
-                fig.add_trace(go.Bar(
-                    x=labels,
-                    y=valores,
-                    marker=dict(color=["#A8D5BA","#7FB77E","#4CAF50"]),
-                    width=0.25
-                ))
+        st.subheader("📷 FOTO")
 
-                fig.add_trace(go.Scatter(
-                    x=labels,
-                    y=valores,
-                    mode="lines+markers",
-                    showlegend=False
-                ))
+        archivo = st.file_uploader(
+            "Subir foto",
+            type=[
+                "jpg",
+                "jpeg",
+                "png"
+            ]
+        )
 
-                st.plotly_chart(fig, key=f"graf_{i}")
+        ruta = f"fotos/{id_emp}.png"
 
+        if archivo:
+
+            with open(
+                ruta,
+                "wb"
+            ) as f:
+
+                f.write(
+                    archivo.read()
+                )
+
+        if os.path.exists(ruta):
+
+            st.image(
+                ruta,
+                width=250
+            )
+
+    with derecha:
+
+        st.markdown(
+f"""
+# {emp["nombre"]}
+
+📌 ID: {emp["id"]}
+
+💼 Cargo:
+{emp["cargo"]}
+
+📧 correo@empresa.com
+
+📍 Nicaragua
+
+☎ +505
+0000-0000
+
+"""
+)
+
+    st.markdown("---")
+
+    c1,c2=st.columns([1,2])
+
+    with c1:
+
+        st.subheader(
+            "COMPETENCIAS"
+        )
+
+        comp = st.text_area(
+            "",
+            value="""
+• Liderazgo
+
+• Comunicación
+
+• Trabajo en equipo
+
+• Resolución problemas
+"""
+        )
+
+        st.subheader(
+            "APTITUDES"
+        )
+
+        apt = st.text_area(
+            "",
+            value="""
+• Organización
+
+• Productividad
+
+• Gestión KPI
+"""
+        )
+
+    with c2:
+
+        st.subheader(
+            "PERFIL"
+        )
+
+        perfil = st.text_area(
+            "",
+            value="""
+Profesional con experiencia
+en gestión bancaria y
+cumplimiento KPI.
+""",
+            height=140
+        )
+
+        st.subheader(
+            "EXPERIENCIA"
+        )
+
+        exp = st.text_area(
+            "",
+            value="""
+Analista
+
+Supervisor
+
+Coordinador
+""",
+            height=180
+        )
+
+        st.subheader(
+            "FORMACIÓN"
+        )
+
+        form = st.text_area(
+            "",
+            value="""
+Universidad
+
+Diplomados
+"""
+        )
+
+    st.markdown("---")
+
+    st.subheader(
+        "📈 KPI DEL PUESTO"
+    )
+
+    kpi = pd.read_sql(
+        """
+        SELECT *
+        FROM kpis
+        WHERE id=?
+        """,
+        conn,
+        params=[
+            id_emp
+        ]
+    )
+
+    if not kpi.empty:
+
+        mostrar = kpi[
+            [
+                "indicador",
+                "meta",
+                "proyectado",
+                "real"
+            ]
+        ]
+
+        st.dataframe(
+            mostrar,
+            use_container_width=True
+        )
+
+    else:
+
+        st.info(
+            "Sin KPIs"
+        )
+
+    st.markdown("---")
+
+    if st.button(
+        "💾 GUARDAR CV"
+    ):
+
+        st.success(
+            "CV actualizado"
+        )
 # =========================================================
 # CARGOS
 # =========================================================
