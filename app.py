@@ -527,107 +527,107 @@ elif menu == "KPIS":
 # =========================================================
 # ESCÁNER (CON GRÁFICOS)
 # =========================================================
-elif menu == "ESCANER CV":
+elif menu == "ESCÁNER":
 
-    import streamlit as st
-    import pandas as pd
-    import os
-
-    st.title("📄 ESCÁNER CV EJECUTIVO")
-
-    empleados = pd.read_sql(
-        "SELECT * FROM empleados",
-        conn
-    )
-
-    if empleados.empty:
-        st.warning("No hay empleados")
-        st.stop()
-
-    empleados["vista"] = (
-        empleados.iloc[:, 0].astype(str)
-        + " - "
-        + empleados.iloc[:, 1].astype(str)
-    )
-
-    seleccion = st.selectbox(
-        "👤 Seleccionar empleado",
-        empleados["vista"]
-    )
-
-    id_emp = seleccion.split(" - ")[0]
-
-    empleado = empleados[
-        empleados.iloc[:, 0].astype(str)
-        == str(id_emp)
-    ].iloc[0]
+    st.title("📄 ESCÁNER EMPLEADO")
 
     try:
 
-        kpis = pd.read_sql(
-            """
-            SELECT *
-            FROM kpis
-            WHERE id=?
-            """,
-            conn,
-            params=[id_emp]
-        )
-
-    except:
-
-        kpis = pd.DataFrame()
-
-    try:
-
-        cargos = pd.read_sql(
-            "SELECT * FROM cargos",
+        empleados = pd.read_sql(
+            "SELECT * FROM empleados",
             conn
         )
 
-        cargo = str(
-            empleado.get(
-                "cargo",
-                ""
-            )
-        )
-
-        cargo_info = cargos[
-            cargos.iloc[:, 0]
-            .astype(str)
-            ==
-            cargo
-        ]
-
     except:
 
-        cargo_info = pd.DataFrame()
+        st.error(
+            "No existe tabla empleados"
+        )
+
+        st.stop()
+
+    if empleados.empty:
+
+        st.warning(
+            "No hay registros"
+        )
+
+        st.stop()
+
+    columna_id = empleados.columns[0]
+
+    empleados["vista"] = (
+
+        empleados[columna_id]
+        .astype(str)
+
+    )
+
+    empleado_sel = st.selectbox(
+
+        "Empleado",
+
+        empleados["vista"]
+
+    )
+
+    emp = empleados[
+
+        empleados[
+            columna_id
+        ]
+        .astype(str)
+
+        ==
+
+        str(
+            empleado_sel
+        )
+
+    ].iloc[0]
+
+    id_emp = str(
+        emp[
+            columna_id
+        ]
+    )
 
     st.markdown("---")
 
-    col1, col2 = st.columns([1, 3])
+    izq, der = st.columns([1,2])
 
-    with col1:
+    with izq:
 
-        carpeta = "fotos"
+        st.subheader("📷 FOTO")
 
-        os.makedirs(
-            carpeta,
-            exist_ok=True
+        ruta = (
+            "fotos/"
+            +
+            id_emp
+            +
+            ".png"
         )
 
-        ruta = f"{carpeta}/{id_emp}.png"
+        archivo = st.file_uploader(
 
-        foto = st.file_uploader(
-            "📷 Foto",
+            "Subir foto",
+
             type=[
+
                 "png",
                 "jpg",
                 "jpeg"
+
             ]
+
         )
 
-        if foto:
+        if archivo:
+
+            os.makedirs(
+                "fotos",
+                exist_ok=True
+            )
 
             with open(
                 ruta,
@@ -635,7 +635,7 @@ elif menu == "ESCANER CV":
             ) as f:
 
                 f.write(
-                    foto.read()
+                    archivo.read()
                 )
 
         if os.path.exists(
@@ -643,14 +643,13 @@ elif menu == "ESCANER CV":
         ):
 
             st.image(
-                ruta,
-                use_container_width=True
+                ruta
             )
 
-    with col2:
+    with der:
 
         st.subheader(
-            "PERFIL EMPLEADO"
+            "DATOS REGISTRADOS"
         )
 
         for c in empleados.columns:
@@ -658,115 +657,136 @@ elif menu == "ESCANER CV":
             if c != "vista":
 
                 st.write(
-                    f"**{c}**"
-                )
 
-                st.write(
-                    empleado[c]
+                    f"**{c}:**",
+
+                    emp[c]
+
                 )
 
     st.markdown("---")
 
     st.subheader(
-        "💼 INFORMACIÓN DEL CARGO"
+        "💼 CARGO"
     )
 
-    if not cargo_info.empty:
+    try:
 
-        st.dataframe(
-            cargo_info,
-            use_container_width=True
+        cargos = pd.read_sql(
+
+            "SELECT * FROM cargos",
+
+            conn
+
         )
 
-    else:
+        if "cargo" in empleados.columns:
 
-        st.info(
-            "Sin información del cargo"
-        )
+            cargo_emp = str(
+                emp["cargo"]
+            )
 
-    st.markdown("---")
+            cargo_data = cargos[
 
-    st.subheader(
-        "📈 KPIs"
-    )
-
-    if not kpis.empty:
-
-        columnas = []
-
-        for x in [
-
-            "indicador",
-            "meta",
-            "proyectado",
-            "real"
-
-        ]:
-
-            if x in kpis.columns:
-
-                columnas.append(
-                    x
+                cargos.astype(
+                    str
                 )
 
-        st.dataframe(
+                .apply(
 
-            kpis[
-                columnas
-            ],
-
-            use_container_width=True
-
-        )
-
-        if (
-
-            "meta"
-            in kpis.columns
-
-            and
-
-            "real"
-            in kpis.columns
-
-        ):
-
-            cumplimiento = round(
-
-                (
-                    kpis["real"]
-                    .sum()
-
-                    /
-
-                    max(
-                        kpis["meta"]
-                        .sum(),
-                        1
+                    lambda x:
+                    x.str.contains(
+                        cargo_emp,
+                        case=False,
+                        na=False
                     )
 
                 )
 
-                * 100,
+                .any(
+                    axis=1
+                )
 
-                2
+            ]
 
-            )
+            if not cargo_data.empty:
 
-            st.metric(
-                "Cumplimiento",
-                f"{cumplimiento}%"
-            )
+                st.dataframe(
 
-    else:
+                    cargo_data,
+
+                    use_container_width=True
+
+                )
+
+            else:
+
+                st.info(
+                    "Sin información cargo"
+                )
+
+    except:
 
         st.info(
-            "Sin KPIs"
+            "Tabla cargos no encontrada"
         )
 
-    st.success(
-        "CV generado correctamente"
+    st.markdown("---")
+
+    st.subheader(
+        "📈 KPI"
     )
+
+    try:
+
+        kpis = pd.read_sql(
+
+            "SELECT * FROM kpis",
+
+            conn
+
+        )
+
+        if "id" in kpis.columns:
+
+            kpi_emp = kpis[
+
+                kpis[
+                    "id"
+                ]
+                .astype(str)
+
+                ==
+
+                id_emp
+
+            ]
+
+        else:
+
+            kpi_emp = kpis
+
+        if not kpi_emp.empty:
+
+            st.dataframe(
+
+                kpi_emp,
+
+                use_container_width=True
+
+            )
+
+        else:
+
+            st.info(
+                "Sin KPI"
+            )
+
+    except:
+
+        st.info(
+            "No existe KPI"
+        )
 # =========================================================
 # CARGOS
 # =========================================================
