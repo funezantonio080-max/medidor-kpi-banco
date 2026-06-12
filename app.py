@@ -261,8 +261,8 @@ if menu == "DASHBOARD":
     """, unsafe_allow_html=True)
 
     # Lectura de datos SQL relacionales
-    empleados = pd.read_sql("SELECT * FROM empleados", conn)
-    kpis = pd.read_sql("SELECT * FROM kpis", conn)
+   empleados = pd.read_sql("SELECT * FROM empleados", conn)
+kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
 lista_cargos = empleados["cargo"].dropna().unique().tolist()
 
@@ -280,6 +280,9 @@ if cargo_filtro != "TODOS":
     kpis = kpis[
         kpis["id"].isin(ids_empleados)
     ]
+
+total_emp = len(empleados)
+total_kp = len(kpis)
 
     total_emp = len(empleados)
     total_kp = len(kpis)
