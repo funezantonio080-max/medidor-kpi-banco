@@ -264,6 +264,31 @@ if menu == "DASHBOARD":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
+    if menu == "DASHBOARD":
+
+    ...
+
+    empleados = pd.read_sql("SELECT * FROM empleados", conn)
+    kpis = pd.read_sql("SELECT * FROM kpis", conn)
+
+    # FILTRO POR CARGO
+    lista_cargos = empleados["cargo"].dropna().unique().tolist()
+
+    cargo_filtro = st.selectbox(
+        "📋 FILTRAR POR CARGO",
+        ["TODOS"] + sorted(lista_cargos)
+    )
+
+    if cargo_filtro != "TODOS":
+        ids_cargo = empleados[
+            empleados["cargo"] == cargo_filtro
+        ]["id"].tolist()
+
+        kpis = kpis[kpis["id"].isin(ids_cargo)]
+
+    total_emp = len(empleados)
+    total_kp = len(kpis)
+
     total_emp = len(empleados)
     total_kp = len(kpis)
     prom_cump = round((kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100, 2) if not kpis.empty else 0
