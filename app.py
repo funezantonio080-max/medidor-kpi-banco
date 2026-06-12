@@ -96,6 +96,20 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
         for i in inds:
             c.execute("INSERT INTO cargos VALUES (?,?)",(cargo,i))
     conn.commit()
+   if st.button("ACTUALIZAR"):
+    img = foto.read() if foto else data["foto"]
+
+    c.execute("""
+    UPDATE empleados
+    SET nombre=?, edad=?, estado=?, cargo=?, foto=?
+    WHERE id=?
+    """, (nombre,edad,estado,cargo,img,emp_id))
+
+    conn.commit()
+
+    regenerar_kpis(emp_id, cargo)
+
+    st.success("ACTUALIZADO")
 
 # ---------------- FUNCIONES ----------------
 def regenerar_kpis(emp_id, cargo):
