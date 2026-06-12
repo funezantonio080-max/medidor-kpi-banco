@@ -52,6 +52,7 @@ conn.execute("PRAGMA synchronous=FULL")
 
 c = conn.cursor()
 
+# TABLA HISTORIAL KPI
 c.execute("""
 CREATE TABLE IF NOT EXISTS historial_kpis(
     id TEXT,
@@ -62,9 +63,8 @@ CREATE TABLE IF NOT EXISTS historial_kpis(
     fecha TEXT
 )
 """)
-except:
-    pass
 
+# TABLA EMPLEADOS
 c.execute("""
 CREATE TABLE IF NOT EXISTS empleados(
     id TEXT PRIMARY KEY,
@@ -77,17 +77,18 @@ CREATE TABLE IF NOT EXISTS empleados(
 )
 """)
 
+# TABLA KPI
 c.execute("""
-CREATE TABLE IF NOT EXISTS historial_kpis(
+CREATE TABLE IF NOT EXISTS kpis(
     id TEXT,
     indicador TEXT,
     meta REAL,
     real REAL,
-    proyectado REAL,
-    fecha TEXT
+    proyectado REAL
 )
 """)
 
+# TABLA CARGOS
 c.execute("""
 CREATE TABLE IF NOT EXISTS cargos(
     nombre TEXT,
