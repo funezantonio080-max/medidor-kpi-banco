@@ -1,4 +1,3 @@
-import streamlit as st
 import pandas as pd
 import sqlite3
 import plotly.graph_objects as go
@@ -8,22 +7,6 @@ import shutil
 import os
 from io import BytesIO
 from datetime import datetime
-
-# ---------------- CONFIG ----------------
-st.set_page_config(page_title="BANCO KPI PRO", layout="wide")
-
-c.execute("""
-INSERT INTO historial_kpis
-VALUES (?,?,?,?,?,?)
-""",
-(
-    emp_id,
-    row["indicador"],
-    m,
-    r,
-    p,
-    fecha
-))
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="BANCO KPI PRO", layout="wide")
