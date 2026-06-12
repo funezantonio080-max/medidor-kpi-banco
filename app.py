@@ -3,8 +3,24 @@ import pandas as pd
 import sqlite3
 import plotly.graph_objects as go
 import qrcode
-import json
-from io import BytesIO
+import shutil
+import os
+from datetime import datetime
+
+fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+c.execute("""
+INSERT INTO historial_kpis
+VALUES (?,?,?,?,?,?)
+""",
+(
+    emp_id,
+    row["indicador"],
+    m,
+    r,
+    p,
+    fecha
+))
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="BANCO KPI PRO", layout="wide")
@@ -30,7 +46,22 @@ if not st.session_state.auth:
 
 # ---------------- DB ----------------
 conn = sqlite3.connect("bank.db", check_same_thread=False)
+
+conn.execute("PRAGMA journal_mode=WAL")
+conn.execute("PRAGMA synchronous=FULL")
+
 c = conn.cursor()
+os.makedirs("backup", exist_ok=True)
+
+fecha = datetime.now().strftime("%Y%m%d")
+
+try:
+    shutil.copy(
+        "bank.db",
+        f"backup/bank_{fecha}.db"
+    )
+except:
+    pass
 
 c.execute("""
 CREATE TABLE IF NOT EXISTS empleados(
@@ -45,12 +76,13 @@ CREATE TABLE IF NOT EXISTS empleados(
 """)
 
 c.execute("""
-CREATE TABLE IF NOT EXISTS kpis(
+CREATE TABLE IF NOT EXISTS historial_kpis(
     id TEXT,
     indicador TEXT,
     meta REAL,
     real REAL,
-    proyectado REAL
+    proyectado REAL,
+    fecha TEXT
 )
 """)
 
