@@ -1029,10 +1029,13 @@ if menu == "DASHBOARD":
 # REGISTRAR
 # =========================================================
 elif menu == "REGISTRAR":
-    st.title("➕ REGISTRO DE EMPLEADO")
+st.title("➕ REGISTRO DE EMPLEADO")
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
     with st.form("form_reg"):
+        
+        cargo = st.selectbox("CARGO", cargos["nombre"])
+        
         col1, col2, col3 = st.columns(3)
         with col1:
             id = st.text_input("ID").upper()
