@@ -517,20 +517,19 @@ elif menu == "EDITAR":
 
         foto = st.file_uploader("ACTUALIZAR FOTO", type=["jpg", "png"])
 
-        if st.button("ACTUALIZAR"):
-            img = foto.read() if foto else data["foto"]
+      if st.form_submit_button("GUARDAR"):
+    img = foto.read() if foto else None
 
-            c.execute("""
-            UPDATE empleados
-            SET nombre=?, edad=?, estado=?, cargo=?, foto=?
-            WHERE id=?
-            """, (nombre, edad, estado, cargo, img, emp_id))
+    c.execute("""
+    INSERT OR REPLACE INTO empleados
+    VALUES (?,?,?,?,?,?,?)
+    """, (id, nombre, edad, estado, profesion, cargo, img))
 
-            conn.commit()
+    conn.commit()
 
-            regenerar_kpis(emp_id, cargo)
+    regenerar_kpis(id, cargo)
 
-            st.success("ACTUALIZADO")
+    st.success("EMPLEADO REGISTRADO")
 
 # =========================================================
 # KPIS
