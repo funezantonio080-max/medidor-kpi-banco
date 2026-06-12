@@ -931,7 +931,6 @@ elif menu == "ESCÁNER":
 elif menu == "CARGOS":
 st.title("⚙️ ADMINISTRACIÓN DE CARGOS Y KPI")
 
-```
 # CREAR NUEVO CARGO
 st.subheader("➕ CREAR NUEVO CARGO")
 
@@ -946,6 +945,8 @@ if st.button("CREAR CARGO"):
         conn.commit()
         st.success("CARGO CREADO CORRECTAMENTE")
         st.rerun()
+    else:
+        st.warning("INGRESE UN NOMBRE DE CARGO")
 
 st.divider()
 
@@ -984,8 +985,10 @@ if st.button("AGREGAR KPI"):
             (cargo_sel, nuevo_kpi.upper())
         )
         conn.commit()
-        st.success("KPI AGREGADO")
+        st.success("KPI AGREGADO CORRECTAMENTE")
         st.rerun()
+    else:
+        st.warning("INGRESE EL NOMBRE DEL KPI")
 
 st.divider()
 
@@ -997,7 +1000,7 @@ lista_kpis = kpis["indicador"].tolist()
 if len(lista_kpis) > 0:
 
     kpi_eliminar = st.selectbox(
-        "KPI A ELIMINAR",
+        "SELECCIONE KPI A ELIMINAR",
         lista_kpis
     )
 
@@ -1007,6 +1010,5 @@ if len(lista_kpis) > 0:
             (cargo_sel, kpi_eliminar)
         )
         conn.commit()
-        st.success("KPI ELIMINADO")
+        st.success("KPI ELIMINADO CORRECTAMENTE")
         st.rerun()
-```
