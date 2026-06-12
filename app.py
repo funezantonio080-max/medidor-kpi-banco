@@ -439,7 +439,7 @@ elif menu == "REGISTRAR":
 
         with col2:
             edad = st.number_input("EDAD", 18, 70)
-            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+            estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
 
         with col3:
             profesion = st.text_input("PROFESIÓN").upper()
@@ -474,7 +474,7 @@ elif menu == "EDITAR":
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
         edad = st.number_input("EDAD", value=int(data["edad"]))
-        estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+        estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
 
         cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
         cargo = st.selectbox("CARGO", cargos["nombre"])
