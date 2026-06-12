@@ -425,9 +425,7 @@ if menu == "DASHBOARD":
 # =========================================================
 # REGISTRAR
 # =========================================================
-# =========================================================
-# REGISTRAR (CORREGIDO)
-# =========================================================
+
 elif menu == "REGISTRAR":
     st.title("➕ REGISTRO DE EMPLEADO")
 
@@ -541,18 +539,13 @@ elif menu == "ESCÁNER":
 
     import os
     import io
-    import qrcode  # Requieres instalarlo: pip install qrcode
+    import qrcode
     import plotly.graph_objects as go
 
     # Inyección de estilos CSS modificados para incluir el área del QR
     st.markdown("""
     <style>
-    /* Fondo global oscuro */
-    .stApp {
-        background-color: #050814 !important;
-    }
-    
-    /* Tarjetas principales */
+    .stApp { background-color: #050814 !important; }
     .card {
         background: #090e1d;
         padding: 24px;
@@ -560,35 +553,9 @@ elif menu == "ESCÁNER":
         margin-bottom: 20px;
         border: 1px solid #141b2d;
     }
-    
-    /* Título principal */
-    .tt {
-        font-size: 38px;
-        font-weight: 700;
-        color: white;
-        letter-spacing: 0.5px;
-    }
-    
-    /* Subtítulo */
-    .sub {
-        font-size: 16px; 
-        color: #7b52ff;
-        font-weight: 600;
-        margin-top: 6px;
-    }
-    
-    /* Subtítulos de secciones */
-    .section-title {
-        color: white;
-        font-size: 22px;
-        font-weight: 700;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    /* Cajas de datos de la columna izquierda */
+    .tt { font-size: 38px; font-weight: 700; color: white; letter-spacing: 0.5px; }
+    .sub { font-size: 16px; color: #7b52ff; font-weight: 600; margin-top: 6px; }
+    .section-title { color: white; font-size: 22px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
     .box {
         background: #0b1326;
         padding: 16px;
@@ -599,138 +566,17 @@ elif menu == "ESCÁNER":
         flex-direction: column;
         gap: 4px;
     }
+    .lbl { font-size: 14px; color: #637393; font-weight: 700; text-transform: uppercase; }
+    .val { font-size: 22px; font-weight: 700; color: white; }
+    .profile-container { display: flex; gap: 30px; align-items: center; background: #0b1326; padding: 20px; border-radius: 10px; border: 1px solid #172033; }
+    .profile-item { display: flex; align-items: center; gap: 15px; flex: 1; }
+    .profile-icon { background: rgba(123, 82, 255, 0.15); color: #7b52ff; padding: 12px; border-radius: 50px; font-size: 26px; display: flex; align-items: center; justify-content: center; width: 55px; height: 55px; }
+    .lbl-profile { font-size: 18px; color: #7b52ff; font-weight: 700; }
+    .val-profile { font-size: 24px; font-weight: 700; color: white; }
     
-    .lbl {
-        font-size: 14px;
-        color: #637393;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-    
-    .val {
-        font-size: 22px;
-        font-weight: 700;
-        color: white;
-    }
-    
-    /* Bloque de Perfil (Área y Cargo) */
-    .profile-container {
-        display: flex;
-        gap: 30px;
-        align-items: center;
-        background: #0b1326;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #172033;
-    }
-    
-    .profile-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex: 1;
-    }
-    
-    .profile-icon {
-        background: rgba(123, 82, 255, 0.15);
-        color: #7b52ff;
-        padding: 12px;
-        border-radius: 50px;
-        font-size: 26px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 55px;
-        height: 55px;
-    }
-    
-    .lbl-profile {
-        font-size: 18px;
-        color: #7b52ff;
-        font-weight: 700;
-    }
-    
-    .val-profile {
-        font-size: 24px;
-        font-weight: 700;
-        color: white;
-    }
-    
-    /* Texto inferior de Cumplimiento Total */
-    .kpi-total-box {
-        text-align: center;
-        margin-top: -10px;
-        margin-bottom: 15px;
-    }
-    
-    .kpi-total-val {
-        font-size: 38px;
-        font-weight: 800;
-        color: #1aff74;
-    }
-    
-    .kpi-total-lbl {
-        font-size: 14px;
-        color: white;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    /* Caja contenedora para el QR */
-    .qr-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: #0b1326;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #172033;
-        margin-top: 20px;
-    }
-    
-    /* CSS PARA LA TABLA A 24PX */
-    .stDataFrame td, 
-    .stDataFrame div[data-testid="stTableDataCell"] p,
-    .stDataFrame data-grid-canvas,
-    div[data-role="grid"] cell {
-        font-size: 24px !important;
-        font-weight: 700 !important;
-        color: white !important;
-    }
-
-    .stDataFrame th, 
-    .stDataFrame div[data-testid="stHeaderCell"] p,
-    .stDataFrame div[data-testid="stHeaderCell"] span,
-    .stDataFrame div[data-grid-header-cell] {
-        font-size: 26px !important;
-        font-weight: 900 !important;
-        color: #8e6eff !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1px !important;
-    }
-
-    .stDataFrame div[data-testid="stDataFrame"] {
-        line-height: 2.2 !important;
-    }
-
-    div[data-baseweb="select"] {
-        background-color: #0b1326 !important;
-        border: 1px solid #172033 !important;
-        border-radius: 8px !important;
-    }
-    
-    div[data-baseweb="select"] div {
-        color: white !important;
-        font-size: 20px !important;
-        font-weight: 600 !important;
-    }
-    
-    .stDataFrame {
-        border: 1px solid #172033 !important;
-        border-radius: 8px !important;
-        overflow: hidden;
-    }
+    /* Estilos de tabla adaptados */
+    .stDataFrame td, .stDataFrame p { font-size: 20px !important; font-weight: 700 !important; color: white !important; }
+    .stDataFrame th, .stDataFrame span { font-size: 22px !important; font-weight: 900 !important; color: #8e6eff !important; text-transform: uppercase !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -738,13 +584,12 @@ elif menu == "ESCÁNER":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
 
     if empleados.empty:
-        st.warning("Sin empleados")
+        st.warning("⚠️ Sin empleados registrados en la base de datos.")
         st.stop()
 
     empleados["vista"] = empleados["id"].astype(str) + " - " + empleados["nombre"]
 
-    # --- 🛠️ LÓGICA DE ESCANEO QR (LEER PARÁMETRO DE LA URL) ---
-    # Si la URL contiene un ID válido, pre-seleccionamos ese empleado automáticamente
+    # Parámetros de URL para QR dinámico
     parametros_url = st.query_params
     indice_por_defecto = 0
     
@@ -772,7 +617,6 @@ elif menu == "ESCÁNER":
 
     with c2:
         st.markdown("<p style='color:#637393; font-size:16px; font-weight:700; margin-bottom:4px; margin-top:5px;'>Empleado</p>", unsafe_allow_html=True)
-        # Añadido index=indice_por_defecto para responder dinámicamente al QR
         emp = st.selectbox("Empleado", empleados["vista"], index=indice_por_defecto, label_visibility="collapsed")
 
     id_emp = emp.split(" - ")[0]
@@ -783,7 +627,6 @@ elif menu == "ESCÁNER":
 
     # ================= COLUMNA IZQUIERDA =================
     with izq:
-        # Contenedor de la Foto
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='section-title'>📷 FOTO</div>", unsafe_allow_html=True)
 
@@ -804,13 +647,12 @@ elif menu == "ESCÁNER":
             <div style='border: 2px dashed #242f4d; border-radius: 10px; padding: 30px; text-align: center; background: #070c18;'>
                 <div style='font-size: 30px; color: #7b52ff; margin-bottom: 8px;'>📥</div>
                 <div style='color: white; font-weight: 700; font-size: 14px;'>SUBIR FOTO</div>
-                <div style='color: #4f5e7b; font-size: 11px; margin-top: 4px;'>PNG, JPG - Hasta 10MB</div>
             </div>
             """, unsafe_allow_html=True)
             
         st.markdown("</div>", unsafe_allow_html=True)
 
-        # Contenedor de Datos Personales
+        # Datos Personales
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         for x in ["nombre", "edad", "estado", "profesion"]:
             st.markdown(f"""
@@ -821,10 +663,8 @@ elif menu == "ESCÁNER":
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-
     # ================= COLUMNA DERECHA =================
     with der:
-        # Tarjeta superior de Perfil Profesional
         st.markdown(f"""
         <div class='card'>
             <div class='section-title'>👤 PERFIL</div>
@@ -841,14 +681,13 @@ elif menu == "ESCÁNER":
                     <div class='profile-icon'>💼</div>
                     <div>
                         <div class='lbl-profile'>CARGO</div>
-                        <div class='val-profile'>{empleado['cargo'].upper()}</div>
+                        <div class='val-profile'>{str(empleado['cargo']).upper()}</div>
                     </div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Tarjeta inferior de KPIs y Gráfico de Dona
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='section-title'>📈 KPI DEL PUESTO</div>", unsafe_allow_html=True)
 
@@ -868,73 +707,29 @@ elif menu == "ESCÁNER":
 
                 fig = go.Figure()
                 fig.add_trace(go.Pie(
-                    values=[100, 0], 
+                    values=[pct, max(100 - pct, 0)], 
                     hole=0.72,
-                    marker=dict(colors=["#1aff74", "#090e1d"]),
+                    marker=dict(colors=["#1aff74", "#172033"]),
                     textinfo="none",
                     hoverinfo="skip"
                 ))
 
                 fig.update_layout(
-                    height=240,
+                    height=200,
                     margin=dict(t=0, b=0, l=0, r=0),
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
                     showlegend=False,
                     annotations=[dict(
-                        text=f"<span style='font-size:34px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:13px; font-weight:700; color:white; letter-spacing:0.5px;'>CUMPLIMIENTO</span>",
-                        showarrow=False,
-                        align="center"
+                        text=f"<span style='font-size:30px; font-weight:800; color:#1aff74;'>{pct}%</span><br><span style='font-size:12px; color:white;'>CUMP.</span>",
+                        showarrow=False
                     )]
                 )
-
-                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-                
-                st.markdown(f"""
-                <div class='kpi-total-box'>
-                    <div class='kpi-total-val'>{pct}%</div>
-                    <div class='kpi-total-lbl'>Cumplimiento Total</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
-                # Reemplaza 'http://localhost:8501' con el link real si lo subes a la nube (ej. Streamlit Community Cloud)
-                url_base = "http://localhost:8501" 
-                url_compartible = f"{url_base}/?emp_id={id_emp}"
-                
-                # Crear la matriz del QR acoplada estéticamente (Fondo oscuro, QR blanco)
-                qr = qrcode.QRCode(version=1, box_size=10, border=1)
-                qr.add_data(url_compartible)
-                qr.make(fit=True)
-                
-                img_qr = qr.make_image(fill_color="#ffffff", back_color="#0b1326")
-                
-                # Convertir a bytes para que Streamlit lo pueda renderizar sin guardarlo físicamente
-                buf = io.BytesIO()
-                img_qr.save(buf, format="PNG")
-                byte_im = buf.getvalue()
-                
-                # Renderizado del QR en la UI
-                st.markdown("""
-                <div class='qr-container'>
-                    <div style='color:#637393; font-size:12px; font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;'>🔗 ACCESO MÓVIL DIRECTO</div>
-                """, unsafe_allow_html=True)
-                
-                st.image(byte_im, width=160)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                
+                st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False}, key=f"qr_chart_{id_emp}")
         else:
-            st.info("Sin registros de KPIs vinculados a este ID.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Notificación inferior
-    st.markdown("""
-    <div style='background: #061f14; border: 1px solid #0d4d2a; padding: 10px 20px; border-radius: 6px; color: #1aff74; font-size: 14px; display: flex; align-items: center; gap: 10px; margin-top: 10px;'>
-        <span>✔️</span> Escáner actualizado con éxito
-    </div>
-    """, unsafe_allow_html=True)
+            st.info("No hay indicadores asignados a este colaborador.")
+            
+        st.markdown("</div>", unsafe_allow_html=True
 # =========================================================
 # CARGOS
 # =========================================================
