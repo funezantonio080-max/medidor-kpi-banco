@@ -288,8 +288,6 @@ if cargo_filtro != "TODOS":
         empleados["cargo"] == cargo_filtro
     ]["id"].tolist()
 
-    kpis = kpis[kpis["id"].isin(ids_cargo)]
-
 
     total_emp = len(empleados)
     total_kp = len(kpis)
