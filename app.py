@@ -425,12 +425,18 @@ if menu == "DASHBOARD":
 # =========================================================
 # REGISTRAR
 # =========================================================
+# =========================================================
+# REGISTRAR (CORREGIDO)
+# =========================================================
 elif menu == "REGISTRAR":
     st.title("➕ REGISTRO DE EMPLEADO")
 
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
 
-    with st.form("form_reg"):
+    # Creamos el contenedor del formulario
+    form_registro = st.form("form_reg")
+
+    with form_registro:
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -446,18 +452,22 @@ elif menu == "REGISTRAR":
             cargo = st.selectbox("CARGO", cargos["nombre"])
 
         foto = st.file_uploader("FOTO", type=["jpg","png"])
+        
+        # El botón de envío debe pertenecer al bloque del formulario
+        enviado = st.form_submit_button("GUARDAR")
 
-        if st.form_submit_button("GUARDAR"):
-            img = foto.read() if foto else None
+    # Evaluamos la acción fuera de las columnas, asegurando la persistencia de datos
+    if enviado:
+        img = foto.read() if foto else None
 
-            c.execute("""
-            INSERT OR REPLACE INTO empleados
-            VALUES (?,?,?,?,?,?,?)
-            """, (id,nombre,edad,estado,profesion,cargo,img))
+        c.execute("""
+        INSERT OR REPLACE INTO empleados
+        VALUES (?,?,?,?,?,?,?)
+        """, (id, nombre, edad, estado, profesion, cargo, img))
+        conn.commit()  # Aseguramos guardar los cambios en la BD
 
-            regenerar_kpis(id, cargo)
-            st.success("EMPLEADO REGISTRADO")
-
+        regenerar_kpis(id, cargo)
+        st.success("EMPLEADO REGISTRADO CORRECOTAMENTE 🎉")
 # =========================================================
 # EDITAR
 # =========================================================
