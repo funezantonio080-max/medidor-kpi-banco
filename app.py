@@ -281,6 +281,7 @@ if cargo_filtro != "TODOS":
 
     kpis = kpis[
         kpis["id"].isin(ids_empleados)
+    ]
 
     total_emp = len(empleados)
     total_kp = len(kpis)
