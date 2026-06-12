@@ -510,12 +510,12 @@ elif menu == "EDITAR":
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
         edad = st.number_input("EDAD", value=int(data["edad"]))
-        estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+        estado = st.selectbox("ESTADO", ["SOLTERO", "CASADO"])
 
         cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
         cargo = st.selectbox("CARGO", cargos["nombre"])
 
-        foto = st.file_uploader("ACTUALIZAR FOTO", type=["jpg","png"])
+        foto = st.file_uploader("ACTUALIZAR FOTO", type=["jpg", "png"])
 
         if st.button("ACTUALIZAR"):
             img = foto.read() if foto else data["foto"]
@@ -524,9 +524,12 @@ elif menu == "EDITAR":
             UPDATE empleados
             SET nombre=?, edad=?, estado=?, cargo=?, foto=?
             WHERE id=?
-            """, (nombre,edad,estado,cargo,img,emp_id))
+            """, (nombre, edad, estado, cargo, img, emp_id))
+
+            conn.commit()
 
             regenerar_kpis(emp_id, cargo)
+
             st.success("ACTUALIZADO")
 
 # =========================================================
