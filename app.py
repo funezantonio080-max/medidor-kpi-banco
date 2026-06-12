@@ -264,11 +264,6 @@ if menu == "DASHBOARD":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
-    if menu == "DASHBOARD":
-
-# Lectura de datos SQL relacionales
-empleados = pd.read_sql("SELECT * FROM empleados", conn)
-kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
 # FILTRO POR CARGO
 lista_cargos = empleados["cargo"].dropna().unique().tolist()
@@ -285,10 +280,12 @@ if cargo_filtro != "TODOS":
     ids_cargo = empleados[
         empleados["cargo"] == cargo_filtro
     ]["id"].tolist()
-
+    
+    kpis = kpis[kpis["id"].isin(ids_cargo)]
 
     total_emp = len(empleados)
     total_kp = len(kpis)
+    
     prom_cump = round((kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100, 2) if not kpis.empty else 0
     kpis_riesgo = len(kpis[kpis["real"] < kpis["meta"]]) if not kpis.empty else 0
     kpis_ok = max(total_kp - kpis_riesgo, 0)
