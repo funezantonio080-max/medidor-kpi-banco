@@ -266,8 +266,6 @@ if menu == "DASHBOARD":
 
     if menu == "DASHBOARD":
 
-    ...
-
 # Lectura de datos SQL relacionales
 empleados = pd.read_sql("SELECT * FROM empleados", conn)
 kpis = pd.read_sql("SELECT * FROM kpis", conn)
