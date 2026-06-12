@@ -302,12 +302,13 @@ if menu == "DASHBOARD":
 
     st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
-  # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
+ # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
     for index in range(0, len(kpis), 2):
         par_kpis = kpis.iloc[index:index+2]
         bloque_columnas = st.columns(2)
 
-        for col_pos, (_, row) in enumerate(par_kpis.iterrows()):
+        # Usamos enumerate para obtener un índice único (idx) por cada gráfico en pantalla
+        for col_pos, (idx, row) in enumerate(par_kpis.iterrows()):
             m_val = max(row["meta"], 1)
             r_val = row["real"]
             p_val = row["proyectado"]
@@ -378,7 +379,8 @@ if menu == "DASHBOARD":
                                 font=dict(color="white")
                             )]
                         )
-                        st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+                        # SOLUCIÓN DEFINITIVA: key único usando el índice de la fila del DataFrame
+                        st.plotly_chart(fig_donut, use_container_width=True, key=f"donut_{idx}", config={'displayModeBar': False})
 
                     with c_datos:
                         # Formateadores numéricos de precisión string
@@ -414,7 +416,6 @@ if menu == "DASHBOARD":
 
                     # Nota aclaratoria base del KPI
                     st.markdown(f"<div class='card-footer-note'>{txt_footer}</div>", unsafe_allow_html=True)
-
     # 4. PIE DE PÁGINA GLOBAL DEL PANEL REPLICA V14
     st.markdown("""
     <div class='footer-bar-clon'>
