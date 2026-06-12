@@ -474,7 +474,7 @@ elif menu == "EDITAR":
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
         edad = st.number_input("EDAD", value=int(data["edad"]))
-        estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
+        estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
 
         cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
         cargo = st.selectbox("CARGO", cargos["nombre"])
