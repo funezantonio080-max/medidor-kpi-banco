@@ -928,23 +928,76 @@ elif menu == "ESCÁNER":
 # =========================================================
 # CARGOS
 # =========================================================
+# =========================================================
+# CARGOS
+# =========================================================
 elif menu == "CARGOS":
     st.title("⚙️ CARGOS")
 
-    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
-    cargo_sel = st.selectbox("CARGO", cargos["nombre"])
+    # CREAR NUEVO CARGO
+    st.subheader("➕ CREAR NUEVO CARGO")
 
-    kpis = pd.read_sql("SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo_sel,))
+    nuevo_cargo = st.text_input("NOMBRE DEL NUEVO CARGO")
+
+    if st.button("CREAR CARGO"):
+        if nuevo_cargo.strip() != "":
+            c.execute(
+                "INSERT INTO cargos VALUES (?,?)",
+                (nuevo_cargo.upper(), "SIN KPI")
+            )
+            conn.commit()
+            st.success("CARGO CREADO")
+
+    st.divider()
+
+    # SELECCIÓN DE CARGO
+    cargos = pd.read_sql(
+        "SELECT DISTINCT nombre FROM cargos",
+        conn
+    )
+
+    cargo_sel = st.selectbox(
+        "CARGO",
+        cargos["nombre"]
+    )
+
+    # KPI DEL CARGO
+    kpis = pd.read_sql(
+        "SELECT indicador FROM cargos WHERE nombre=?",
+        conn,
+        params=(cargo_sel,)
+    )
+
     st.write("KPIs:", kpis["indicador"].tolist())
 
+    st.divider()
+
+    # AGREGAR KPI
     nuevo = st.text_input("NUEVO KPI")
 
-    if st.button("AGREGAR"):
-        c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo.upper()))
-        conn.commit()
+    if st.button("AGREGAR KPI"):
+        if nuevo.strip() != "":
+            c.execute(
+                "INSERT INTO cargos VALUES (?,?)",
+                (cargo_sel, nuevo.upper())
+            )
+            conn.commit()
+            st.success("KPI AGREGADO")
 
-    eliminar = st.selectbox("ELIMINAR KPI", kpis["indicador"])
+    st.divider()
 
-    if st.button("ELIMINAR"):
-        c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?",(cargo_sel,eliminar))
-        conn.commit()
+    # ELIMINAR KPI
+    if not kpis.empty:
+
+        eliminar = st.selectbox(
+            "ELIMINAR KPI",
+            kpis["indicador"]
+        )
+
+        if st.button("ELIMINAR KPI"):
+            c.execute(
+                "DELETE FROM cargos WHERE nombre=? AND indicador=?",
+                (cargo_sel, eliminar)
+            )
+            conn.commit()
+            st.success("KPI ELIMINADO")
