@@ -264,6 +264,8 @@ if menu == "DASHBOARD":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
+total_emp = len(empleados)
+total_kp = len(kpis)
 
 # FILTRO POR CARGO
 
