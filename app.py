@@ -260,35 +260,41 @@ if menu == "DASHBOARD":
     </style>
     """, unsafe_allow_html=True)
 
-    # Lectura de datos SQL relacionales
-   empleados = pd.read_sql("SELECT * FROM empleados", conn)
-kpis = pd.read_sql("SELECT * FROM kpis", conn)
+       # Lectura de datos SQL relacionales
+    empleados = pd.read_sql("SELECT * FROM empleados", conn)
+    kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
-lista_cargos = empleados["cargo"].dropna().unique().tolist()
+    lista_cargos = empleados["cargo"].dropna().unique().tolist()
 
-cargo_filtro = st.selectbox(
-    "📋 FILTRAR POR CARGO",
-    ["TODOS"] + lista_cargos
-)
+    cargo_filtro = st.selectbox(
+        "📋 FILTRAR POR CARGO",
+        ["TODOS"] + lista_cargos
+    )
 
-if cargo_filtro != "TODOS":
+    if cargo_filtro != "TODOS":
 
-    ids_empleados = empleados[
-        empleados["cargo"] == cargo_filtro
-    ]["id"].tolist()
+        ids_empleados = empleados[
+            empleados["cargo"] == cargo_filtro
+        ]["id"].tolist()
 
-    kpis = kpis[
-        kpis["id"].isin(ids_empleados)
-    ]
-
-total_emp = len(empleados)
-total_kp = len(kpis)
+        kpis = kpis[
+            kpis["id"].isin(ids_empleados)
+        ]
 
     total_emp = len(empleados)
     total_kp = len(kpis)
-    prom_cump = round((kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100, 2) if not kpis.empty else 0
-    kpis_riesgo = len(kpis[kpis["real"] < kpis["meta"]]) if not kpis.empty else 0
+
+    prom_cump = round(
+        (kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100,
+        2
+    ) if not kpis.empty else 0
+
+    kpis_riesgo = len(
+        kpis[kpis["real"] < kpis["meta"]]
+    ) if not kpis.empty else 0
+
     kpis_ok = max(total_kp - kpis_riesgo, 0)
+
     fecha_badge = datetime.now().strftime("%d/%m/%Y")
 
     # 1. RENDERIZADO DEL ENCABEZADO SUPERIOR
