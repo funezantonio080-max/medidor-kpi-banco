@@ -378,7 +378,12 @@ if menu == "DASHBOARD":
                                 font=dict(color="white")
                             )]
                         )
-                        st.plotly_chart(fig_donut, use_container_width=True, key=f"clon_v14_{row['indicador']}", config={'displayModeBar': False})
+                 st.plotly_chart(
+    fig_donut,
+    use_container_width=True,
+    key=f"clon_v14_{index}_{col_pos}",
+    config={'displayModeBar': False}
+)
 
                     with c_datos:
                         # Formateadores numéricos de precisión string
