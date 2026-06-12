@@ -4,10 +4,7 @@ import sqlite3
 import plotly.graph_objects as go
 import qrcode
 import json
-import shutil
-import os
 from io import BytesIO
-from datetime import datetime
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="BANCO KPI PRO", layout="wide")
@@ -33,25 +30,8 @@ if not st.session_state.auth:
 
 # ---------------- DB ----------------
 conn = sqlite3.connect("bank.db", check_same_thread=False)
-
-conn.execute("PRAGMA journal_mode=WAL")
-conn.execute("PRAGMA synchronous=FULL")
-
 c = conn.cursor()
 
-# TABLA HISTORIAL KPI
-c.execute("""
-CREATE TABLE IF NOT EXISTS historial_kpis(
-    id TEXT,
-    indicador TEXT,
-    meta REAL,
-    real REAL,
-    proyectado REAL,
-    fecha TEXT
-)
-""")
-
-# TABLA EMPLEADOS
 c.execute("""
 CREATE TABLE IF NOT EXISTS empleados(
     id TEXT PRIMARY KEY,
@@ -64,7 +44,6 @@ CREATE TABLE IF NOT EXISTS empleados(
 )
 """)
 
-# TABLA KPI
 c.execute("""
 CREATE TABLE IF NOT EXISTS kpis(
     id TEXT,
@@ -75,7 +54,6 @@ CREATE TABLE IF NOT EXISTS kpis(
 )
 """)
 
-# TABLA CARGOS
 c.execute("""
 CREATE TABLE IF NOT EXISTS cargos(
     nombre TEXT,
@@ -96,20 +74,6 @@ if pd.read_sql("SELECT * FROM cargos", conn).empty:
         for i in inds:
             c.execute("INSERT INTO cargos VALUES (?,?)",(cargo,i))
     conn.commit()
- if st.button("ACTUALIZAR"):
-    img = foto.read() if foto else data["foto"]
-
-    c.execute("""
-    UPDATE empleados
-    SET nombre=?, edad=?, estado=?, cargo=?, foto=?
-    WHERE id=?
-    """, (nombre, edad, estado, cargo, img, emp_id))
-
-    conn.commit()
-
-    regenerar_kpis(emp_id, cargo)
-
-    st.success("ACTUALIZADO")
 
 # ---------------- FUNCIONES ----------------
 def regenerar_kpis(emp_id, cargo):
@@ -510,26 +474,24 @@ elif menu == "EDITAR":
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
         edad = st.number_input("EDAD", value=int(data["edad"]))
-        estado = st.selectbox("ESTADO", ["SOLTERO", "CASADO"])
+        estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
 
         cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
         cargo = st.selectbox("CARGO", cargos["nombre"])
 
-        foto = st.file_uploader("ACTUALIZAR FOTO", type=["jpg", "png"])
+        foto = st.file_uploader("ACTUALIZAR FOTO", type=["jpg","png"])
 
-      if st.form_submit_button("GUARDAR"):
-    img = foto.read() if foto else None
+        if st.button("ACTUALIZAR"):
+            img = foto.read() if foto else data["foto"]
 
-    c.execute("""
-    INSERT OR REPLACE INTO empleados
-    VALUES (?,?,?,?,?,?,?)
-    """, (id, nombre, edad, estado, profesion, cargo, img))
+            c.execute("""
+            UPDATE empleados
+            SET nombre=?, edad=?, estado=?, cargo=?, foto=?
+            WHERE id=?
+            """, (nombre,edad,estado,cargo,img,emp_id))
 
-    conn.commit()
-
-    regenerar_kpis(id, cargo)
-
-    st.success("EMPLEADO REGISTRADO")
+            regenerar_kpis(emp_id, cargo)
+            st.success("ACTUALIZADO")
 
 # =========================================================
 # KPIS
