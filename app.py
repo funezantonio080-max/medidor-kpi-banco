@@ -51,15 +51,17 @@ conn.execute("PRAGMA journal_mode=WAL")
 conn.execute("PRAGMA synchronous=FULL")
 
 c = conn.cursor()
-os.makedirs("backup", exist_ok=True)
 
-fecha = datetime.now().strftime("%Y%m%d")
-
-try:
-    shutil.copy(
-        "bank.db",
-        f"backup/bank_{fecha}.db"
-    )
+c.execute("""
+CREATE TABLE IF NOT EXISTS historial_kpis(
+    id TEXT,
+    indicador TEXT,
+    meta REAL,
+    real REAL,
+    proyectado REAL,
+    fecha TEXT
+)
+""")
 except:
     pass
 
