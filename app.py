@@ -302,7 +302,7 @@ if menu == "DASHBOARD":
 
     st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
-    # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
+  # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
     for index in range(0, len(kpis), 2):
         par_kpis = kpis.iloc[index:index+2]
         bloque_columnas = st.columns(2)
@@ -378,7 +378,7 @@ if menu == "DASHBOARD":
                                 font=dict(color="white")
                             )]
                         )
-                   st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+                        st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
                     with c_datos:
                         # Formateadores numéricos de precisión string
