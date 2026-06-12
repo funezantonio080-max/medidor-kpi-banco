@@ -1326,62 +1326,53 @@ elif menu == "ESCÁNER":
             )
         st.markdown("</div>", unsafe_allow_html=True)
 
-# =========================================================
-# CARGOS
-# =========================================================
-# =========================================================
-# CARGOS (MODIFICADO PARA AGREGAR MANUALMENTE)
+
+# CARGOS (CORREGIDO PARA EVITAR EL ERROR DE COLUMNAS)
 # =========================================================
 elif menu == "CARGOS":
-    st.title("⚙️ GESTIÓN DE CARGOS Y KPIs")
+    st.title("⚙️ GESTIÓN DE CARGOS")
     
-    # --- SUBSECCIÓN 1: AGREGAR NUEVO CARGO MANUALMENTE ---
+    # 1. Formulario para agregar el cargo manualmente
     st.subheader("➕ Agregar Nuevo Cargo")
     with st.form("form_nuevo_cargo", clear_on_submit=True):
-        nuevo_cargo_nombre = st.text_input("NOMBRE DEL NUEVO CARGO").upper().strip()
-        kpi_inicial = st.text_input("KPI INICIAL PARA ESTE CARGO (OPCIONAL)").upper().strip()
+        nuevo_cargo = st.text_input("NOMBRE DEL NUEVO CARGO").upper().strip()
         
-        if st.form_submit_button("CREAR CARGO"):
-            if nuevo_cargo_nombre:
-                # Comprobar si ya existe para no duplicar
-                existe = pd.read_sql("SELECT 1 FROM cargos WHERE nombre=?", conn, params=(nuevo_cargo_nombre,))
+        if st.form_submit_button("AGREGAR CARGO"):
+            if nuevo_cargo:
+                # Comprobamos si el cargo ya existe
+                existe = pd.read_sql("SELECT 1 FROM cargos WHERE nombre=?", conn, params=(nuevo_cargo,))
                 if existe.empty:
-                    # Insertamos el cargo. Si no puso KPI inicial, ponemos uno por defecto (ej. "DESEMPEÑO")
-                    kpi_a_insertar = kpi_inicial if kpi_inicial else "RENDIMIENTO"
-                    c.execute("INSERT INTO cargos VALUES (?,?)", (nuevo_cargo_nombre, kpi_a_insertar))
+                    # LÍNEA CORREGIDA: Pasamos el nombre del cargo Y un indicador por defecto ("RENDIMIENTO")
+                    c.execute("INSERT INTO cargos VALUES (?, ?)", (nuevo_cargo, "RENDIMIENTO"))
                     conn.commit()
-                    st.success(f"¡Cargo '{nuevo_cargo_nombre}' creado con éxito!")
+                    st.success(f"¡Cargo '{nuevo_cargo}' agregado con éxito!")
                     st.rerun()
                 else:
-                    st.error("Este cargo ya existe en la base de datos.")
+                    st.error("Este cargo ya está registrado.")
             else:
                 st.error("Por favor, introduce un nombre para el cargo.")
 
     st.markdown("---")
 
-    # --- SUBSECCIÓN 2: VINCULAR MÁS KPIs A CARGOS EXISTENTES ---
-    st.subheader("📊 Agregar KPIs a un Cargo Existente")
+    # 2. Visor de KPIs por cargo y opción de añadir más
+    st.subheader("📋 KPIs por Puesto")
     cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
     
     if not cargos.empty:
-        cargo_sel = st.selectbox("SELECCIONA EL CARGO", cargos["nombre"])
+        cargo_sel = st.selectbox("SELECCIONA UN CARGO", cargos["nombre"])
         
         kpis_puesto = pd.read_sql("SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo_sel,))
         st.write("**KPIs actualmente vinculados:**", kpis_puesto["indicador"].tolist())
         
-        nuevo_kpi = st.text_input("NUEVO KPI PARA ASOCIAR").upper().strip()
-        if st.button("ASOCIAR KPI"):
+        nuevo_kpi = st.text_input("AÑADIR OTRO KPI A ESTE CARGO").upper().strip()
+        if st.button("VINCULAR KPI"):
             if nuevo_kpi:
-                # Comprobar si ese KPI ya está asociado a ese cargo
+                # Evitamos duplicar el mismo KPI en el mismo cargo
                 existe_kpi = pd.read_sql("SELECT 1 FROM cargos WHERE nombre=? AND indicador=?", conn, params=(cargo_sel, nuevo_kpi))
                 if existe_kpi.empty:
                     c.execute("INSERT INTO cargos VALUES (?,?)", (cargo_sel, nuevo_kpi))
                     conn.commit()
-                    st.success(f"¡Indicador '{nuevo_kpi}' agregado con éxito a '{cargo_sel}'!")
+                    st.success(f"¡KPI '{nuevo_kpi}' vinculado a '{cargo_sel}'!")
                     st.rerun()
                 else:
-                    st.warning("Este KPI ya está registrado en este cargo.")
-            else:
-                st.error("Por favor, introduce un nombre válido para el KPI.")
-    else:
-        st.info("No hay cargos registrados todavía. Crea uno en el formulario de arriba.")
+                    st.warning("Este KPI ya está vinculado a este cargo.")
