@@ -264,9 +264,7 @@ if menu == "DASHBOARD":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
-    lista_cargos = sorted(
-    empleados["cargo"].dropna().unique().tolist()
-)
+lista_cargos = empleados["cargo"].dropna().unique().tolist()
 
 cargo_filtro = st.selectbox(
     "📋 FILTRAR POR CARGO",
