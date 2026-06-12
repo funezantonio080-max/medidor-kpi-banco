@@ -1035,3 +1035,32 @@ elif menu == "CARGOS":
             )
             conn.commit()
             st.success("KPI ELIMINADO")
+            st.divider()
+            st.divider()
+
+# ELIMINAR CARGO
+st.subheader("🗑️ ELIMINAR CARGO")
+
+cargos_lista = pd.read_sql(
+    "SELECT DISTINCT nombre FROM cargos",
+    conn
+)
+
+cargo_eliminar = st.selectbox(
+    "SELECCIONE EL CARGO A ELIMINAR",
+    cargos_lista["nombre"],
+    key="eliminar_cargo"
+)
+
+if st.button("ELIMINAR CARGO COMPLETO"):
+
+    c.execute(
+        "DELETE FROM cargos WHERE nombre=?",
+        (cargo_eliminar,)
+    )
+
+    conn.commit()
+
+    st.success(f"CARGO {cargo_eliminar} ELIMINADO")
+    st.rerun()
+
