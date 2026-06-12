@@ -264,11 +264,8 @@ if menu == "DASHBOARD":
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
-total_emp = len(empleados)
-total_kp = len(kpis)
-
-# FILTRO POR CARGO
-
+    total_emp = len(empleados)
+    total_kp = len(kpis)
     prom_cump = round((kpis["real"].sum() / (kpis["meta"].sum() + 1)) * 100, 2) if not kpis.empty else 0
     kpis_riesgo = len(kpis[kpis["real"] < kpis["meta"]]) if not kpis.empty else 0
     kpis_ok = max(total_kp - kpis_riesgo, 0)
@@ -305,13 +302,12 @@ total_kp = len(kpis)
 
     st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
- # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
+    # 3. GENERACIÓN EN REJILLA DE LAS TARJETAS DE INDICADORES (Mapeo de 2 en 2)
     for index in range(0, len(kpis), 2):
         par_kpis = kpis.iloc[index:index+2]
         bloque_columnas = st.columns(2)
 
-        # Usamos enumerate para obtener un índice único (idx) por cada gráfico en pantalla
-        for col_pos, (idx, row) in enumerate(par_kpis.iterrows()):
+        for col_pos, (_, row) in enumerate(par_kpis.iterrows()):
             m_val = max(row["meta"], 1)
             r_val = row["real"]
             p_val = row["proyectado"]
@@ -382,8 +378,7 @@ total_kp = len(kpis)
                                 font=dict(color="white")
                             )]
                         )
-                        # SOLUCIÓN DEFINITIVA: key único usando el índice de la fila del DataFrame
-                        st.plotly_chart(fig_donut, use_container_width=True, key=f"donut_{idx}", config={'displayModeBar': False})
+                        st.plotly_chart(fig_donut, use_container_width=True, key=f"clon_v14_{row['indicador']}", config={'displayModeBar': False})
 
                     with c_datos:
                         # Formateadores numéricos de precisión string
@@ -419,6 +414,7 @@ total_kp = len(kpis)
 
                     # Nota aclaratoria base del KPI
                     st.markdown(f"<div class='card-footer-note'>{txt_footer}</div>", unsafe_allow_html=True)
+
     # 4. PIE DE PÁGINA GLOBAL DEL PANEL REPLICA V14
     st.markdown("""
     <div class='footer-bar-clon'>
@@ -443,7 +439,7 @@ elif menu == "REGISTRAR":
 
         with col2:
             edad = st.number_input("EDAD", 18, 70)
-            estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
+            estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
 
         with col3:
             profesion = st.text_input("PROFESIÓN").upper()
@@ -478,7 +474,7 @@ elif menu == "EDITAR":
 
         nombre = st.text_input("NOMBRE", value=data["nombre"]).upper()
         edad = st.number_input("EDAD", value=int(data["edad"]))
-        estado = st.selectbox("ESTADO", ["SOLTERO (A)","CASADO (A)"])
+        estado = st.selectbox("ESTADO", ["SOLTERO","CASADO"])
 
         cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
         cargo = st.selectbox("CARGO", cargos["nombre"])
@@ -933,85 +929,22 @@ elif menu == "ESCÁNER":
 # CARGOS
 # =========================================================
 elif menu == "CARGOS":
-    st.title("⚙️ ADMINISTRACIÓN DE CARGOS Y KPI")
+    st.title("⚙️ CARGOS")
 
-    # CREAR NUEVO CARGO
-    st.subheader("➕ CREAR NUEVO CARGO")
+    cargos = pd.read_sql("SELECT DISTINCT nombre FROM cargos", conn)
+    cargo_sel = st.selectbox("CARGO", cargos["nombre"])
 
-    nuevo_cargo = st.text_input("NOMBRE DEL CARGO")
+    kpis = pd.read_sql("SELECT indicador FROM cargos WHERE nombre=?", conn, params=(cargo_sel,))
+    st.write("KPIs:", kpis["indicador"].tolist())
 
-    if st.button("CREAR CARGO"):
-        if nuevo_cargo.strip() != "":
-            c.execute(
-                "INSERT INTO cargos VALUES (?, ?)",
-                (nuevo_cargo.upper(), "SIN KPI")
-            )
-            conn.commit()
-            st.success("CARGO CREADO CORRECTAMENTE")
-            st.rerun()
-        else:
-            st.warning("INGRESE UN NOMBRE DE CARGO")
+    nuevo = st.text_input("NUEVO KPI")
 
-    st.divider()
+    if st.button("AGREGAR"):
+        c.execute("INSERT INTO cargos VALUES (?,?)",(cargo_sel,nuevo.upper()))
+        conn.commit()
 
-    # LISTA DE CARGOS
-    cargos = pd.read_sql(
-        "SELECT DISTINCT nombre FROM cargos",
-        conn
-    )
+    eliminar = st.selectbox("ELIMINAR KPI", kpis["indicador"])
 
-    cargo_sel = st.selectbox(
-        "SELECCIONE UN CARGO",
-        cargos["nombre"]
-    )
-
-    st.subheader("📊 KPI DEL CARGO")
-
-    kpis = pd.read_sql(
-        "SELECT indicador FROM cargos WHERE nombre=?",
-        conn,
-        params=(cargo_sel,)
-    )
-
-    st.write(kpis["indicador"].tolist())
-
-    st.divider()
-
-    # AGREGAR KPI
-    st.subheader("➕ AGREGAR KPI")
-
-    nuevo_kpi = st.text_input("NOMBRE DEL KPI")
-
-    if st.button("AGREGAR KPI"):
-        if nuevo_kpi.strip() != "":
-            c.execute(
-                "INSERT INTO cargos VALUES (?, ?)",
-                (cargo_sel, nuevo_kpi.upper())
-            )
-            conn.commit()
-            st.success("KPI AGREGADO CORRECTAMENTE")
-            st.rerun()
-        else:
-            st.warning("INGRESE EL NOMBRE DEL KPI")
-
-    st.divider()
-
-    # ELIMINAR KPI
-    st.subheader("🗑️ ELIMINAR KPI")
-
-    lista_kpis = kpis["indicador"].tolist()
-
-    if len(lista_kpis) > 0:
-        kpi_eliminar = st.selectbox(
-            "SELECCIONE KPI A ELIMINAR",
-            lista_kpis
-        )
-
-        if st.button("ELIMINAR KPI"):
-            c.execute(
-                "DELETE FROM cargos WHERE nombre=? AND indicador=?",
-                (cargo_sel, kpi_eliminar)
-            )
-            conn.commit()
-            st.success("KPI ELIMINADO CORRECTAMENTE")
-            st.rerun()
+    if st.button("ELIMINAR"):
+        c.execute("DELETE FROM cargos WHERE nombre=? AND indicador=?",(cargo_sel,eliminar))
+        conn.commit()
