@@ -929,86 +929,85 @@ elif menu == "ESCÁNER":
 # CARGOS
 # =========================================================
 elif menu == "CARGOS":
-st.title("⚙️ ADMINISTRACIÓN DE CARGOS Y KPI")
+    st.title("⚙️ ADMINISTRACIÓN DE CARGOS Y KPI")
 
-# CREAR NUEVO CARGO
-st.subheader("➕ CREAR NUEVO CARGO")
+    # CREAR NUEVO CARGO
+    st.subheader("➕ CREAR NUEVO CARGO")
 
-nuevo_cargo = st.text_input("NOMBRE DEL CARGO")
+    nuevo_cargo = st.text_input("NOMBRE DEL CARGO")
 
-if st.button("CREAR CARGO"):
-    if nuevo_cargo.strip() != "":
-        c.execute(
-            "INSERT INTO cargos VALUES (?, ?)",
-            (nuevo_cargo.upper(), "SIN KPI")
-        )
-        conn.commit()
-        st.success("CARGO CREADO CORRECTAMENTE")
-        st.rerun()
-    else:
-        st.warning("INGRESE UN NOMBRE DE CARGO")
+    if st.button("CREAR CARGO"):
+        if nuevo_cargo.strip() != "":
+            c.execute(
+                "INSERT INTO cargos VALUES (?, ?)",
+                (nuevo_cargo.upper(), "SIN KPI")
+            )
+            conn.commit()
+            st.success("CARGO CREADO CORRECTAMENTE")
+            st.rerun()
+        else:
+            st.warning("INGRESE UN NOMBRE DE CARGO")
 
-st.divider()
+    st.divider()
 
-# LISTA DE CARGOS
-cargos = pd.read_sql(
-    "SELECT DISTINCT nombre FROM cargos",
-    conn
-)
-
-cargo_sel = st.selectbox(
-    "SELECCIONE UN CARGO",
-    cargos["nombre"]
-)
-
-st.subheader("📊 KPI DEL CARGO")
-
-kpis = pd.read_sql(
-    "SELECT indicador FROM cargos WHERE nombre=?",
-    conn,
-    params=(cargo_sel,)
-)
-
-st.write(kpis["indicador"].tolist())
-
-st.divider()
-
-# AGREGAR KPI
-st.subheader("➕ AGREGAR KPI")
-
-nuevo_kpi = st.text_input("NOMBRE DEL KPI")
-
-if st.button("AGREGAR KPI"):
-    if nuevo_kpi.strip() != "":
-        c.execute(
-            "INSERT INTO cargos VALUES (?, ?)",
-            (cargo_sel, nuevo_kpi.upper())
-        )
-        conn.commit()
-        st.success("KPI AGREGADO CORRECTAMENTE")
-        st.rerun()
-    else:
-        st.warning("INGRESE EL NOMBRE DEL KPI")
-
-st.divider()
-
-# ELIMINAR KPI
-st.subheader("🗑️ ELIMINAR KPI")
-
-lista_kpis = kpis["indicador"].tolist()
-
-if len(lista_kpis) > 0:
-
-    kpi_eliminar = st.selectbox(
-        "SELECCIONE KPI A ELIMINAR",
-        lista_kpis
+    # LISTA DE CARGOS
+    cargos = pd.read_sql(
+        "SELECT DISTINCT nombre FROM cargos",
+        conn
     )
 
-    if st.button("ELIMINAR KPI"):
-        c.execute(
-            "DELETE FROM cargos WHERE nombre=? AND indicador=?",
-            (cargo_sel, kpi_eliminar)
+    cargo_sel = st.selectbox(
+        "SELECCIONE UN CARGO",
+        cargos["nombre"]
+    )
+
+    st.subheader("📊 KPI DEL CARGO")
+
+    kpis = pd.read_sql(
+        "SELECT indicador FROM cargos WHERE nombre=?",
+        conn,
+        params=(cargo_sel,)
+    )
+
+    st.write(kpis["indicador"].tolist())
+
+    st.divider()
+
+    # AGREGAR KPI
+    st.subheader("➕ AGREGAR KPI")
+
+    nuevo_kpi = st.text_input("NOMBRE DEL KPI")
+
+    if st.button("AGREGAR KPI"):
+        if nuevo_kpi.strip() != "":
+            c.execute(
+                "INSERT INTO cargos VALUES (?, ?)",
+                (cargo_sel, nuevo_kpi.upper())
+            )
+            conn.commit()
+            st.success("KPI AGREGADO CORRECTAMENTE")
+            st.rerun()
+        else:
+            st.warning("INGRESE EL NOMBRE DEL KPI")
+
+    st.divider()
+
+    # ELIMINAR KPI
+    st.subheader("🗑️ ELIMINAR KPI")
+
+    lista_kpis = kpis["indicador"].tolist()
+
+    if len(lista_kpis) > 0:
+        kpi_eliminar = st.selectbox(
+            "SELECCIONE KPI A ELIMINAR",
+            lista_kpis
         )
-        conn.commit()
-        st.success("KPI ELIMINADO CORRECTAMENTE")
-        st.rerun()
+
+        if st.button("ELIMINAR KPI"):
+            c.execute(
+                "DELETE FROM cargos WHERE nombre=? AND indicador=?",
+                (cargo_sel, kpi_eliminar)
+            )
+            conn.commit()
+            st.success("KPI ELIMINADO CORRECTAMENTE")
+            st.rerun()
