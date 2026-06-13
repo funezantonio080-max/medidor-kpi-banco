@@ -780,21 +780,17 @@ elif menu == "ESCÁNER":
     indice_por_defecto = 0
     
 # --- 🛠️ LÓGICA DE ESCANEO QR (LEER PARÁMETRO DE LA URL) ---
+parametros_url = st.query_params
+indice_por_defecto = 0
+
 if "emp_id" in parametros_url:
-
-    id_buscado = parametros_url["emp_id"]
-
-    coincidencias = empleados[
-        empleados["id"].astype(str).str.strip()
-        == str(id_buscado).strip()
-    ].index
-
-    if len(coincidencias) > 0:
+    id_buscado = str(parametros_url["emp_id"])
+    coincidencias = empleados[empleados["id"].astype(str) == id_buscado].index
+    if not coincidencias.empty:
         indice_por_defecto = int(coincidencias[0])
 
-# SOLO PARA PRUEBA
-st.write("ID recibido:", parametros_url)
-
+# --- ENCABEZADO SUPERIOR ---
+c1, c2 = st.columns([3.8, 2.2])
     # --- ENCABEZADO SUPERIOR ---
     c1, c2 = st.columns([3.8, 2.2])
     
