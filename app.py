@@ -928,55 +928,50 @@ elif menu == "ESCÁNER":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
-                # Reemplaza 'http://localhost:8501' con el link real si lo subes a la nube (ej. Streamlit Community Cloud)
-                url_base = url_base = "https://medidor-kpi-banco.streamlit.app"
+                            # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
 
-url_compartible = f"{url_base}/?emp_id={id_emp}"
+                url_base = "https://medidor-kpi-banco.streamlit.app"
 
-qr = qrcode.QRCode(version=1, box_size=10, border=1)
-qr.add_data(url_compartible)
-qr.make(fit=True)
+                url_compartible = f"{url_base}/?emp_id={id_emp}"
 
-img_qr = qr.make_image(
-    fill_color="#ffffff",
-    back_color="#0b1326"
-)
+                qr = qrcode.QRCode(
+                    version=1,
+                    box_size=10,
+                    border=1
+                )
 
-                
-                # Crear la matriz del QR acoplada estéticamente (Fondo oscuro, QR blanco)
-                qr = qrcode.QRCode(version=1, box_size=10, border=1)
                 qr.add_data(url_compartible)
                 qr.make(fit=True)
-                
-                img_qr = qr.make_image(fill_color="#ffffff", back_color="#0b1326")
-                
-                # Convertir a bytes para que Streamlit lo pueda renderizar sin guardarlo físicamente
+
+                img_qr = qr.make_image(
+                    fill_color="#ffffff",
+                    back_color="#0b1326"
+                )
+
+                # Convertir a bytes
                 buf = io.BytesIO()
                 img_qr.save(buf, format="PNG")
                 byte_im = buf.getvalue()
-                
-                # Renderizado del QR en la UI
+
+                # Mostrar QR
                 st.markdown("""
                 <div class='qr-container'>
-                    <div style='color:#637393; font-size:12px; font-weight:700; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;'>🔗 ACCESO MÓVIL DIRECTO</div>
+                    <div style='color:#637393;
+                                font-size:12px;
+                                font-weight:700;
+                                text-transform:uppercase;
+                                margin-bottom:10px;
+                                letter-spacing:0.5px;'>
+                        🔗 ACCESO MÓVIL DIRECTO
+                    </div>
                 """, unsafe_allow_html=True)
-                
+
                 st.image(byte_im, width=160)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-        else:
-            st.info("Sin registros de KPIs vinculados a este ID.")
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Notificación inferior
-    st.markdown("""
-    <div style='background: #061f14; border: 1px solid #0d4d2a; padding: 10px 20px; border-radius: 6px; color: #1aff74; font-size: 14px; display: flex; align-items: center; gap: 10px; margin-top: 10px;'>
-        <span>✔️</span> Escáner actualizado con éxito
-    </div>
-    """, unsafe_allow_html=True)
+                st.markdown(
+                    "</div>",
+                    unsafe_allow_html=True
+                )
 # =========================================================
 # CARGOS
 # =========================================================
