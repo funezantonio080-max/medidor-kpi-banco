@@ -930,7 +930,7 @@ elif menu == "ESCÁNER":
                 
                 # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
                 # Reemplaza 'http://localhost:8501' con el link real si lo subes a la nube (ej. Streamlit Community Cloud)
-                url_base = "http://localhost:8501" 
+                url_base = "https://medidor-kpi-banco.streamlit.app" 
                 url_compartible = f"{url_base}/?emp_id={id_emp}"
                 
                 # Crear la matriz del QR acoplada estéticamente (Fondo oscuro, QR blanco)
