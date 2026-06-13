@@ -792,7 +792,7 @@ if "emp_id" in parametros_url:
 # --- ENCABEZADO SUPERIOR ---
 c1, c2 = st.columns([3.8, 2.2])
     # --- ENCABEZADO SUPERIOR ---
-    c1, c2 = st.columns([3.8, 2.2])
+   c1, c2 = st.columns([3.8, 2.2])
     
     with c1:
         st.markdown("""
