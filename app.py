@@ -248,11 +248,21 @@ if menu == "DASHBOARD":
     .lbl-style { color: #7a8b9e; font-weight: 600; text-transform: uppercase; }
     .val-style { color: white; font-weight: 700; font-family: monospace; font-size: 13.5px; }
 
-    /* CAJA DE CUMPLIMIENTO GRIS OSCURO */
-    .box-comp-clon { background: #0e1926; border: 1px solid #1a2d42; border-radius: 10px; padding: 12px; text-align: center; margin-top: 15px; width: 100%; }
-    .box-comp-lbl { color: #7a8b9e; font-size: 11px; font-weight: 500; }
-    .box-comp-val { color: #00E676; font-size: 22px; font-weight: 700; margin: 2px 0; }
-    .box-comp-status { color: #00E676; font-size: 11px; font-weight: 600; }
+    /* CAJA DE CUMPLIMIENTO GRIS OSCURO OPTIMIZADA */
+    .box-comp-clon { 
+        background: #0e1926; 
+        border: 1px solid #1a2d42; 
+        border-radius: 10px; 
+        padding: 6px 10px; 
+        text-align: center; 
+        margin-top: 8px; 
+        width: 85%; 
+        margin-left: auto; 
+        margin-right: auto; 
+    }
+    .box-comp-lbl { color: #7a8b9e; font-size: 10px; font-weight: 500; }
+    .box-comp-val { color: #00E676; font-size: 18px; font-weight: 700; margin: 1px 0; }
+    .box-comp-status { color: #00E676; font-size: 10px; font-weight: 600; }
 
     /* NOTAS Y PIE DE PÁGINA */
     .card-footer-note { text-align: center; color: #00E676; font-size: 11px; opacity: 0.6; margin-top: 15px; font-weight: 500; width: 100%; }
@@ -260,7 +270,7 @@ if menu == "DASHBOARD":
     </style>
     """, unsafe_allow_html=True)
 
-       # Lectura de datos SQL relacionales
+    # Lectura de datos SQL relacionales
     empleados = pd.read_sql("SELECT * FROM empleados", conn)
     kpis = pd.read_sql("SELECT * FROM kpis", conn)
 
@@ -272,7 +282,6 @@ if menu == "DASHBOARD":
     )
 
     if cargo_filtro != "TODOS":
-
         ids_empleados = empleados[
             empleados["cargo"] == cargo_filtro
         ]["id"].tolist()
@@ -384,10 +393,10 @@ if menu == "DASHBOARD":
                         fig_donut = go.Figure()
                         fig_donut.add_trace(go.Pie(
                             values=[val_graf_cump, val_graf_rest],
-                            hole=0.52,  # Ajustado de 0.74 a 0.52 para engrosar el cuerpo significativamente
+                            hole=0.52,  
                             textinfo="none",
                             hoverinfo="none",
-                            marker=dict(colors=["#00E676", "#142c1b"]), # Tonos verde claro y verde oscuro originales
+                            marker=dict(colors=["#00E676", "#142c1b"]), 
                             direction="clockwise",
                             sort=False
                         ))
@@ -403,17 +412,15 @@ if menu == "DASHBOARD":
                                 showarrow=False,
                                 font=dict(color="white")
                             )]
+                        )
 
-                                )
-
-                    st.plotly_chart(
-                        fig_donut,
-                        use_container_width=True,
-                        key=f"clon_v14_{index}_{col_pos}",
-                        config={'displayModeBar': False}
-                    )
-                     
-
+                        st.plotly_chart(
+                            fig_donut,
+                            use_container_width=True,
+                            key=f"clon_v14_{index}_{col_pos}",
+                            config={'displayModeBar': False}
+                        )
+                         
                     with c_datos:
                         # Formateadores numéricos de precisión string
                         f_str = ",.2f"
