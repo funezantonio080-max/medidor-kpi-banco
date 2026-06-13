@@ -930,7 +930,7 @@ elif menu == "ESCÁNER":
                 
                 # --- 📱 GENERACIÓN E INYECCIÓN DEL CÓDIGO QR ---
                 # Reemplaza 'http://localhost:8501' con el link real si lo subes a la nube (ej. Streamlit Community Cloud)
-                url_base = https://TU_APP.streamlit.app/?emp_id=EMP001
+                url_base =  "https://TU_APP.streamlit.app"
                 url_compartible = f"{url_base}/?emp_id={id_emp}"
                 
                 # Crear la matriz del QR acoplada estéticamente (Fondo oscuro, QR blanco)
